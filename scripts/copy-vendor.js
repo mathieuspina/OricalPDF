@@ -78,7 +78,7 @@ const ICONS = [
   'slash', 'move-up-right', 'circle', 'pentagon', 'activity', 'cloud', 'pencil', 'eraser', 'highlighter', 'underline',
   'sticky-note', 'stamp', 'image', 'signature',
   'pin', 'strikethrough', 'brush', 'copy', 'clipboard-paste', 'bring-to-front', 'send-to-back', 'sliders-horizontal', 'message-square-text',
-  'ruler', 'ruler-dimension-line', 'triangle-right', 'magnet', 'table-2', 'file-down', 'lock', 'lock-open', 'scaling', 'square-minus', 'diameter', 'crosshair', 'printer',
+  'ruler', 'move-horizontal', 'triangle-right', 'magnet', 'table-2', 'file-down', 'lock', 'lock-open', 'scaling', 'square-minus', 'diameter', 'crosshair', 'printer',
   'file-plus', 'file-input', 'files', 'file-output', 'crop', 'split', 'list-ordered', 'eye', 'file-image', 'info',
   'git-compare', 'scan-text', 'arrow-left', 'arrow-right', 'arrow-up', 'arrow-down',
   'circle-help', 'square-check', 'circle-dot', 'calendar', 'form-input', 'align-start-vertical', 'align-center-vertical', 'align-end-vertical',

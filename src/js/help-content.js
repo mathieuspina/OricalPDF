@@ -42,6 +42,10 @@ ${steps('Échelle : choisir une échelle connue (1:50, 1:100…) ou « Calibrer 
     'Aimantation : les extrémités et intersections des traits du plan attirent le pointeur ; ' + K('Alt') + ' pour la désactiver ponctuellement.',
     'Panneau Mesures : liste, totaux par type, export CSV ; option « inclure dans le PDF ».')}
 ${traps('L\'échelle n\'est pas lue dans le PDF : vérifiez-la sur une cote connue. Elle est mémorisée par fichier sur ce PC seulement.', 'Une page recadrée ou pivotée garde son échelle.')}` },
+  { id: 'distance-cote', title: 'Distance ou Cote ?', html: `
+<p>Les deux donnent la même longueur (même échelle, même aimantation) ; seul le dessin change.</p>
+<ul><li><strong>Distance</strong> (onglet Mesure) : mesure rapide directement sur le trait, valeur au milieu du trait ; option « Afficher dX / dY » (décomposition horizontale et verticale).</li>
+<li><strong>Cote</strong> : cote de plan décalée, avec flèches et traits d'attache, valeur au-dessus de la ligne de cote ; « Décalage de la cote » réglable dans le panneau Propriétés.</li></ul>` },
 
   { id: 'pages', title: 'Pages : rotation, ordre, recadrage, extraction, division, numérotation', html: `
 <p>Onglet <strong>Pages</strong> et panneau des miniatures (${K('F4')}). Sélection multiple : ${K('Ctrl')}+clic, ${K('Maj')}+clic.</p>

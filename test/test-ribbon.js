@@ -28,6 +28,12 @@ check(`aucune commande perdue (${new Set(all).size} commandes de référence)`, 
 const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]);
 const dup = ids.filter((x, i) => ids.indexOf(x) !== i);
 check('ids uniques dans index.html', dup.length === 0, dup);
+// Distance (m-dist) et Cote (m-dim) : deux outils distincts de l'onglet Mesure (1.0.2) : une fois chacun, icônes et infobulles différentes.
+const btn = (cmd) => [...html.matchAll(new RegExp(`<button[^>]*data-cmd="${cmd}"[^>]*title="([^"]*)"[^>]*><span class="ico" data-icon="([^"]+)"></span><span class="lbl">([^<]+)<`, 'g'))].map((m) => ({ title: m[1], icon: m[2], label: m[3] }));
+const bd = btn('tool-m-dist'), bc = btn('tool-m-dim');
+check('Distance et Cote : un seul bouton chacun, dans l\'onglet Mesure', bd.length === 1 && bc.length === 1 && where['tool-m-dist'].join() === 'Mesure' && where['tool-m-dim'].join() === 'Mesure', { bd, bc });
+check('Distance et Cote : libellés, icônes et infobulles distincts et explicites', bd[0] && bc[0] && bd[0].label === 'Distance' && bc[0].label === 'Cote' && bd[0].icon !== bc[0].icon &&
+  /^Distance : mesure rapide directement sur le trait/.test(bd[0].title) && /^Cote : cote de plan décalée, avec flèches et traits d'attache/.test(bc[0].title), { bd, bc });
 
 console.log('\nAvant → après (commandes qui changent d\'onglet) :');
 for (const [id, t] of Object.entries(before.tabs)) for (const c of t.cmds) {
