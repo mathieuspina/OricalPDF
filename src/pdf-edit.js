@@ -30,9 +30,9 @@
 //   ctx = { doc, page, fonts, measure, PDFLib, rgb } ; `page` est la PDFPage de e.page.
 // Une modification de type inconnu fait échouer l'enregistrement (jamais de perte silencieuse).
 (function (root, factory) {
-  if (typeof module === 'object' && module.exports) module.exports = factory(require('./shapes.js'), require('./page-ops.js'), require('./numbering.js'), require('./forms.js'), require('./ocr.js'), require('./redact-pdf.js'), require('./fields-pdf.js'), require('./outline.js'));
-  else root.PdfEdit = factory(root.Shapes, root.PageOps, root.Numbering, root.Forms, root.Ocr, root.RedactPdf, root.FieldsPdf, root.Outline);
-})(typeof self !== 'undefined' ? self : this, function (Shapes, PageOps, Numbering, Forms, Ocr, RedactPdf, FieldsPdf, Outline) {
+  if (typeof module === 'object' && module.exports) module.exports = factory(require('./shapes.js'), require('./page-ops.js'), require('./numbering.js'), require('./forms.js'), require('./ocr.js'), require('./redact-pdf.js'), require('./fields-pdf.js'), require('./outline.js'), require('./editable-state.js'), require('./editable-pdf.js'));
+  else root.PdfEdit = factory(root.Shapes, root.PageOps, root.Numbering, root.Forms, root.Ocr, root.RedactPdf, root.FieldsPdf, root.Outline, root.EditableState, root.EditablePdf);
+})(typeof self !== 'undefined' ? self : this, function (Shapes, PageOps, Numbering, Forms, Ocr, RedactPdf, FieldsPdf, Outline, EditableState, EditablePdf) {
   'use strict';
 
   const sanitizeWinAnsi = Shapes.sanitize;
@@ -185,9 +185,17 @@
   // assets : { images: { [imgId]: { mime: 'image/png' | 'image/jpeg', bytes: Uint8Array } }, measure: { scales, unit, precision } }
   //   (images des objets 'image' ; contexte d'affichage des mesures 'm-*'), pages: { list, sources } (structure des pages, voir buildPages ; ignorée si elle est
   //   l'identité). Les modifications désignent les pages par leur indice DANS cette liste.
+  // MODIFIABLE (1.2.0, voir editable-state.js / editable-pdf.js) : assets.editable = { numbering: règles à ancres d'indices, nextId } → objets et
+  //   numérotation dans un flux DÉDIÉ par page + état JSON ; jamais avec caviardage (scrub) ni nettoyage des métadonnées (clean) : aplati.
+  //   assets.onEditable({ written, reason }) rend compte. assets.purge : les octets viennent d'une restauration (mise à jour incrémentale) :
+  //   les objets devenus inaccessibles (ancien flux dédié, état, polices, images) sont supprimés avant l'écriture.
   async function applyEdits(PDFLib, bytes, edits, assets) {
     const { PDFDocument, rgb } = PDFLib;
     let doc = await PDFDocument.load(bytes, { password: (assets && assets.password) || undefined });
+    if (assets && assets.purge) RedactPdf.collect(PDFLib, doc, { cut: false });
+    const ed = assets && assets.editable && !assets.scrub && !assets.clean ? assets.editable : null;
+    const say = (o) => { if (assets && assets.onEditable) assets.onEditable(o); };
+    if (assets && assets.editable && !ed) say({ written: false, reason: assets.scrub ? 'caviardage' : 'metadonnees' });
     const spec = assets && assets.pages;
     let rebuilt = false;
     if (spec && !PageOps.isIdentity(spec.list, doc.getPageCount())) { doc = await buildPages(PDFLib, doc, spec); rebuilt = true; }
@@ -242,6 +250,21 @@
     const rotOf = (pg) => (pg ? (((pg.getRotation().angle % 360) + 360) % 360) : 0);
     const ctxFor = (e) => ({ doc, page: pages[e.page], fonts, images, measure, mctx: Object.assign({}, mctx, { pageRot: rotOf(pages[e.page]) }), PDFLib, rgb });
 
+    // Texte reconnu : assets.ocr[i] = enregistrement OCR de la page de SORTIE i (ou null). Mode modifiable : écrit dans la base (avant le flux dédié).
+    const drawOcr = async () => {
+      const ocrPages = (assets && assets.ocr) || [];
+      if (ocrPages.some((r) => r && r.words && r.words.length)) {
+        const ocrFont = await doc.embedFont(PDFLib.StandardFonts.Helvetica);
+        ocrPages.forEach((rec, i) => { if (rec && rec.words && pages[i]) drawInvisibleText(PDFLib, pages[i], ocrFont, rec.words); });
+      }
+    };
+    let sess = null;
+    const drawn = edits.filter((e) => pages[e.page] && (types[e.type].cover || types[e.type].draw));
+    if (ed) {
+      await drawOcr();
+      const idx = drawn.map((e) => e.page).concat(numPrims.map(([i]) => i));
+      if (idx.length) sess = EditablePdf.begin(PDFLib, doc, idx);
+    }
     // 1re passe : fonds / recouvrements (ils ne masquent ainsi jamais un contenu ajouté).
     for (const e of edits) {
       if (pages[e.page] && types[e.type].cover) types[e.type].cover(ctxFor(e), e);
@@ -250,13 +273,13 @@
     for (const e of edits) {
       if (pages[e.page] && types[e.type].draw) types[e.type].draw(ctxFor(e), e);
     }
-    // Texte reconnu : assets.ocr[i] = enregistrement OCR de la page de SORTIE i (ou null).
-    const ocrPages = (assets && assets.ocr) || [];
-    if (ocrPages.some((r) => r && r.words && r.words.length)) {
-      const ocrFont = await doc.embedFont(PDFLib.StandardFonts.Helvetica);
-      ocrPages.forEach((rec, i) => { if (rec && rec.words && pages[i]) drawInvisibleText(PDFLib, pages[i], ocrFont, rec.words); });
-    }
+    if (!ed) await drawOcr();
     for (const [i, prims] of numPrims) drawPrimitives({ doc, page: pages[i], fonts, images, measure, mctx, PDFLib, rgb }, prims);
+    let edOut = null;
+    if (sess) {
+      const mimes = {}; for (const id of Object.keys(images)) mimes[id] = assets.images[id].mime;
+      edOut = await EditablePdf.end(PDFLib, doc, sess, images, mimes);
+    }
     // Informations du document (titre, auteur, sujet, mots-clés) : une valeur vide retire l'entrée.
     const info = assets && assets.info;
     if (info) {
@@ -273,10 +296,26 @@
     else if (assets && assets.clean) { await doc.flush(); RedactPdf.collect(PDFLib, doc, { cut: false }); }
     // Champs de formulaire créés : vrais champs AcroForm, écrits APRÈS le nettoyage du caviardage (qui retire le formulaire d'origine des pages
     // conservées) ; ils suivent la reconstruction des pages. Aplatissement éventuel après leur écriture.
+    let renamed = {};
     if (created.length) {
       if (rebuilt) FieldsPdf.freezeOrphans(PDFLib, doc);
-      await FieldsPdf.write(PDFLib, doc, created, assets && assets.form ? assets.form.values : null, (assets && assets.warn) || null);
+      const wr = await FieldsPdf.write(PDFLib, doc, created, assets && assets.form ? assets.form.values : null, (assets && assets.warn) || null);
+      renamed = (wr && wr.renamed) || {};
       if (assets && assets.form && assets.form.flatten) doc.getForm().flatten();
+    }
+    // État des annotations modifiables : uniquement les objets écrits (pages existantes ; ni zone de caviardage ni mesure non incluse,
+    // déjà filtrées) ; aucun objet ni numérotation : ni flux ni état.
+    if (ed) {
+      const kept = EditableState.writable(edits, assets && assets.measure).filter((e) => pages[e.page]);
+      if (kept.length || (ed.numbering && ed.numbering.length && numPrims.length)) {
+        const st = EditableState.build({
+          pages: pages.length, edits: kept.map((e) => (e.type === 'field' && renamed[e.name] ? Object.assign({}, e, { name: renamed[e.name] }) : e)), nextId: ed.nextId,
+          measure: assets && assets.measure, numbering: numPrims.length ? ed.numbering : [], streams: edOut ? edOut.streams : [], images: edOut ? edOut.images : {},
+          fields: created.filter((e) => pages[e.page]).map((e) => renamed[e.name] || e.name),
+        });
+        EditablePdf.writeState(PDFLib, doc, st);
+        say({ written: true, objects: kept.length });
+      } else say({ written: false, reason: 'vide' });
     }
     // Protection par mot de passe (chiffrement du fichier enregistré) : { userPassword, ownerPassword?, permissions? }.
     const enc = assets && assets.encrypt;
