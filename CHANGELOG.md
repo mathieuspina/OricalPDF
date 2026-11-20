@@ -3,6 +3,16 @@
 Une ligne par fonction importante. Les dates sont celles du dépôt. Les versions 0.x sont des versions de travail.
 Pour la mise à jour d'un poste, voir [RELEASING.md](RELEASING.md#mettre-à-jour-un-poste).
 
+## 1.0.1 — 2026-11-20
+Petites corrections.
+- À propos : la liste des licences tierces s'affiche dans l'application installée (le message « Fichier THIRD_PARTY_LICENSES introuvable »
+  apparaissait à la place).
+- Diagnostic : le nom du serveur des imprimantes réseau est masqué (`\\<serveur>\NomImprimante`).
+- Icône redessinée pour les petites tailles : fond transparent, document et anneaux nets dans l'Explorateur et la barre des tâches (plus de
+  tache sombre) ; tailles 16 à 256 px.
+- La fenêtre se rouvre comme elle a été fermée : plein écran, agrandie, ou même taille et même position (position par défaut si l'écran
+  n'existe plus).
+
 ## 1.0.0 — 2026-11-12
 Première version publique. Lecteur et éditeur de PDF pour Windows, 100 % hors-ligne, interface en français. Fonctions
 (vérifiées par les tests automatiques ; impression sur papier non vérifiée, voir « Limites connues » dans le README) :

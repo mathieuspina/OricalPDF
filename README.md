@@ -48,7 +48,7 @@ Pour vérifier que le fichier est bien celui publié, comparer son empreinte SHA
 Release (PowerShell, dans le dossier du téléchargement) :
 
 ```powershell
-Get-FileHash .SpinADoc-Setup-1.0.0.exe -Algorithm SHA256
+Get-FileHash .\SpinADoc-Setup-1.0.1.exe -Algorithm SHA256
 ```
 
 Les deux valeurs doivent être identiques (la casse des lettres ne compte pas). Si elles diffèrent, ne pas lancer le fichier et le télécharger
