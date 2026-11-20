@@ -129,11 +129,11 @@ Pièges : tests de pointeur dans la zone visible de la page (coordonnées en poi
 | ocr.js (ORIENT, looksWrong, pickOrientation, sampleRect) | test-ocr (54, § 9) | 0.12.4 (voir git log) |
 | help-ui (#help-version), help-content (limites, smartscreen) | test-help-ui (28) ; suite complète, test:packaged, test:update 0.12.4 → 1.0.0 | 1.0.0 (voir git log) |
 | dépôt public : LICENSE / EULA / politique, publish: null, .gitignore (fichiers privés, binaires), aucun fichier suivi > 5 Mo ni binaire ; scripts/scan-private.js (motifs privés HORS du dépôt) | test-public (16), scan-private | dépôt public (voir git log) |
-| app-info (licences : resources puis projet ; maskPrinter), main.js (resourcesPath) | test-release (20), test-app-info (9), test-about-ui (2, aussi dans test:packaged), test-help-ui (28) | A1 fc3ca28, A1-bis b0d8509 |
-| copy-vendor (icône move-horizontal), index.html (infobulles Distance / Cote), help-content (distance-cote) | test-ribbon (6), test-help-ui (28), test-ribbon-layout-ui (65), licences | B2 9f725d5 |
-| measure (readableAngle, primitives(rot), lift, dX/dY, cote au-dessus), shapes (pageRot), pdf-edit (pageRot de la page écrite) | test-measure-rotate (25), test-measure-rotate-ui (11), test-measure-render, test-measure, test-shapes, test-fields | B3 ecaac49 |
-| icône : scripts/icon-geometry.js, make-icon.js, build/icon.ico (8 tailles, fond transparent) | test-icon (13) ; images vérifiées dans dist/win-unpacked/Spin A Doc.exe | A2 b235c3c |
-| window-state (pur), main.js (enregistrement / restauration de la fenêtre) | test-window-state (29), test-home-ui, test-winint-ui (seconde instance) | A3 9994881 |
+| app-info (licences : resources puis projet ; maskPrinter), main.js (resourcesPath) | test-release (20), test-app-info (9), test-about-ui (2, aussi dans test:packaged), test-help-ui (28) | A1 06a957b, A1-bis 999b860 |
+| copy-vendor (icône move-horizontal), index.html (infobulles Distance / Cote), help-content (distance-cote) | test-ribbon (6), test-help-ui (28), test-ribbon-layout-ui (65), licences | B2 45c6cf8 |
+| measure (readableAngle, primitives(rot), lift, dX/dY, cote au-dessus), shapes (pageRot), pdf-edit (pageRot de la page écrite) | test-measure-rotate (25), test-measure-rotate-ui (11), test-measure-render, test-measure, test-shapes, test-fields | B3 a78e612 |
+| icône : scripts/icon-geometry.js, make-icon.js, build/icon.ico (8 tailles, fond transparent) | test-icon (13) ; images vérifiées dans dist/win-unpacked/Spin A Doc.exe | A2 d41af3f |
+| window-state (pur), main.js (enregistrement / restauration de la fenêtre) | test-window-state (29), test-home-ui, test-winint-ui (seconde instance) | A3 25d78f9 |
 | ocr-engine.recognizePage (orientation par échantillon), ocr-scans (graine, jeu « orient »), fixture | test-ocr-orient-ui (27, déterministe), test-ocr-ui (39) | 0.12.4 (voir git log) |
 | test:packaged (association : valeur par défaut de .pdf inchangée, OpenWithProgids / classe / Applications / RegisteredApplications posés puis retirés ; rapport des plantages ; refus si installation réelle présente) | test:packaged | 5b (voir git log) |
 | ocr, doc-model.ocr, pdf-edit (couche invisible) | test-ocr (37 vérifications) | 3f (voir git log) |
