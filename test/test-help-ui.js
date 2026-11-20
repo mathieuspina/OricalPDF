@@ -87,7 +87,7 @@ function check(name, cond, detail) {
     const diag = await c.ev(`window.spinadoc.diagnostic()`);
     check('diagnostic : version, système, mémoire, écrans, imprimantes', /Version :/.test(diag) && /Système :/.test(diag) && /Mémoire :/.test(diag) && /écran 1 : \d+ × \d+ px, mise à l'échelle \d+ %/.test(diag) && /Imprimantes \(\d+\)/.test(diag), diag);
     const user = os.userInfo().username;
-    const leaks = [[/[A-Za-z]:\\/, 'chemin Windows'], [/\\\\/, 'chemin réseau'], [/\/(Users|home|tmp)\//i, 'chemin'], [/\.pdf\b/i, 'nom de fichier PDF'], [new RegExp(user.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'), 'nom d\'utilisateur'], [/a-huit-pages|spinadoc-ui-pdfs/i, 'nom du fichier ouvert']].filter(([re]) => re.test(diag)).map(([, w]) => w);
+    const leaks = [[/[A-Za-z]:\\/, 'chemin Windows'], [/\\\\(?!<serveur>\\)/, 'chemin réseau'], [/\/(Users|home|tmp)\//i, 'chemin'], [/\.pdf\b/i, 'nom de fichier PDF'], [new RegExp(user.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'), 'nom d\'utilisateur'], [/a-huit-pages|spinadoc-ui-pdfs/i, 'nom du fichier ouvert']].filter(([re]) => re.test(diag)).map(([, w]) => w);
     check('diagnostic : aucun chemin, nom de fichier ni nom d\'utilisateur', leaks.length === 0, leaks);
     await c.click('#about-close'); await sleep(150);
 

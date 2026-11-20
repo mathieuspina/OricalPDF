@@ -53,6 +53,14 @@ function windowsName() {
   return `${v.replace(/\s+/g, ' ').trim()} (${r}${build >= 22000 ? ', Windows 11' : build ? ', Windows 10' : ''})`;
 }
 
+// Nom d'imprimante pour le diagnostic : serveur d'une imprimante réseau masqué (« \\<serveur>\Nom »), nom d'utilisateur masqué.
+const SERVER_MASK = '\\\\<serveur>\\';
+function maskPrinter(name, user) {
+  let s = String(name || '');
+  if (s.startsWith('\\\\')) { const i = s.indexOf('\\', 2); s = i > 2 ? SERVER_MASK + s.slice(i + 1) : SERVER_MASK; }
+  return user && user.length > 2 ? s.split(user).join('<utilisateur>') : s;
+}
+
 async function diagnostic(app, screen, webContents, dir) {
   const b = buildInfo(dir);
   const gib = (n) => (n / 1024 ** 3).toFixed(1).replace('.', ',') + ' Go';
@@ -60,7 +68,6 @@ async function diagnostic(app, screen, webContents, dir) {
   let printers = [];
   try { printers = (await webContents.getPrintersAsync()).map((p) => p.name); } catch { printers = []; }
   const user = (() => { try { return os.userInfo().username; } catch { return ''; } })();
-  const mask = (s) => (user && user.length > 2 ? s.split(user).join('<utilisateur>') : s);
   const lines = [
     'Spin A Doc — informations de diagnostic',
     `Version : ${app.getVersion()}${b && b.date ? ' (build du ' + b.date + ')' : ' (développement)'}`,
@@ -70,10 +77,10 @@ async function diagnostic(app, screen, webContents, dir) {
     `Mémoire : ${gib(os.totalmem())} au total, ${gib(os.freemem())} libres`,
     `Mémoire de l'application : ${Math.round(process.memoryUsage().rss / 1024 ** 2)} Mo`,
     'Écrans :', ...displays,
-    `Imprimantes (${printers.length}) :`, ...printers.map((p) => '  ' + mask(p)),
+    `Imprimantes (${printers.length}) :`, ...printers.map((p) => '  ' + maskPrinter(p, user)),
     `Requêtes réseau bloquées depuis le démarrage : ${net.blocked}`,
   ];
   return lines.join('\n');
 }
 
-module.exports = { installNetGuard, netStats, about, diagnostic, licensePaths, readLicenses, LICENSES_MISSING };
+module.exports = { installNetGuard, netStats, about, diagnostic, licensePaths, readLicenses, LICENSES_MISSING, maskPrinter, SERVER_MASK };
