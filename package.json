@@ -52,7 +52,6 @@
       "print-main.js",
       "src/**/*",
       "vendor/**/*",
-      "THIRD_PARTY_LICENSES",
       "package.json",
       "build/icon.ico",
       "!node_modules/**/*"

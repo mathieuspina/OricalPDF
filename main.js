@@ -278,7 +278,7 @@ ipcMain.handle('win:toggle-fullscreen', () => {
 });
 ipcMain.handle('win:is-fullscreen', () => !!win && win.isFullScreen());
 
-ipcMain.handle('app:about', () => AppInfo.about(app, __dirname));
+ipcMain.handle('app:about', () => AppInfo.about(app, __dirname, app.isPackaged ? process.resourcesPath : null));
 // Diagnostic (sans nom de fichier, chemin ni contenu) : copié dans le presse-papiers et renvoyé.
 ipcMain.handle('app:diag', async () => {
   const text = await AppInfo.diagnostic(app, require('electron').screen, win.webContents, __dirname);

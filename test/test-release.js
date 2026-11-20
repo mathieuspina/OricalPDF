@@ -41,6 +41,28 @@ check('RELEASING.md : toutes les étapes', steps.every((s) => rel.includes(s)), 
 const pkg = require('../package.json');
 check('package.json : scripts checksums, release-notes, test:update', ['checksums', 'release-notes', 'test:update'].every((s) => pkg.scripts[s]));
 
+// 5. Licences tierces (À propos) : empaquetée = resources/THIRD_PARTY_LICENSES.txt, développement = racine du projet
+{
+  const AppInfo = require('../app-info.js');
+  const dev = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-lic-dev-'));
+  const res = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-lic-res-'));
+  const asarDir = path.join(res, 'app.asar'); // dossier de l'application empaquetée : sans fichier de licences
+  fs.mkdirSync(asarDir);
+  fs.writeFileSync(path.join(res, 'THIRD_PARTY_LICENSES.txt'), 'licences empaquetées');
+  fs.writeFileSync(path.join(dev, 'THIRD_PARTY_LICENSES'), 'licences du projet');
+  check('licences : application empaquetée → resources/THIRD_PARTY_LICENSES.txt', AppInfo.readLicenses(asarDir, res) === 'licences empaquetées');
+  check('licences : développement → THIRD_PARTY_LICENSES du projet', AppInfo.readLicenses(dev, null) === 'licences du projet');
+  check('licences : aucun fichier → message « introuvable »', AppInfo.readLicenses(asarDir, null) === AppInfo.LICENSES_MISSING);
+  const about = AppInfo.about({ getVersion: () => version }, asarDir, res);
+  check('about() lit les licences depuis resources', about.licenses === 'licences empaquetées');
+  check('main.js passe process.resourcesPath à about() quand l\'application est empaquetée', fs.readFileSync(path.join(root, 'main.js'), 'utf8').includes('AppInfo.about(app, __dirname, app.isPackaged ? process.resourcesPath : null)'));
+  check('package.json : THIRD_PARTY_LICENSES livré en extraResources sous le nom THIRD_PARTY_LICENSES.txt', (require('../package.json').build.extraResources || []).some((e) => e.from === 'THIRD_PARTY_LICENSES' && e.to === 'THIRD_PARTY_LICENSES.txt'));
+  check('test:packaged lance test-about-ui sur l\'application dépaquetée et installée', fs.readFileSync(path.join(root, 'scripts', 'test-packaged.js'), 'utf8').split("'test-about-ui.js'").length - 1 >= 2);
+  const real = path.join(root, 'dist', 'win-unpacked', 'resources');
+  if (fs.existsSync(real)) check('build : licences lisibles depuis dist/win-unpacked/resources', AppInfo.readLicenses(path.join(real, 'app.asar'), real).length > 1000);
+  fs.rmSync(dev, { recursive: true, force: true }); fs.rmSync(res, { recursive: true, force: true });
+}
+
 // 4. Dépôt : aucun binaire suivi, dist/ ignoré
 const tracked = spawnSync('git', ['ls-files'], { cwd: root, encoding: 'utf8' }).stdout.split('\n');
 check('git : aucun .exe / .msi / .7z suivi', !tracked.some((f) => /\.(exe|msi|7z|blockmap)$/i.test(f)), tracked.filter((f) => /\.(exe|msi|7z)$/i.test(f)));

@@ -24,9 +24,19 @@ function buildInfo(dir) {
   try { return JSON.parse(fs.readFileSync(path.join(dir, 'build-info.json'), 'utf8')); } catch { return null; }
 }
 
-function about(app, dir) {
-  let licenses = '';
-  try { licenses = fs.readFileSync(path.join(dir, 'THIRD_PARTY_LICENSES'), 'utf8'); } catch { licenses = 'Fichier THIRD_PARTY_LICENSES introuvable.'; }
+// Licences tierces. Application empaquetée : resources/THIRD_PARTY_LICENSES.txt (extraResources ; electron-builder n'embarque PAS le
+// fichier sans extension de « files » dans app.asar). Développement : THIRD_PARTY_LICENSES à la racine du projet.
+const LICENSES_MISSING = 'Fichier THIRD_PARTY_LICENSES introuvable.';
+function licensePaths(dir, resourcesPath) {
+  return [resourcesPath ? path.join(resourcesPath, 'THIRD_PARTY_LICENSES.txt') : null, path.join(dir, 'THIRD_PARTY_LICENSES')].filter(Boolean);
+}
+function readLicenses(dir, resourcesPath) {
+  for (const p of licensePaths(dir, resourcesPath)) { try { const t = fs.readFileSync(p, 'utf8'); if (t.trim()) return t; } catch { /* suivant */ } }
+  return LICENSES_MISSING;
+}
+
+function about(app, dir, resourcesPath) {
+  const licenses = readLicenses(dir, resourcesPath);
   const b = buildInfo(dir);
   const year = b && b.date ? b.date.slice(0, 4) : String(new Date().getFullYear());
   return {
@@ -66,4 +76,4 @@ async function diagnostic(app, screen, webContents, dir) {
   return lines.join('\n');
 }
 
-module.exports = { installNetGuard, netStats, about, diagnostic };
+module.exports = { installNetGuard, netStats, about, diagnostic, licensePaths, readLicenses, LICENSES_MISSING };

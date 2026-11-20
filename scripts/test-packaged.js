@@ -38,7 +38,7 @@ for (const f of [unpacked, portable, setup]) if (!fs.existsSync(f)) { console.er
   }
 }
 
-run('app dépaquetée', unpacked, ['test-home-ui.js', 'test-layout-ui.js', 'test-stamps-ui.js', 'test-ocr-ui.js']);
+run('app dépaquetée', unpacked, ['test-home-ui.js', 'test-about-ui.js', 'test-layout-ui.js', 'test-stamps-ui.js', 'test-ocr-ui.js']);
 run('portable', portable, ['test-home-ui.js']);
 
 // Version installée : installation silencieuse (NSIS /S, /D= en dernier argument) dans un dossier temporaire, deux cycles :
@@ -146,7 +146,7 @@ if (home) {
 }
 if (!home) { console.error('Installation échouée : Spin A Doc.exe absent de ' + dir); failed++; }
 else {
-  run('installée', path.join(home, 'Spin A Doc.exe'), ['test-home-ui.js', 'test-ocr-ui.js']);
+  run('installée', path.join(home, 'Spin A Doc.exe'), ['test-home-ui.js', 'test-about-ui.js', 'test-ocr-ui.js']);
   const keep = fakeData('garde');
   uninstall(home, ['/DATADIR=' + keep]);
   const kept = fs.existsSync(path.join(keep, 'settings.json'));

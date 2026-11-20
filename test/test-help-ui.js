@@ -77,8 +77,8 @@ function check(name, cond, detail) {
 
     console.log('2. À propos et diagnostic');
     await c.click('#btn-settings'); await sleep(250); await c.click('#btn-about'); await sleep(400);
-    const ab = await c.ev(`JSON.stringify({v:document.getElementById('about-version').textContent, c:document.getElementById('about-copyright').textContent, o:document.getElementById('about-offline').textContent, l:document.getElementById('about-licenses').textContent.length})`).then(JSON.parse);
-    check('À propos : version, mention « Tous droits réservés », « 100 % hors-ligne », licences tierces', ab.v.includes(require('../package.json').version) && /Tous droits réservés/.test(ab.c) && /100 % hors-ligne, aucune donnée envoyée/.test(ab.o) && ab.l > 1000, ab);
+    const ab = await c.ev(`JSON.stringify({v:document.getElementById('about-version').textContent, c:document.getElementById('about-copyright').textContent, o:document.getElementById('about-offline').textContent, l:document.getElementById('about-licenses').textContent.length, missing:/introuvable/i.test(document.getElementById('about-licenses').textContent.slice(0,200))})`).then(JSON.parse);
+    check('À propos : version, mention « Tous droits réservés », « 100 % hors-ligne », licences tierces', ab.v.includes(require('../package.json').version) && /Tous droits réservés/.test(ab.c) && /100 % hors-ligne, aucune donnée envoyée/.test(ab.o) && ab.l > 1000 && !ab.missing, ab);
     const ck2 = JSON.parse(await c.ev(CLICKABLE('#about')));
     const ov2 = JSON.parse(await c.ev(OVERFLOW('#about .dialog')));
     check(`À propos : cliquable (${ck2.n}) et sans débordement`, ck2.bad.length === 0 && ov2.bad.length === 0, [ck2.bad, ov2.bad].map((x) => x.slice(0, 3)));
