@@ -1,6 +1,6 @@
 # Spin A Doc — notes pour le service informatique
 
-Version de référence : 1.0.1. Tout ce qui suit est vérifié dans la configuration de construction (`package.json`, section `build`, et
+Version de référence : 1.0.2. Tout ce qui suit est vérifié dans la configuration de construction (`package.json`, section `build`, et
 `build/installer.nsh`) et par le test `npm run test:packaged` (installation et désinstallation silencieuses dans un dossier temporaire).
 
 ## Ce que fait l'installeur
@@ -27,8 +27,8 @@ Version de référence : 1.0.1. Tout ce qui suit est vérifié dans la configura
 ## Installation et désinstallation silencieuses
 
 ```bat
-SpinADoc-Setup-1.0.1.exe /S
-SpinADoc-Setup-1.0.1.exe /S /D=C:\Programmes\SpinADoc
+SpinADoc-Setup-1.0.2.exe /S
+SpinADoc-Setup-1.0.2.exe /S /D=C:\Programmes\SpinADoc
 ```
 
 `/D=` doit être le **dernier** argument, sans guillemets, même si le chemin contient des espaces.
@@ -53,7 +53,7 @@ l'ancien) ne supprime jamais les données.
 - **AppLocker / listes blanches** : autoriser par chemin (`%LOCALAPPDATA%\Programs\Spin A Doc\*`) ou par empreinte du fichier :
 
 ```powershell
-Get-FileHash .\SpinADoc-Setup-1.0.1.exe -Algorithm SHA256
+Get-FileHash .\SpinADoc-Setup-1.0.2.exe -Algorithm SHA256
 Get-FileHash "$env:LOCALAPPDATA\Programs\Spin A Doc\Spin A Doc.exe" -Algorithm SHA256
 ```
 

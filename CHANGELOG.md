@@ -3,6 +3,14 @@
 Une ligne par fonction importante. Les dates sont celles du dépôt. Les versions 0.x sont des versions de travail.
 Pour la mise à jour d'un poste, voir [RELEASING.md](RELEASING.md#mettre-à-jour-un-poste).
 
+## 1.0.2 — 2026-11-20
+Mesures.
+- Les textes des mesures sont toujours lisibles, jamais à l'envers, quel que soit le sens du tracé, y compris sur une page pivotée (rotation
+  d'origine du PDF ou « Pivoter » de l'onglet Pages / Accueil) : distance, cote, polyligne, dX / dY ; la valeur d'une surface, d'un angle ou
+  d'un cercle reste horizontale à l'écran. Même résultat à l'écran et dans le PDF enregistré.
+- Cote : la valeur est toujours au-dessus de la ligne de cote, même tracée de droite à gauche ou de haut en bas.
+- Distance et Cote mieux distinguées : infobulles explicites, icône propre à la Cote, rubrique d'aide « Distance ou Cote ? ».
+
 ## 1.0.1 — 2026-11-20
 Petites corrections.
 - À propos : la liste des licences tierces s'affiche dans l'application installée (le message « Fichier THIRD_PARTY_LICENSES introuvable »
