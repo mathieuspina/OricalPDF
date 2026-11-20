@@ -47,6 +47,24 @@ check('git : aucun fichier suivi de plus de 5 Mo, aucun binaire (.exe .dll .pdf 
 const cl = read('CLAUDE.md');
 check('CLAUDE.md public : aucun chemin de lecteur D:\\ à Z:\\ ni adresse de dépôt GitHub', !/\b[D-Z]:\\/.test(cl) && !/github\.com\//.test(cl));
 check('scanner de données personnelles présent, motifs privés HORS du dépôt', fs.existsSync(path.join(root, 'scripts', 'scan-private.js')) && !fs.existsSync(path.join(root, 'private-patterns.txt')));
+// Motifs du scanner : limite de mot (re:\bNOM\b, casse ignorée) et casse respectée (rec:) ; un nom court ne sort plus dans « Edieresis »
+// (nom de glyphe de pdf.js). Noms FICTIFS, dossier temporaire.
+{
+  const os = require('os');
+  const { spawnSync } = require('child_process');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-scan-'));
+  fs.mkdirSync(path.join(tmp, 'd'));
+  fs.writeFileSync(path.join(tmp, 'd', 'a.txt'), 'glyphes : Edieresis edieresis Edieresissmall\nnom : EDIER et Edier, Edier-Dupont\n');
+  const B = String.fromCharCode(92);
+  const run = (pat) => {
+    fs.writeFileSync(path.join(tmp, 'p.txt'), pat + '\n');
+    spawnSync(process.execPath, [path.join(root, 'scripts', 'scan-private.js'), '--patterns', path.join(tmp, 'p.txt'), '--dir', path.join(tmp, 'd'), '--json', path.join(tmp, 'r.json')], { stdio: 'ignore' });
+    return JSON.parse(fs.readFileSync(path.join(tmp, 'r.json'), 'utf8')).filter((h) => h.kind === 'privé').map((h) => h.match).join(',');
+  };
+  const lit = run('EDIER'), word = run('re:' + B + 'bEDIER' + B + 'b'), cs = run('rec:' + B + 'bEDIER' + B + 'b');
+  fs.rmSync(tmp, { recursive: true, force: true });
+  check('scanner : re: avec limite de mot = mot entier, casse ignorée (pas « Edieresis ») ; rec: = casse respectée ; texte littéral inchangé', word === 'EDIER,Edier,Edier' && cs === 'EDIER' && lit.split(',').length === 6, { lit, word, cs });
+}
 
 // 6. Build (si présent)
 const res = path.join(root, 'dist', 'win-unpacked', 'resources');

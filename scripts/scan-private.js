@@ -1,7 +1,8 @@
 // Recherche de données personnelles ou professionnelles avant publication (lecture seule, ne modifie rien).
 // Motifs GÉNÉRIQUES intégrés (e-mails, téléphones, adresses IP, chemins de lecteur et UNC, dossiers d'utilisateur, domaines internes) +
 // motifs PRIVÉS lus dans un fichier HORS du dépôt (noms réels : jamais écrits dans le dépôt). Une ligne par motif : texte littéral (casse
-// ignorée) ou « re:<expression régulière> ». Lignes vides et « # » ignorées.
+// ignorée), « re:<expression régulière> » (casse ignorée) ou « rec:<expression régulière> » (casse respectée). Lignes vides et « # » ignorées.
+// Limite de mot pour un nom court qui apparaît dans d'autres mots : re:\bNOM\b (ex. un nom court qui ne doit plus sortir dans « Edieresis », nom de glyphe de pdf.js).
 // Usage :
 //   node scripts/scan-private.js --patterns <fichier> [--tree <dépôt>] [--history <dépôt>] [--dir <dossier>]... [--asar <app.asar>]
 //                                [--exe <fichier.exe>] [--json <sortie.json>]
@@ -32,7 +33,8 @@ const GENERIC = [
 function loadPrivate(file) {
   if (!file || !fs.existsSync(file)) { console.error('Fichier de motifs privés introuvable : ' + file); process.exit(2); }
   return fs.readFileSync(file, 'utf8').split(/\r?\n/).map((l) => l.trim()).filter((l) => l && !l.startsWith('#'))
-    .map((l) => (l.startsWith('re:') ? ['privé', new RegExp(l.slice(3), 'gi'), l.slice(3)] : ['privé', new RegExp(esc(l), 'gi'), l]));
+    .map((l) => (l.startsWith('rec:') ? ['privé', new RegExp(l.slice(4), 'g'), l.slice(4)]
+      : l.startsWith('re:') ? ['privé', new RegExp(l.slice(3), 'gi'), l.slice(3)] : ['privé', new RegExp(esc(l), 'gi'), l]));
 }
 const PRIVATE = loadPrivate(one('--patterns'));
 const hits = [];
