@@ -112,7 +112,7 @@ async function loadSide(side, value) {
       if (value.startsWith('tab:')) {
         const doc = store.docs.find((d) => 'tab:' + d.id === value);
         if (!doc) throw new Error('document fermé');
-        if (doc.dirty) S[side] = { name: doc.name + ' (avec modifications)', pdf: await loadPdf(await V.exportBytes(doc, null, { encrypt: null })), own: true, value };
+        if (doc.dirty || doc.restored) S[side] = { name: doc.name + ' (avec modifications)', pdf: await loadPdf(await V.exportBytes(doc, null, { encrypt: null })), own: true, value };
         else S[side] = { name: doc.name, pdf: V.getPdf(doc) || await loadPdf(doc.bytes), own: !V.getPdf(doc), value };
       } else {
         const f = S.files[Number(value.slice(5))];

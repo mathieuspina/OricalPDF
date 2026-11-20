@@ -460,6 +460,7 @@
     <span id="tool-label" class="tool-label" title="Outil actif (Échap pour revenir à la sélection)"></span>
     <span id="snap-busy" class="snap-busy" role="status" aria-live="polite" hidden>Analyse du plan en cours…</span>
     <button id="scale-label" class="link" title="Échelle de la page : cliquer pour la définir" disabled></button>
+    <button id="sb-editable" class="link sb-editable" type="button" hidden title="Annotations modifiables : ce document sera enregistré en Modifiable (Spin A Doc pourra rééditer ses annotations). Cliquer pour enregistrer en choisissant Modifiable ou Aplati."><span class="ico" data-icon="pencil"></span>Annotations modifiables</button>
     <div class="spacer"></div>
     <div class="zoomer">
       <button id="zoom-out" class="icon-btn" aria-label="Zoom arrière"><span class="ico" data-icon="minus"></span></button>
@@ -901,6 +902,7 @@
         <legend>Annotations</legend>
         <label class="radio"><input type="checkbox" id="opt-keeptool"> Garder l'outil actif après un tracé</label>
         <p class="muted small">Quitter l'outil : Échap, « Souris » ou un autre outil. Ctrl + clic = sélection temporaire d'un objet.</p>
+        <label class="radio">À l'enregistrement : <select id="opt-savemode" aria-label="Annotations à l'enregistrement"><option value="ask">demander</option><option value="editable">modifiables</option><option value="flat">aplaties</option></select></label>
       </fieldset>
       <div class="dialog-actions">
         <button id="btn-winint" class="secondary">Intégration à Windows</button>
@@ -909,6 +911,22 @@
       </div>
     </div>
   </div>
+
+  <!-- Enregistrement : annotations modifiables ou aplaties (js/editable-ui.js) -->
+  <div id="savemode" class="overlay-dialog" hidden>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="savemode-title">
+      <h2 id="savemode-title">Enregistrer les annotations</h2>
+      <fieldset>
+        <legend>Les annotations seront</legend>
+        <label class="radio sm-choice"><input type="radio" name="savemode" id="sm-editable" value="editable"> <span><strong>Modifiables</strong><br><span class="muted small">Le PDF reste lisible partout, annotations visibles. Spin A Doc pourra les déplacer et les modifier à la réouverture.</span></span></label>
+        <label class="radio sm-choice"><input type="radio" name="savemode" id="sm-flat" value="flat"> <span><strong>Aplaties</strong><br><span class="muted small">Elles font partie des pages et ne sont plus modifiables (document définitif, signé, à diffuser).</span></span></label>
+      </fieldset>
+      <p id="sm-warn" class="sm-warn small" hidden><strong>Attention :</strong> toute personne qui ouvre ce fichier avec Spin A Doc pourra déplacer ou retirer les annotations, y compris les tampons et signatures. <span id="sm-sensitive"></span> Pour un document signé ou définitif, choisissez Aplaties.</p>
+      <label class="radio small"><input type="checkbox" id="sm-remember"> Mémoriser mon choix (modifiable dans Réglages > Annotations)</label>
+      <div class="dialog-actions"><button id="sm-cancel" type="button" class="secondary">Annuler</button><button id="sm-ok" type="button" class="primary">Enregistrer</button></div>
+    </div>
+  </div>
+  <div id="edit-restore" class="edit-restore" role="status" aria-live="polite" hidden><span class="spinner-sm" aria-hidden="true"></span><span id="edit-restore-msg"></span><button id="edit-restore-skip" type="button" class="secondary">Ouvrir sans les annotations modifiables</button></div>
 
   <!-- Intégration à Windows : lecteur PDF par défaut (« Ouvrir avec », page des Paramètres de Windows) -->
   <div id="winint" class="overlay-dialog" hidden>

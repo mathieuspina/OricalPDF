@@ -7,6 +7,7 @@ import { askForm } from './pages-ui.js';
 import { getAnim } from './anim.js';
 import { playMerge } from './merge-anim.js';
 import { guardOutput } from './redact-guard.js';
+import * as EditUI from './editable-ui.js';
 
 const { PrintLayout: L } = window;
 const THUMB_W = 132;
@@ -81,7 +82,7 @@ export async function addBytes(name, bytes) {
 
 export async function addPaths(paths) {
   for (const p of paths) {
-    try { const f = await api.readFile(p, { noRecent: true }); await addBytes(f.name, f.bytes); }
+    try { const f = await api.readFile(p, { noRecent: true }); await addBytes(f.name, f.bytes); EditUI.mergeNotice(f.name, f.bytes); }
     catch { toast(`Impossible de lire « ${String(p).split(/[\\/]/).pop()} ».`, 5000); }
   }
 }
@@ -110,7 +111,8 @@ function openTabsMenu(btn) {
       const g = await guardOutput(doc, 'La fusion');
       if (!g) return;
       // caviardage appliqué à l'instant : le document modifié est TOUJOURS celui qui est ajouté (l'original contient encore le texte)
-      try { await addBytes(doc.name, (incl && doc.dirty) || g === 'applied' ? await V.exportBytes(doc) : doc.bytes.slice()); } catch (err) { toast('Impossible d\'ajouter ce document : ' + (err && err.message || err), 6000); }
+      // document aux annotations modifiables restaurées : doc.bytes n'a plus les annotations (fichier tel qu'enregistré : doc.fileBytes)
+      try { await addBytes(doc.name, (incl && doc.dirty) || g === 'applied' ? await V.exportBytes(doc) : (doc.fileBytes || doc.bytes).slice()); EditUI.mergeNotice(doc.name, null, doc); } catch (err) { toast('Impossible d\'ajouter ce document : ' + (err && err.message || err), 6000); }
     });
     m.append(b);
   }

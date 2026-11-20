@@ -26,6 +26,7 @@ import * as Print from './print-ui.js';
 import { initAnim, startupSpin, getAnim, setAnim } from './anim.js';
 import * as Settings from './settings.js';
 import * as FavUI from './favorites-ui.js';
+import * as EditUI from './editable-ui.js';
 
 const { DocModel } = window;
 const APP = 'Spin A Doc';
@@ -58,6 +59,7 @@ async function openFiles(paths) {
       await V.openDocument(doc);
       activate(doc);
       FormsUI.scan(doc).catch((e) => console.warn('Formulaire :', e));
+      EditUI.afterOpen(doc).catch((e) => console.error(e)); // annotations modifiables : restauration en arrière-plan
     } catch (err) {
       if (!(err && err.name === 'PasswordException')) console.error(err);
       if (doc) { V.closeDocument(doc); store.close(doc.id); activate(active()); }
@@ -77,6 +79,7 @@ async function openFiles(paths) {
             activate(doc);
             FormsUI.scan(doc).catch((e) => console.warn('Formulaire :', e));
             toast('PDF protégé ouvert. Il sera enregistré avec le même mot de passe (Document > Protéger pour le changer ou le retirer).', 7000);
+            EditUI.afterOpen(doc).catch((e) => console.error(e)); // détection APRÈS déchiffrement
           } catch (e2) {
             console.error(e2);
             if (doc) { V.closeDocument(doc); store.close(doc.id); activate(active()); }
@@ -153,17 +156,26 @@ async function saveDoc(doc, o) {
   const g = await RedactUI.beforeSave(doc, o && o.redact);
   if (!g) return false;
   if (g.applied && o && o.bytes) o = Object.assign({}, o, { bytes: null }); // octets calculés avant l'application : périmés
+  // Annotations : Modifiable ou Aplati (boîte, réglage, document déjà modifiable ; aplati forcé si caviardé ou métadonnées à nettoyer)
+  const mode = await EditUI.chooseMode(doc, o);
+  if (!mode) return false;
   const done = busy('Enregistrement…');
   try {
     // o : { bytes (déjà calculés), encrypt (protection de cet enregistrement), useObjectStreams } — par défaut la protection du document (doc.protect)
     const warns = [];
-    const bytes = o && o.bytes ? o.bytes : await V.exportBytes(doc, null, { warn: (m) => warns.push(m), encrypt: o && 'encrypt' in o ? o.encrypt : (doc.protect || null), useObjectStreams: o && o.useObjectStreams });
+    const rep = {};
+    const exo = { warn: (m) => warns.push(m), encrypt: o && 'encrypt' in o ? o.encrypt : (doc.protect || null), useObjectStreams: o && o.bytes ? true : o && o.useObjectStreams };
+    if (mode.editable) Object.assign(exo, EditUI.exportOptions(doc, rep));
+    // octets précalculés (optimisation) : aplatis ; en modifiable, recalculés avec les mêmes options (flux d'objets)
+    const bytes = o && o.bytes && !mode.editable ? o.bytes : await V.exportBytes(doc, null, exo);
     const r = await api.saveAs(bytes, g.name || doc.name, doc.path, g.forbid ? { forbid: g.forbid } : undefined);
     if (r.refused) { toast('Un document caviardé ne peut pas remplacer le fichier d\'origine : enregistrez-le sous un autre nom.', 8000); return false; }
     if (!r.saved) return false;
     DocModel.markSaved(doc);
+    doc.editable = !!(mode.editable && rep.written);
     if (r.path && r.path.toLowerCase() !== (doc.path || '').toLowerCase()) { doc.path = r.path; doc.name = r.name; }
-    toast(`Enregistré : ${r.name}` + (warns.length ? ' — ' + warns[0] + (warns.length > 1 ? ` (+${warns.length - 1})` : '') : ''), warns.length ? 8000 : 4500);
+    if (mode.forced) warns.unshift(EditUI.FORCED[mode.forced]);
+    toast(`Enregistré${doc.editable ? ' (annotations modifiables)' : ''} : ${r.name}` + (warns.length ? ' — ' + warns[0] + (warns.length > 1 ? ` (+${warns.length - 1})` : '') : ''), warns.length ? 8000 : 4500);
     if (g.reopen && r.path) { done(); await reopenSaved(doc, r.path); }
     refreshAll();
     loadRecents();
@@ -313,6 +325,7 @@ function refreshStatus() {
   $('zoom-label-ribbon').textContent = pct + ' %';
   $('zoom-range').value = String(pct);
   $('page-count').textContent = has ? String(V.pageCount(doc)) : '0';
+  EditUI.refreshIndicator(doc);
   $('tool-label').textContent = has && doc.tool !== 'select' ? 'Outil : ' + (A.TOOL_LABELS[doc.tool] || doc.tool) : '';
   if (document.activeElement !== $('in-page')) $('in-page').value = has ? String(doc.page + 1) : '1';
   $('in-page').max = has ? String(V.pageCount(doc)) : '1';
@@ -546,6 +559,7 @@ $('btn-settings').addEventListener('click', () => {
   $('opt-keeptool').checked = Settings.get('keepTool') !== false;
   $('opt-panmiddle').checked = Settings.get('panMiddle') !== false;
   $('opt-username').value = Settings.get('userName') || '';
+  EditUI.syncSettings();
   openDialog('settings');
 });
 document.querySelectorAll('input[name=anim]').forEach((r) => r.addEventListener('change', () => setAnim(r.value)));
@@ -666,6 +680,7 @@ document.addEventListener('keydown', async (e) => {
   FieldsUI.initFields();
   Help.initHelp();
   FavUI.initFavorites({ refresh: () => refreshRibbon() });
+  EditUI.init({ save: (d, o) => saveDoc(d, o), refresh: () => refreshAll(), activate: (d) => activate(d), scanForm: (d) => FormsUI.scan(d).catch((e) => console.warn('Formulaire :', e)) });
   Merge.hooks.openResult = openMerged;
   refreshAll();
   startupSpin();

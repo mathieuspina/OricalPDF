@@ -12,8 +12,14 @@ const getJson = (u) => new Promise((res, rej) => http.get(u, (r) => { let d = ''
 
 // exe : exécutable de l'application empaquetée (sinon Electron + dossier du projet = version de développement).
 // userDataFiles : { 'recents.json': contenu } écrits dans le dossier de données avant le démarrage.
-async function launchApp({ files = [], port = 9300 + Math.floor(Math.random() * 500), env = {}, exe = process.env.SPINADOC_EXE || null, userDataFiles = {} } = {}) {
+// saveMode (1.2.0) : réglage « annotations à l'enregistrement » écrit dans settings.json : 'flat' par défaut (comportement d'avant 1.2.0 :
+// aucune boîte « Modifiable / Aplati » dans les tests existants) ; null = vrai défaut de l'application (« demander ») ; un saveMode fourni
+// dans userDataFiles['settings.json'] l'emporte.
+async function launchApp({ files = [], port = 9300 + Math.floor(Math.random() * 500), env = {}, exe = process.env.SPINADOC_EXE || null, userDataFiles = {}, saveMode = 'flat' } = {}) {
   const userData = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-test-'));
+  userDataFiles = Object.assign({}, userDataFiles);
+  const st = userDataFiles['settings.json'];
+  if (saveMode !== null && (st === undefined || (st && typeof st === 'object' && !Buffer.isBuffer(st) && st.saveMode === undefined))) userDataFiles['settings.json'] = Object.assign({ saveMode }, st || {});
   for (const [name, content] of Object.entries(userDataFiles)) {
     fs.mkdirSync(path.dirname(path.join(userData, name)), { recursive: true }); // « sous-dossier/fichier » accepté
     fs.writeFileSync(path.join(userData, name), typeof content === 'string' || Buffer.isBuffer(content) ? content : JSON.stringify(content));

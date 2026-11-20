@@ -368,6 +368,18 @@ body[data-anim=none] *, body[data-anim=none] *::before, body[data-anim=none] *::
 
 /* Les notifications ne doivent jamais capter la souris (elles recouvraient des éléments cliquables). */
 #toast { pointer-events: none; }
+.sb-editable { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; padding: 0 6px; white-space: nowrap; }
+.sb-editable .ico { width: 14px; height: 14px; }
+.edit-restore { position: fixed; z-index: 85; left: 50%; bottom: 96px; transform: translateX(-50%); max-width: 92vw; display: flex; align-items: center; gap: 12px; padding: 8px 12px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); -webkit-app-region: no-drag; }
+.edit-restore #edit-restore-msg { min-width: 0; overflow-wrap: anywhere; }
+.edit-restore button { flex: none; }
+.spinner-sm { flex: none; width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--red-1); border-radius: 50%; animation: spin-sm 0.9s linear infinite; }
+@keyframes spin-sm { to { transform: rotate(360deg); } }
+#settings .dialog { overflow-y: auto; } /* petite fenêtre : la boîte défile, le bouton Fermer reste accessible */
+#settings fieldset { padding: 6px 14px 8px; }
+.sm-choice { align-items: flex-start; }
+.sm-choice input { margin-top: 3px; }
+.sm-warn { margin: 0; padding: 8px 10px; border-left: 3px solid var(--red-1); background: var(--surface-2); border-radius: var(--radius); }
 
 .tool-label { color: var(--text); font-weight: 600; padding: 2px 10px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--red-1); }
 .tool-label:empty { display: none; }

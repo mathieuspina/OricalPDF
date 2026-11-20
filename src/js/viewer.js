@@ -644,6 +644,7 @@ export function exportBytes(doc, st, opts) {
     form: o.form === undefined ? (doc.form || doc.runtime.flatten ? { values: doc.form ? doc.form.values : {}, flatten: !!doc.runtime.flatten } : null) : o.form, warn: o.warn || null,
     info: o.info === undefined ? doc.info : o.info, encrypt: o.encrypt || null, useObjectStreams: o.useObjectStreams,
     clean: o.clean === undefined ? doc.clean : o.clean, scrub: window.Redact.hasRedacted(s.pages), onScrub: o.onScrub || null,
+    editable: o.editable || null, onEditable: o.onEditable || null, purge: !!doc.restored, // annotations modifiables (editable-ui.js)
   });
 }
 
