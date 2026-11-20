@@ -119,6 +119,11 @@ ${steps('Propriétés : titre, auteur, sujet, mots-clés (écrits à l\'enregist
     'Pages en images : PNG ou JPEG, 36 à 1200 dpi, dans un dossier choisi.')}
 ${traps('Un mot de passe oublié ne peut pas être retrouvé.')}` },
 
+  { id: 'favoris', title: 'Mes favoris (onglet Accueil)', html: `
+<p>Clic droit sur une commande du ruban (n'importe quel onglet), ou touche Menu / ${K('Maj+F10')} au clavier, puis « Ajouter aux favoris » : elle apparaît dans l'onglet <strong>Accueil</strong>, groupe « Favoris » (12 au plus), et reste aussi dans son onglet.</p>
+<p>Clic droit sur un favori : « Retirer des favoris », « Déplacer à gauche / à droite ». Les favoris sont mémorisés sur ce PC ; le groupe n'apparaît que s'il y a au moins un favori.</p>
+<p>Un favori fait exactement la même chose que la commande d'origine et montre le même état (outil actif, option activée, commande indisponible). Les listes déroulantes (unité, décimales) ne peuvent pas être ajoutées.</p>` },
+
   { id: 'ruban', title: 'Où sont les commandes ? (ruban réorganisé en 0.12)', html: `
 <p>Le ruban passe de 8 à 7 onglets ; aucune commande n'a été retirée, aucun raccourci n'a changé.</p>
 <table class="help-table"><thead><tr><th>Commande</th><th>Avant</th><th>Maintenant</th></tr></thead><tbody>

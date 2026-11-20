@@ -3,6 +3,14 @@
 Une ligne par fonction importante. Les dates sont celles du dépôt. Les versions 0.x sont des versions de travail.
 Pour la mise à jour d'un poste, voir [RELEASING.md](RELEASING.md#mettre-à-jour-un-poste).
 
+## 1.1.0 — 2026-11-20
+Favoris.
+- Clic droit sur une commande du ruban (ou touche Menu / Maj+F10) : « Ajouter aux favoris ». Les favoris s'affichent dans l'onglet Accueil,
+  groupe « Favoris » (12 au plus), et restent dans leur onglet d'origine. Clic droit sur un favori : retirer, déplacer à gauche ou à droite.
+- Un favori déclenche la même commande et montre le même état que le bouton d'origine (outil actif, option activée, commande indisponible).
+- Favoris mémorisés d'une session à l'autre (réglages de l'application). Les listes déroulantes ne peuvent pas être ajoutées.
+- Aide : rubrique « Mes favoris ».
+
 ## 1.0.2 — 2026-11-20
 Mesures.
 - Les textes des mesures sont toujours lisibles, jamais à l'envers, quel que soit le sens du tracé, y compris sur une page pivotée (rotation

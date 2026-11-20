@@ -66,6 +66,20 @@ function check(name, cond, detail) {
     await c.click('#rdx-meta-cancel'); await sleep(200);
     await show('rdx-apply'); await sleep(150); await view('boîte « Appliquer le caviardage »', '#rdx-apply', 6); await hide('rdx-apply');
 
+    console.log('3e. Favoris : menu du clic droit et groupe « Favoris » de l\'Accueil');
+    {
+      const rclick = async (sel) => { const [x, y, w, h] = await c.rect(sel); await c.mouse('mouseMoved', x + w / 2, y + h / 2); await c.mouse('mousePressed', x + w / 2, y + h / 2, { button: 'right', buttons: 2 }); await c.mouse('mouseReleased', x + w / 2, y + h / 2, { button: 'right', buttons: 0 }); await sleep(250); };
+      await c.click('#rtab-view'); await sleep(200);
+      await rclick('#rpanel-view [data-cmd=zoom-in]');
+      await view('menu des favoris (clic droit sur une commande)', '#favmenu', 1);
+      await c.click('#favmenu [data-fav=add]'); await sleep(300);
+      await c.click('#rtab-home'); await sleep(250);
+      await view('groupe « Favoris » de l\'Accueil', '#fav-group', 1);
+      await rclick('#fav-body [data-cmd=zoom-in]');
+      await view('menu d\'un favori (retirer, déplacer)', '#favmenu', 1);
+      await c.click('#favmenu [data-fav=remove]'); await sleep(300);
+    }
+
     console.log('4. Boîtes de dialogue et panneaux');
     await c.click('#btn-settings'); await sleep(300);
     await view('réglages', '#settings', 3); await c.click('#btn-winint'); await sleep(200);

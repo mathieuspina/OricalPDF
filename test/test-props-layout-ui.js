@@ -123,6 +123,18 @@ const TOOLS = [
     await c.click('#btn-settings'); await sleep(200); await c.click('#btn-about'); await sleep(400); await overflow('À propos (version, hors-ligne, diagnostic, licences)', '#about .dialog'); await c.click('#about-close'); await sleep(150);
     await c.click('#btn-settings'); await sleep(200); await c.click('#btn-winint'); await sleep(200); await overflow('Intégration à Windows (lecteur PDF)', '#winint .dialog'); await c.click('#winint-close'); await sleep(150);
     await c.ev(`(()=>{document.getElementById('fldorder').hidden=true; return 1})()`);
+    // Favoris (1.1.0) : menu du clic droit (commande, favori, liste non épinglable) et groupe « Favoris » de l'Accueil (libellés longs)
+    {
+      const rclick = async (sel) => { const [x, y, w, h] = await c.rect(sel); await c.mouse('mouseMoved', x + w / 2, y + h / 2); await c.mouse('mousePressed', x + w / 2, y + h / 2, { button: 'right', buttons: 2 }); await c.mouse('mouseReleased', x + w / 2, y + h / 2, { button: 'right', buttons: 0 }); await sleep(250); };
+      await c.click('#rtab-document'); await sleep(200);
+      for (const cmd of ['doc-export-images', 'rdx-meta']) { await rclick(`#rpanel-document [data-cmd=${cmd}]`); if (cmd === 'doc-export-images') await overflow('Favoris : menu « Ajouter aux favoris »', '#favmenu'); await c.click('#favmenu [data-fav=add]'); await sleep(250); }
+      await c.click('#rtab-measure'); await sleep(200); await rclick('#m-unit'); await overflow('Favoris : menu d\'une liste non épinglable', '#favmenu'); await c.key('Escape', { code: 'Escape', windowsVirtualKeyCode: 27 }); await sleep(100);
+      await c.click('#rtab-home'); await sleep(250);
+      await overflow('Favoris : groupe « Favoris » (libellés longs)', '#fav-group');
+      await rclick('#fav-body [data-cmd=rdx-meta]'); await overflow('Favoris : menu d\'un favori (retirer, déplacer)', '#favmenu');
+      await c.click('#favmenu [data-fav=remove]'); await sleep(200);
+      await rclick('#fav-body [data-cmd=doc-export-images]'); await c.click('#favmenu [data-fav=remove]'); await sleep(200);
+    }
     await c.click('#rtab-document'); await c.click('#rpanel-document [data-cmd=doc-compare]'); await sleep(900);
     await overflow('Comparer : espace complet', '#cmpws');
     for (const m of ['side', 'fade']) { await c.click('#cmp-m-' + m); await sleep(200); await overflow('Comparer : mode ' + m, '#cmpws'); }

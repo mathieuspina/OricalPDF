@@ -25,34 +25,47 @@ const MEASURE = `(()=>{
   return JSON.stringify({ id: p.id, top, bottom, vscroll: p.scrollHeight - p.clientHeight, labels, btns, lbls });
 })()`;
 
-(async () => {
-  const f = await makeAll(path.join(os.tmpdir(), 'spinadoc-ui-pdfs'));
-  const c = await launchApp({ files: [f.a] });
+// Favoris (1.1.0) : 1er passage sans favori (aucun groupe « Favoris »), 2e passage avec 12 favoris (plafond) : l'onglet Accueil, seul
+// touché par les favoris, est remesuré aux trois tailles.
+const TWELVE = ['open', 'print', 'saveas', 'merge-open', 'doc-export-images', 'rdx-meta', 'tool-m-dist', 'tool-m-dim', 'm-snap', 'fit-page', 'zoom-in', 'pg-number'];
+async function pass(f, favs) {
+  const c = await launchApp({ files: [f.a], userDataFiles: favs.length ? { 'settings.json': { favorites: favs } } : {} });
   const J = async (e) => JSON.parse(await c.ev(e));
+  const tag = favs.length ? ` (${favs.length} favoris)` : '';
   try {
     await c.waitFor(`document.querySelectorAll('.docview.active canvas').length>0`);
     await sleep(700);
-    const tabs = JSON.parse(await c.ev(`JSON.stringify([...document.querySelectorAll('#ribbon-tabs [role=tab]')].map(t=>t.id))`));
-    check('7 onglets de ruban trouvés', tabs.length === 7, tabs);
+    const all = JSON.parse(await c.ev(`JSON.stringify([...document.querySelectorAll('#ribbon-tabs [role=tab]')].map(t=>t.id))`));
+    const nFav = await c.ev(`document.querySelectorAll('#fav-body .fav').length`);
+    const favShown = await c.ev(`!!document.getElementById('fav-group') && !document.getElementById('fav-group').hidden`);
+    if (!favs.length) check('7 onglets de ruban trouvés ; aucun favori : pas de groupe « Favoris »', all.length === 7 && !favShown && nFav === 0, all);
+    else check(`${favs.length} favoris affichés dans le groupe « Favoris » de l'Accueil`, favShown && nFav === favs.length, nFav);
+    const tabs = favs.length ? ['rtab-home'] : all;
     for (const [w, h, dsf, label] of [[1280, 860, 1, 'largeur par défaut'], [700, 500, 1, '700 px'], [853, 573, 1.5, 'zoom 150 %']]) {
       await c.send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: dsf, mobile: false }); await sleep(300);
       for (const t of tabs) {
         await c.click('#' + t); await sleep(250);
         const m = await J(MEASURE);
         const badL = m.labels.filter((x) => !x.ok); const badB = m.btns.filter((x) => !x.ok); const badT = m.lbls.filter((x) => x.l > 2);
-        const where = `${t.replace('rtab-', '')} à ${label}`;
+        const where = `${t.replace('rtab-', '')} à ${label}${tag}`;
         check(`${where} : étiquettes de groupe entières (${m.labels.length})`, m.labels.length > 0 && !badL.length && m.vscroll <= 0, { badL, vscroll: m.vscroll, top: m.top, bottom: m.bottom });
         check(`${where} : aucun bouton ne dépasse en bas (${m.btns.length})`, !badB.length, { badB, bottom: m.bottom });
         check(`${where} : aucun libellé sur plus de deux lignes`, !badT.length, badT);
       }
     }
     await c.send('Emulation.clearDeviceMetricsOverride');
-    check('aucune erreur JavaScript', c.logs.length === 0, c.logs);
+    check('aucune erreur JavaScript' + tag, c.logs.length === 0, c.logs);
   } catch (e) {
     check('exécution sans exception', false, String(e && e.stack || e));
   } finally {
     await c.close();
   }
+}
+
+(async () => {
+  const f = await makeAll(path.join(os.tmpdir(), 'spinadoc-ui-pdfs'));
+  await pass(f, []);
+  await pass(f, TWELVE);
   console.log(`\n${passed} vérifications réussies, ${failures.length} échec(s).`);
   if (failures.length) { console.log('Échecs :\n - ' + failures.join('\n - ')); process.exit(1); }
 })();
