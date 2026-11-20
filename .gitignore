@@ -1,5 +1,7 @@
 node_modules/
 dist/
+out/
+release/
 vendor/
 test-logs/
 coverage/
