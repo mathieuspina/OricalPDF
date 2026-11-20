@@ -25,6 +25,7 @@ import { initPan } from './pan.js';
 import * as Print from './print-ui.js';
 import { initAnim, startupSpin, getAnim, setAnim } from './anim.js';
 import * as Settings from './settings.js';
+import * as FavUI from './favorites-ui.js';
 
 const { DocModel } = window;
 const APP = 'Spin A Doc';
@@ -300,6 +301,7 @@ function refreshRibbon() {
     }
     b.setAttribute('aria-pressed', String(on));
   });
+  FavUI.sync();
 }
 
 function refreshStatus() {
@@ -663,6 +665,7 @@ document.addEventListener('keydown', async (e) => {
   RedactUI.initRedact();
   FieldsUI.initFields();
   Help.initHelp();
+  FavUI.initFavorites({ refresh: () => refreshRibbon() });
   Merge.hooks.openResult = openMerged;
   refreshAll();
   startupSpin();

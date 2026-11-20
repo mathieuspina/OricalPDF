@@ -4,6 +4,7 @@ import { api } from './ui.js';
 const values = {
   keepTool: true, snap: true, panMiddle: true, print: null, printPrinters: {}, pinSidebar: false, pinProps: false, propsAuto: false, propsWidth: null,
   userName: '', stampDate: false, stampUser: false, stampTilt: false, sigDate: false,
+  favorites: [], // favoris du ruban (identifiants de commandes, voir favorites.js)
 };
 
 export async function loadSettings() {

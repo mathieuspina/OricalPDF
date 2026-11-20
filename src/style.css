@@ -489,6 +489,13 @@ body.pan-ready #docs, body.pan-ready #docs * { cursor: grab !important; }
 .thumb-badge { position: absolute; right: 2px; top: 2px; padding: 0 4px; border-radius: 4px; background: rgba(0, 0, 0, .65); color: #fff; font-size: 10px; line-height: 16px; pointer-events: none; }
 #pgmenu .recent-item { padding: 7px 12px; }
 #pgmenu .recent-item:disabled { opacity: .4; cursor: default; }
+/* Favoris (1.1.0) : menu du clic droit et groupe « Favoris » de l'onglet Accueil (2 rangs de petits boutons, colonnes ajoutées à droite) */
+#favmenu { min-width: 220px; -webkit-app-region: no-drag; }
+#favmenu .recent-item { padding: 7px 12px; }
+#favmenu .recent-item:disabled { opacity: .45; cursor: default; }
+.rgroup-body.fav-grid { display: grid; grid-auto-flow: column; grid-template-rows: repeat(2, auto); align-content: center; gap: 4px; }
+.rbtn.small.fav { padding: 4px 8px; }
+.rbtn.small.fav .lbl { max-width: 116px; font-size: 12px; line-height: 1.2; text-align: left; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
 #cropbar { position: fixed; left: 50%; bottom: 64px; transform: translateX(-50%); z-index: 60; display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow); }
 #cropbar span { color: var(--text-2); margin-right: 6px; }
 .crop-layer { position: absolute; inset: 0; z-index: 8; cursor: crosshair; }
