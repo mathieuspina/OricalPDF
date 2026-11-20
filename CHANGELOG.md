@@ -3,6 +3,17 @@
 Une ligne par fonction importante. Les dates sont celles du dépôt. Les versions 0.x sont des versions de travail.
 Pour la mise à jour d'un poste, voir [RELEASING.md](RELEASING.md#mettre-à-jour-un-poste).
 
+## 1.2.0 — 2026-11-20
+Annotations modifiables après réouverture.
+- À l'enregistrement : « Modifiables » (le PDF reste lisible partout, Spin A Doc peut rééditer les annotations à la réouverture) ou « Aplaties »
+  (figées dans la page, comme avant). Avertissement : tampons et signatures retirables. « Mémoriser mon choix » (Réglages > Annotations).
+- Réouverture : annotations, mesures et échelles, numérotation et champs créés redeviennent modifiables ; restauration en arrière-plan (bandeau
+  au-delà d'une seconde, « Ouvrir sans les annotations modifiables ») ; indicateur « Annotations modifiables » dans la barre d'état.
+- Fichier réécrit par un autre outil, nombre de pages changé ou version plus récente : ouverture normale (annotations figées) avec un message.
+- Caviardage appliqué ou métadonnées à nettoyer : toujours enregistré aplati. Fichier protégé par mot de passe : pris en charge.
+- Fusion : un fichier modifiable garde ses annotations visibles, figées dans le fichier fusionné (information affichée).
+- Aide : rubrique « Enregistrer : modifiable ou aplati ? ».
+
 ## 1.1.0 — 2026-11-20
 Favoris.
 - Clic droit sur une commande du ruban (ou touche Menu / Maj+F10) : « Ajouter aux favoris ». Les favoris s'affichent dans l'onglet Accueil,

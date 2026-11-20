@@ -22,6 +22,7 @@ Version actuelle : **1.0.0** (historique : [CHANGELOG.md](CHANGELOG.md)).
 | Formulaires | Remplissage des champs existants ; création de champs (texte, case, radio, listes, date), ordre de tabulation, prévisualisation |
 | Caviardage | Zones, recherche (mots, e-mail, téléphone, IBAN), application par rastérisation des pages, nettoyage des structures et métadonnées |
 | Document | Propriétés, protection par mot de passe, optimisation, export des pages en images |
+| Enregistrement | Annotations « Modifiables » (rééditables à la réouverture, PDF lisible partout) ou « Aplaties » (figées dans la page) |
 | Favoris | Clic droit sur une commande du ruban : « Ajouter aux favoris » ; les favoris s'affichent dans l'onglet Accueil |
 
 Ce que chaque fonction fait exactement, ses étapes et ses pièges : aide intégrée (F1).
@@ -49,7 +50,7 @@ Pour vérifier que le fichier est bien celui publié, comparer son empreinte SHA
 Release (PowerShell, dans le dossier du téléchargement) :
 
 ```powershell
-Get-FileHash .\SpinADoc-Setup-1.1.0.exe -Algorithm SHA256
+Get-FileHash .\SpinADoc-Setup-1.2.0.exe -Algorithm SHA256
 ```
 
 Les deux valeurs doivent être identiques (la casse des lettres ne compte pas). Si elles diffèrent, ne pas lancer le fichier et le télécharger
@@ -96,8 +97,8 @@ Signaler une faille de sécurité : [SECURITY.md](SECURITY.md). Signalements et 
 
 ## Limites connues
 
-- **Annotations** : après réouverture d'un fichier enregistré, les objets ajoutés (texte, formes, tampons, mesures…) font partie du contenu de
-  la page : ils ne sont plus modifiables ni déplaçables.
+- **Annotations** : modifiables à la réouverture seulement si le fichier a été enregistré en « Modifiable » (1.2.0 ou plus) et n'a pas été
+  réécrit par un autre outil ; l'historique d'annulation repart de zéro ; dans les autres lecteurs, elles sont visibles mais font partie de la page.
 - **Champs de formulaire créés** : figés après réouverture ; ils se remplissent, mais leur position et leurs propriétés ne se modifient plus.
   Pas de JavaScript (calculs, formats, boutons d'action).
 - **Texte** : non éditable sur une page pivotée ; polices d'origine incorporées non réutilisables ; caractères hors jeu Windows latin

@@ -122,6 +122,13 @@ const TOOLS = [
     await c.click('#btn-help'); await sleep(300); await overflow('Aide intégrée (vue complète)', '#helpws'); await c.click('#help-close'); await sleep(150);
     await c.click('#btn-settings'); await sleep(200); await c.click('#btn-about'); await sleep(400); await overflow('À propos (version, hors-ligne, diagnostic, licences)', '#about .dialog'); await c.click('#about-close'); await sleep(150);
     await c.click('#btn-settings'); await sleep(200); await c.click('#btn-winint'); await sleep(200); await overflow('Intégration à Windows (lecteur PDF)', '#winint .dialog'); await c.click('#winint-close'); await sleep(150);
+    // Annotations modifiables (1.2.0) : boîte « Modifiable / Aplati » avec avertissement, bandeau de restauration (nom très long), réglages
+    await c.ev(`(()=>{document.getElementById('savemode').hidden=false; document.getElementById('sm-editable').checked=true; document.getElementById('sm-warn').hidden=false; document.getElementById('sm-sensitive').textContent='Ce document contient 12 tampons, signatures ou images.'; return 1})()`); await sleep(150);
+    await overflow('Enregistrer : boîte « Modifiable / Aplati » (avertissement affiché)', '#savemode .dialog');
+    await c.ev(`(()=>{document.getElementById('savemode').hidden=true; document.getElementById('edit-restore-msg').textContent='Restauration des annotations modifiables de « Plan_de_fondations_indice_B_nom_de_fichier_tres_long_sans_espace.pdf »…'; document.getElementById('edit-restore').hidden=false; return 1})()`); await sleep(150);
+    await overflow('Bandeau de restauration des annotations modifiables (nom très long)', '#edit-restore');
+    await c.ev(`(()=>{document.getElementById('edit-restore').hidden=true; return 1})()`);
+    await c.click('#btn-settings'); await sleep(200); await overflow('Réglages (annotations : modifiables ou aplaties)', '#settings .dialog'); await c.click('#settings-close'); await sleep(150);
     await c.ev(`(()=>{document.getElementById('fldorder').hidden=true; return 1})()`);
     // Favoris (1.1.0) : menu du clic droit (commande, favori, liste non épinglable) et groupe « Favoris » de l'Accueil (libellés longs)
     {

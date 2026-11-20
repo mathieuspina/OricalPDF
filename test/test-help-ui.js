@@ -33,7 +33,7 @@ function check(name, cond, detail) {
     const n = await c.ev(`document.querySelectorAll('#help-body .help-sec').length`);
     const links = await c.ev(`JSON.stringify([...document.querySelectorAll('#help-nav a')].map(a=>a.getAttribute('href')))`).then(JSON.parse);
     check(`sommaire : un lien par rubrique (${n} rubriques)`, n >= 15 && links.length === n);
-    const topics = ['demarrer', 'texte', 'annotations', 'mesure', 'distance-cote', 'pages', 'fusion', 'impression', 'comparer', 'ocr', 'formulaires', 'caviardage', 'document', 'raccourcis', 'limites', 'informatique', 'confidentialite', 'ruban', 'favoris', 'smartscreen'];
+    const topics = ['demarrer', 'texte', 'annotations', 'mesure', 'distance-cote', 'pages', 'fusion', 'impression', 'comparer', 'ocr', 'formulaires', 'caviardage', 'document', 'raccourcis', 'limites', 'informatique', 'confidentialite', 'ruban', 'modifiable', 'favoris', 'smartscreen'];
     check('raccourcis : aucune touche vide (« Ctrl+Maj++ » affiche la touche +)', (await c.ev(`document.querySelectorAll('#help-body kbd:empty').length`)) === 0);
     check('rubriques demandées toutes présentes', topics.every((t) => links.includes('#aide-' + t)), links);
     await sleep(200);

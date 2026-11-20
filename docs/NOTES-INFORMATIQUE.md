@@ -1,6 +1,6 @@
 # Spin A Doc — notes pour le service informatique
 
-Version de référence : 1.1.0. Tout ce qui suit est vérifié dans la configuration de construction (`package.json`, section `build`, et
+Version de référence : 1.2.0. Tout ce qui suit est vérifié dans la configuration de construction (`package.json`, section `build`, et
 `build/installer.nsh`) et par le test `npm run test:packaged` (installation et désinstallation silencieuses dans un dossier temporaire).
 
 ## Ce que fait l'installeur
@@ -27,8 +27,8 @@ Version de référence : 1.1.0. Tout ce qui suit est vérifié dans la configura
 ## Installation et désinstallation silencieuses
 
 ```bat
-SpinADoc-Setup-1.1.0.exe /S
-SpinADoc-Setup-1.1.0.exe /S /D=C:\Programmes\SpinADoc
+SpinADoc-Setup-1.2.0.exe /S
+SpinADoc-Setup-1.2.0.exe /S /D=C:\Programmes\SpinADoc
 ```
 
 `/D=` doit être le **dernier** argument, sans guillemets, même si le chemin contient des espaces.
@@ -53,7 +53,7 @@ l'ancien) ne supprime jamais les données.
 - **AppLocker / listes blanches** : autoriser par chemin (`%LOCALAPPDATA%\Programs\Spin A Doc\*`) ou par empreinte du fichier :
 
 ```powershell
-Get-FileHash .\SpinADoc-Setup-1.1.0.exe -Algorithm SHA256
+Get-FileHash .\SpinADoc-Setup-1.2.0.exe -Algorithm SHA256
 Get-FileHash "$env:LOCALAPPDATA\Programs\Spin A Doc\Spin A Doc.exe" -Algorithm SHA256
 ```
 
@@ -70,7 +70,9 @@ par-dessus l'ancien, sans désinstaller (`SpinADoc-Setup-x.y.z.exe /S` en silenc
 
 Spin A Doc © SpinASoft, tous droits réservés ; utilisation gratuite, personnelle ou professionnelle, selon le contrat de licence
 (EULA.fr.md, affiché par l'installeur et copié dans le dossier resources de l'application). Confidentialité : POLITIQUE-CONFIDENTIALITE.md
-(aucune donnée collectée ni envoyée). Composants tiers embarqués (Electron, pdf.js, pdf-lib, tesseract.js, police Inter, icônes Lucide…) : licences
+(aucune donnée collectée ni envoyée). PDF « modifiables » (1.2.0) : PDF standard ; les annotations sont un flux de contenu ajouté
+à chaque page (lisible par tout lecteur), l'état de modification est un flux référencé par la clé privée `/SpinADoc` du catalogue (il ne contient que
+la description des annotations : textes, positions, réglages ; aucun JavaScript, aucune pièce jointe). Composants tiers embarqués (Electron, pdf.js, pdf-lib, tesseract.js, police Inter, icônes Lucide…) : licences
 permissives uniquement (MIT, Apache-2.0, BSD-2-Clause, 0BSD, ISC, OFL-1.1), vérifiées à chaque construction ; aucune licence copyleft (GPL, AGPL,
 LGPL). Texte complet : fichier `THIRD_PARTY_LICENSES` et Réglages > À propos.
 

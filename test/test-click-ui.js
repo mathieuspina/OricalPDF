@@ -87,7 +87,9 @@ function check(name, cond, detail) {
     await c.ev(`document.body.click()`); await key('p', 'KeyP', 80, 2); await sleep(2000);
     await view('boîte d\'impression', '#printdlg', 5); await c.click('#pr-cancel'); await sleep(200);
     await c.click('#btn-help'); await sleep(300); await view('aide (sommaire, recherche, fermer)', '#helpws', 15); await c.click('#help-close'); await sleep(200);
-    for (const id of ['mcdlg', 'unsaved', 'stampdlg', 'sigdlg', 'pgdlg', 'numdlg', 'fldorder', 'about']) { await show(id); await sleep(150); await view('boîte #' + id, '#' + id, 2); await hide(id); }
+    await show('edit-restore'); await sleep(100); await view('bandeau de restauration des annotations modifiables', '#edit-restore', 1); await hide('edit-restore');
+    await show('sb-editable'); await sleep(100); await view('barre d\'état (indicateur « Annotations modifiables »)', '#statusbar', 3); await hide('sb-editable');
+    for (const id of ['mcdlg', 'unsaved', 'stampdlg', 'sigdlg', 'pgdlg', 'numdlg', 'fldorder', 'about', 'savemode']) { await show(id); await sleep(150); await view('boîte #' + id, '#' + id, 2); await hide(id); }
     await c.click('#props-toggle'); await sleep(400);
     await view('panneau Propriétés', '#props', 0);
     check('aucune erreur JavaScript', c.logs.length === 0, c.logs.slice(0, 3));

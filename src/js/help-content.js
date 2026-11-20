@@ -9,12 +9,13 @@ const traps = (...l) => `<div class="help-traps"><strong>Pièges</strong><ul>${l
 export const SECTIONS = [
   { id: 'demarrer', title: 'Ouvrir, enregistrer, onglets', html: `
 <p>Spin A Doc ouvre plusieurs PDF dans des onglets. Tout ce que vous ajoutez (texte, formes, mesures, tampons…) reste modifiable tant que le
-document est ouvert, puis est <strong>figé</strong> dans le PDF à l'enregistrement : les autres lecteurs le voient comme le contenu de la page.</p>
+document est ouvert. À l'enregistrement, vous choisissez : <strong>Modifiable</strong> (Spin A Doc pourra le rééditer à la réouverture) ou
+<strong>Aplati</strong> (figé dans la page). Dans les deux cas, les autres lecteurs le voient comme le contenu de la page.</p>
 ${steps('Ouvrir : ' + K('Ctrl+O') + ', bouton « Ouvrir » de l\'onglet Accueil, glisser un PDF sur la fenêtre, ou la liste « Récents ».',
     'Travailler : chaque modification est annulable (' + K('Ctrl+Z') + ' / ' + K('Ctrl+Y') + ').',
     'Enregistrer : ' + K('Ctrl+S') + ' remplace le fichier ; « Enregistrer sous » crée une copie (conseillé pour un plan envoyé à « Client Exemple »).',
     'Fermer l\'onglet : ' + K('Ctrl+W') + ' (une question est posée s\'il reste des modifications).')}
-${traps('Après réouverture, les objets ajoutés sont du contenu de page : ils ne se déplacent plus. Gardez une copie de travail si vous comptez les retoucher.',
+${traps('Un fichier enregistré en Aplati ne se réédite plus : ses objets sont du contenu de page. Choisissez Modifiable pour un document de travail (voir « Enregistrer : modifiable ou aplati ? »).',
     'Un PDF protégé par mot de passe s\'ouvre avec son mot de passe et se réenregistre protégé.')}` },
 
   { id: 'texte', title: 'Texte : ajouter et modifier', html: `
@@ -119,6 +120,21 @@ ${steps('Propriétés : titre, auteur, sujet, mots-clés (écrits à l\'enregist
     'Pages en images : PNG ou JPEG, 36 à 1200 dpi, dans un dossier choisi.')}
 ${traps('Un mot de passe oublié ne peut pas être retrouvé.')}` },
 
+  { id: 'modifiable', title: 'Enregistrer : modifiable ou aplati ?', html: `
+<p>À l'enregistrement d'un document annoté, Spin A Doc demande comment enregistrer les annotations (texte, formes, tampons, signatures, images, mesures,
+légendes, numérotation, champs créés) :</p>
+<ul><li><strong>Modifiables</strong> : le PDF reste lisible partout, annotations visibles et imprimées ; rouvert dans Spin A Doc, chaque objet se
+déplace et se modifie à nouveau. L'indicateur « Annotations modifiables » apparaît dans la barre d'état.</li>
+<li><strong>Aplaties</strong> : les annotations font partie des pages et ne se modifient plus (document définitif, signé, à diffuser).</li></ul>
+${steps('Choix à chaque enregistrement, ou « Mémoriser mon choix » (pour le changer : Réglages > Annotations, « À l\'enregistrement »).',
+    'Un document rouvert en modifiable s\'enregistre de nouveau en modifiable ; clic sur l\'indicateur de la barre d\'état : enregistrer en choisissant Modifiable ou Aplati.',
+    'Un gros fichier se restaure en arrière-plan (bandeau) ; « Ouvrir sans les annotations modifiables » l\'ouvre avec ses annotations figées.')}
+${traps('Modifiable : toute personne qui ouvre le fichier avec Spin A Doc peut déplacer ou retirer les annotations, y compris les tampons et signatures. Pour un document signé ou définitif : Aplati.',
+    'Caviardage appliqué ou « Nettoyer les métadonnées » : enregistrement toujours en Aplati (aucune information cachée ne doit subsister).',
+    'Dans les autres lecteurs (Acrobat, Edge…), les annotations sont visibles mais font partie de la page : elles ne s\'y modifient pas. Si un autre outil réécrit le fichier (contenu des pages, nombre de pages), Spin A Doc l\'ouvre avec les annotations figées et l\'indique.',
+    'À la réouverture, l\'historique d\'annulation repart de zéro ; les opérations de pages faites avant l\'enregistrement sont intégrées au fichier.',
+    'Fusion : un fichier modifiable ajouté à une fusion garde ses annotations visibles, mais figées dans le fichier fusionné.')}` },
+
   { id: 'favoris', title: 'Mes favoris (onglet Accueil)', html: `
 <p>Clic droit sur une commande du ruban (n'importe quel onglet), ou touche Menu / ${K('Maj+F10')} au clavier, puis « Ajouter aux favoris » : elle apparaît dans l'onglet <strong>Accueil</strong>, groupe « Favoris » (12 au plus), et reste aussi dans son onglet.</p>
 <p>Clic droit sur un favori : « Retirer des favoris », « Déplacer à gauche / à droite ». Les favoris sont mémorisés sur ce PC ; le groupe n'apparaît que s'il y a au moins un favori.</p>
@@ -144,7 +160,7 @@ ${[['F1', 'Aide'], ['Ctrl+O', 'Ouvrir'], ['Ctrl+S', 'Enregistrer'], ['Ctrl+P', '
 </tbody></table>` },
 
   { id: 'limites', title: 'Limites connues', html: `<ul>
-<li><b>Annotations</b> : après réouverture d'un fichier enregistré, les objets ajoutés sont du contenu de page : non modifiables, non déplaçables.</li>
+<li><b>Annotations</b> : modifiables à la réouverture seulement si le fichier a été enregistré en « Modifiable » avec Spin A Doc (1.2.0 ou plus) et n'a pas été réécrit par un autre outil ; l'historique d'annulation repart de zéro ; dans les autres lecteurs, elles sont visibles mais non modifiables.</li>
 <li><b>Champs de formulaire créés</b> : figés après réouverture (ils se remplissent, mais leur position et leurs propriétés ne se modifient plus) ; pas de JavaScript (calculs, formats, boutons d'action) ; liste à choix unique.</li>
 <li><b>Texte</b> : non éditable sur une page pivotée ; polices d'origine incorporées non réutilisables (Helvetica, Times, Courier) ; caractères hors jeu Windows latin remplacés par « ? » dans le texte ajouté.</li>
 <li><b>Mesure</b> : l'échelle n'est pas lue dans le PDF (à saisir ou à calibrer) ; pas d'aimantation sur un plan scanné.</li>
