@@ -3,6 +3,9 @@
 Une ligne par fonction importante. Les dates sont celles du dépôt. Les versions 0.x sont des versions de travail.
 Pour la mise à jour d'un poste, voir [RELEASING.md](RELEASING.md#mettre-à-jour-un-poste).
 
+## 1.2.1 — 2026-11-20
+- Contrat de licence : retrait de la mention de brouillon (de même dans la politique de confidentialité ; texte inchangé par ailleurs).
+
 ## 1.2.0 — 2026-11-20
 Annotations modifiables après réouverture.
 - À l'enregistrement : « Modifiables » (le PDF reste lisible partout, Spin A Doc peut rééditer les annotations à la réouverture) ou « Aplaties »

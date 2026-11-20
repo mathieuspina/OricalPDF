@@ -1,7 +1,5 @@
 # Politique de confidentialité — Spin A Doc
 
-> **BROUILLON — à faire relire avant publication.**
-
 Version du 12 novembre 2026. Éditeur : SpinASoft.
 
 ## En résumé

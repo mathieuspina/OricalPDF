@@ -1,6 +1,8 @@
 // Dépôt public (logique, lecture des sources) : titulaire des droits « SpinASoft », pas de fournisseur de mise à jour (publish: null),
 // page de licence de l'installeur (EULA), politique de confidentialité, fichiers privés ignorés par git, CLAUDE.md sans chemin local ni
 // adresse de dépôt ; si un build existe : pas de resources/app-update.yml, EULA / politique / licences tierces livrées.
+// 1.2.1 : aucune mention de brouillon (« à faire relire par un juriste »…) dans le texte visible (EULA, page de licence de l'installeur,
+// politique, README, aide, notes) ; contrat et politique inchangés par ailleurs (empreintes) ; rappel interne dans RELEASING.md seulement.
 // La recherche de données personnelles elle-même se fait avec scripts/scan-private.js (motifs privés hors du dépôt).
 // Usage : node test/test-public.js
 const fs = require('fs');
@@ -24,12 +26,38 @@ check('package.json : build.publish = null (pas de resources/app-update.yml)', p
 
 // 3. EULA et page de licence de l'installeur
 const eula = read('EULA.fr.md');
-const clauses = { 'usage personnel et professionnel gratuit': /gratuitement[^.]*personnel ou professionnel/s, 'redistribution interdite sans accord': /redistribuer le Logiciel/, 'modification interdite': /modifier, adapter/, 'aucune garantie': /« en l'état »/, 'limitation de responsabilité': /Limitation de responsabilité/, 'caviardage : vérifier dans un autre lecteur': /vérifiez toujours le fichier produit dans un autre lecteur PDF/, 'signature sans valeur juridique': /pas de valeur de signature électronique/, 'mention de brouillon': /BROUILLON/ };
+const clauses = { 'usage personnel et professionnel gratuit': /gratuitement[^.]*personnel ou professionnel/s, 'redistribution interdite sans accord': /redistribuer le Logiciel/, 'modification interdite': /modifier, adapter/, 'aucune garantie': /« en l'état »/, 'limitation de responsabilité': /Limitation de responsabilité/, 'caviardage : vérifier dans un autre lecteur': /vérifiez toujours le fichier produit dans un autre lecteur PDF/, 'signature sans valeur juridique': /pas de valeur de signature électronique/ };
 const missing = Object.entries(clauses).filter(([, re]) => !re.test(eula)).map(([k]) => k);
 check('EULA.fr.md : clauses attendues', missing.length === 0, missing);
+check('EULA.fr.md : mention de brouillon ABSENTE (retirée en 1.2.1 ; avant : exigée)', !/BROUILLON/i.test(eula));
 check('installeur : page de licence = build/eula.txt, générée par « npm run dist »', pkg.build.nsis.license === 'build/eula.txt' && /make-eula\.js/.test(pkg.scripts.dist) && pkg.build.nsis.oneClick === false);
 const txt = toText('# Titre\n\n> **Gras** et `code` [lien](http://x)\n');
 check('EULA en texte brut : titres, gras, code et liens simplifiés, fins de ligne Windows', txt === 'Titre\r\n\r\nGras et code lien\r\n', txt);
+
+// 3 bis. Mention de brouillon retirée (1.2.1) : absente de tout texte visible ; le reste du contrat est inchangé mot pour mot.
+// Empreintes SHA-256 = fichiers de la 1.2.0 (main 4e45cc8) moins les 2 lignes « > **BROUILLON — … » et la ligne vide qui suivait (vérifié par
+// diff au moment du retrait). Toute modification du contrat ou de la politique doit être voulue : mettre alors l'empreinte à jour ici.
+{
+  const crypto = require('crypto');
+  const sha = (s) => crypto.createHash('sha256').update(s, 'utf8').digest('hex');
+  const DRAFT = /brouillon|juriste|faire relire|à relire|conseil juridique|\bdraft\b|TODO/i;
+  const visible = {
+    'EULA.fr.md': eula, 'page de licence de l\'installeur (texte généré)': toText(eula), 'POLITIQUE-CONFIDENTIALITE.md': read('POLITIQUE-CONFIDENTIALITE.md'),
+    'README.md': read('README.md'), 'aide (help-content.js)': read('src/js/help-content.js'), 'docs/NOTES-INFORMATIQUE.md': read('docs/NOTES-INFORMATIQUE.md'),
+    'LICENSE': read('LICENSE'), 'À propos (app-info.js)': read('app-info.js'),
+  };
+  const hit = Object.entries(visible).filter(([, s]) => DRAFT.test(s)).map(([k, s]) => k + ' : ' + s.match(DRAFT)[0]);
+  check('aucune mention de brouillon / relecture juridique dans le texte visible (EULA, installeur, politique, README, aide, notes, LICENSE, À propos)', hit.length === 0, hit);
+  check('EULA.fr.md : reste du contrat inchangé (empreinte de la 1.2.0 sans la mention), en-tête conservé (titre, version du 12 novembre 2026, Éditeur, Logiciel)',
+    sha(eula) === '1ee696864b9132f0f639ab162e75f3b88581b6eef2fc158133bd868a52ac2d66' && /^# Contrat de licence utilisateur final — Spin A Doc\n\nVersion du 12 novembre 2026\. Éditeur : SpinASoft/.test(eula), sha(eula));
+  check('POLITIQUE-CONFIDENTIALITE.md : reste inchangé (empreinte de la 1.2.0 sans la mention)', sha(read('POLITIQUE-CONFIDENTIALITE.md')) === 'a9e184eddf1ff126e98001515470aff7eb4b45fb9e07fd49f3315574bdf40585');
+  check('EULA : pas de double ligne vide laissée par le retrait', !/\n\n\n/.test(eula) && !/\n\n\n/.test(read('POLITIQUE-CONFIDENTIALITE.md')));
+  const rel = read('RELEASING.md');
+  check('rappel interne dans RELEASING.md : « Contrat de licence (EULA) rédigé sans conseil juridique : à faire relire par un juriste avant une diffusion large »',
+    rel.includes('Contrat de licence (EULA) rédigé sans conseil juridique : à faire relire par un juriste avant une diffusion large'));
+  const shipped = JSON.stringify(pkg.build.files) + JSON.stringify(pkg.build.extraResources);
+  check('RELEASING.md jamais embarqué dans l\'application (build.files, extraResources)', !/RELEASING/i.test(shipped), shipped);
+}
 
 // 4. Confidentialité
 const pol = read('POLITIQUE-CONFIDENTIALITE.md');
@@ -71,6 +99,13 @@ const res = path.join(root, 'dist', 'win-unpacked', 'resources');
 if (fs.existsSync(res)) {
   check('build : pas de resources/app-update.yml', !fs.existsSync(path.join(res, 'app-update.yml')));
   check('build : EULA, politique et licences tierces dans resources', ['EULA.fr.md', 'POLITIQUE-CONFIDENTIALITE.md', 'THIRD_PARTY_LICENSES.txt'].every((f) => fs.existsSync(path.join(res, f))));
+  let builtVersion = null;
+  try { builtVersion = JSON.parse(require(path.join(root, 'node_modules', '@electron', 'asar')).extractFile(path.join(res, 'app.asar'), 'package.json').toString('utf8')).version; } catch { /* asar illisible */ }
+  if (builtVersion === pkg.version) {
+    check(`build ${builtVersion} : EULA et politique livrées = celles du dépôt (sans mention de brouillon)`, ['EULA.fr.md', 'POLITIQUE-CONFIDENTIALITE.md'].every((f) => fs.readFileSync(path.join(res, f), 'utf8') === read(f)));
+    const eulaTxt = path.join(root, 'build', 'eula.txt');
+    check('build : page de licence de l\'installeur (build/eula.txt) = texte généré depuis EULA.fr.md, sans mention de brouillon', fs.existsSync(eulaTxt) && fs.readFileSync(eulaTxt, 'utf8') === '\ufeff' + toText(read('EULA.fr.md')) && !/brouillon|juriste/i.test(fs.readFileSync(eulaTxt, 'utf8')));
+  } else console.log(`   (build de la version ${builtVersion} ≠ ${pkg.version} : contrôle du texte de licence livré sauté)`);
 } else console.log('   (pas de build dans dist/ : contrôles du build sautés)');
 
 console.log(failures.length ? `\n${failures.length} échec(s) / ${passed + failures.length}` : `\nOK : ${passed} vérifications.`);

@@ -142,7 +142,7 @@ de `dist/RELEASE-NOTES-x.y.z.md`, joindre les trois fichiers, « Save draft », 
       (Si les Issues restent fermées, CONTRIBUTING.md doit indiquer un autre moyen de signaler un bogue.)
 
 **Avant le passage en public**
-- [ ] Relecture juridique de `EULA.fr.md` et de `POLITIQUE-CONFIDENTIALITE.md` (par une personne compétente).
+- [ ] Contrat de licence (EULA) rédigé sans conseil juridique : à faire relire par un juriste avant une diffusion large (`EULA.fr.md` ; de même pour `POLITIQUE-CONFIDENTIALITE.md`).
 - [ ] Recherche d'antériorité de la marque « Spin A Doc » / « SpinASoft » : bases INPI (data.inpi.fr) et EUIPO (TMview / eSearch plus).
 - [ ] Scan privé final (section 5 bis) : zéro occurrence privée sur l'arbre, `git log -p --all`, l'installeur extrait et les propriétés des exécutables.
 

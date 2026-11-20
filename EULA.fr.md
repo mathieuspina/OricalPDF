@@ -1,7 +1,5 @@
 # Contrat de licence utilisateur final — Spin A Doc
 
-> **BROUILLON — à faire relire par un juriste avant publication.** Rédigé sans conseil juridique.
-
 Version du 12 novembre 2026. Éditeur : SpinASoft (« l'Éditeur »). Logiciel : Spin A Doc, lecteur et éditeur de documents PDF pour Windows,
 dans la version installable ou portable distribuée par l'Éditeur (« le Logiciel »).
 
