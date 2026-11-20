@@ -5,6 +5,7 @@ const fs = require('fs');
 const Recents = require('./src/recents.js');
 const PrintMain = require('./print-main.js');
 const AppInfo = require('./app-info.js');
+const WindowState = require('./src/window-state.js');
 
 // Nom affiché dans toutes les boîtes natives, et dossier de données stable (dev et version installée).
 // SPINADOC_USER_DATA : dossier alternatif, utilisé par les tests automatisés.
@@ -23,6 +24,9 @@ const userFile = (n) => path.join(app.getPath('userData'), n);
 function readJson(name, fallback) {
   try { return JSON.parse(fs.readFileSync(userFile(name), 'utf8')); } catch { return fallback; }
 }
+function readText(name) {
+  try { return fs.readFileSync(userFile(name), 'utf8'); } catch { return null; }
+}
 function writeJson(name, data) {
   try {
     fs.mkdirSync(app.getPath('userData'), { recursive: true });
@@ -37,6 +41,27 @@ function pdfsFromArgs(argv) {
 }
 
 const gotLock = app.requestSingleInstanceLock();
+// Mémorisation de la fenêtre (taille, position, agrandie, plein écran) dans settings.json (clé window) : jamais en mode test
+// (SPIN_TEST_HEADLESS=1, fenêtres hors écran) ni dans une seconde instance (elle se ferme aussitôt).
+const rememberWindow = process.env.SPIN_TEST_HEADLESS !== '1' && gotLock;
+const winFlags = { maximized: false, fullScreen: false }; // dernier état connu (une fenêtre réduite n'est ni agrandie ni en plein écran)
+
+// État d'origine de la fenêtre au démarrage : position gardée seulement si sa barre de titre est sur un écran qui existe encore.
+function savedWindow() {
+  if (!rememberWindow) return null;
+  const { screen } = require('electron');
+  const primary = screen.getPrimaryDisplay();
+  const displays = [primary, ...screen.getAllDisplays().filter((d) => d.id !== primary.id)];
+  return WindowState.restore(WindowState.fromJsonText(readText('settings.json')), displays);
+}
+function saveWindowState() {
+  if (!rememberWindow || !win || win.isDestroyed()) return;
+  const st = WindowState.capture({
+    bounds: win.getBounds(), normalBounds: win.getNormalBounds(), isMaximized: win.isMaximized(), isFullScreen: win.isFullScreen(),
+    isMinimized: win.isMinimized(), wasMaximized: winFlags.maximized, wasFullScreen: winFlags.fullScreen,
+  });
+  if (st) writeJson('settings.json', Object.assign(readJson('settings.json', {}), { window: st })); // les autres réglages sont gardés
+}
 if (!gotLock) {
   app.quit();
 } else {
@@ -53,10 +78,13 @@ if (!gotLock) {
 function createWindow() {
   // SPIN_TEST_HEADLESS=1 (tests automatisés) : fenêtre jamais affichée, sans focus, rendu hors écran qui reste actif.
   const headless = process.env.SPIN_TEST_HEADLESS === '1';
+  const saved = savedWindow(); // null en mode test et dans une seconde instance
+  const startState = !!saved && (saved.maximize || saved.fullScreen); // agrandie / plein écran : affichée directement dans cet état
   win = new BrowserWindow({
-    show: !headless,
-    width: 1280,
-    height: 860,
+    show: !headless && !startState,
+    width: saved ? saved.bounds.width : 1280,
+    height: saved ? saved.bounds.height : 860,
+    ...(saved && saved.bounds.x !== undefined ? { x: saved.bounds.x, y: saved.bounds.y } : {}),
     minWidth: 900,
     minHeight: 560,
     title: 'Spin A Doc',
@@ -85,6 +113,16 @@ function createWindow() {
     });
   }
 
+  if (startState) {
+    if (saved.fullScreen) win.setFullScreen(true); else win.maximize();
+    win.show();
+  }
+  Object.assign(winFlags, { maximized: win.isMaximized(), fullScreen: win.isFullScreen() });
+  win.on('maximize', () => { winFlags.maximized = true; });
+  win.on('unmaximize', () => { if (!win.isMinimized()) winFlags.maximized = false; });
+  win.on('enter-full-screen', () => { winFlags.fullScreen = true; });
+  win.on('leave-full-screen', () => { if (!win.isMinimized()) winFlags.fullScreen = false; });
+
   win.loadFile(path.join(__dirname, 'src', 'index.html'));
 
   // Aucune navigation ni fenêtre externe depuis l'application.
@@ -94,7 +132,7 @@ function createWindow() {
   // Fermeture de la fenêtre : s'il y a des modifications, c'est l'interface qui pose la question
   // (boîte « Enregistrer / Ne pas enregistrer / Annuler »), puis elle confirme avec 'app:close-confirmed'.
   win.on('close', (e) => {
-    if ((!dirty && !PrintMain.active()) || forceClose) return; // modifications non enregistrées ou impression en cours : l'interface demande
+    if ((!dirty && !PrintMain.active()) || forceClose) { saveWindowState(); return; } // sinon (modifications, impression) : l'interface demande
     e.preventDefault();
     win.webContents.send('app:request-close');
   });
