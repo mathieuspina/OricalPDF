@@ -238,7 +238,9 @@
       numPrims.push([i, Numbering.primitives(items, { box, rot: pg.getRotation().angle, index: i }, measure)]);
     });
     for (const [, prims] of numPrims) for (const p of prims) if (!fonts[p.fontName]) fonts[p.fontName] = await doc.embedFont(p.fontName);
-    const ctxFor = (e) => ({ doc, page: pages[e.page], fonts, images, measure, mctx, PDFLib, rgb });
+    // rotation de la page écrite (/Rotate d'origine + rotation de l'onglet Pages, appliquée par buildPages) = celle de l'aperçu (render.js)
+    const rotOf = (pg) => (pg ? (((pg.getRotation().angle % 360) + 360) % 360) : 0);
+    const ctxFor = (e) => ({ doc, page: pages[e.page], fonts, images, measure, mctx: Object.assign({}, mctx, { pageRot: rotOf(pages[e.page]) }), PDFLib, rgb });
 
     // 1re passe : fonds / recouvrements (ils ne masquent ainsi jamais un contenu ajouté).
     for (const e of edits) {

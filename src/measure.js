@@ -153,22 +153,39 @@
     return poly([tip, [bx + nx * w, by + ny * w], [bx - nx * w, by - ny * w]], true);
   }
 
-  // Texte centré en `center`, tourné de `ang` (radians, lisible : jamais à l'envers), fond blanc translucide.
+  // Angle de lecture (radians, repère PDF) d'un texte posé le long de la direction `ang` sur une page affichée avec la rotation `rot` (degrés,
+  // sens horaire comme /Rotate : /Rotate du PDF + rotation de l'onglet Pages ; PAS la rotation de la vue seule, qui n'est pas écrite). Sur la page
+  // affichée, l'angle vaut ang − rot ; il est ramené dans ]−90°, 90°] (comme dans AutoCAD) : jamais à l'envers, vertical = lu de bas en haut.
+  function readableAngle(ang, rot) {
+    const r = ((rot || 0) * Math.PI) / 180;
+    let d = Math.atan2(Math.sin(ang - r), Math.cos(ang - r)); // ]−π, π]
+    if (d > Math.PI / 2 + 1e-9) d -= Math.PI; else if (d <= -Math.PI / 2 + 1e-9) d += Math.PI;
+    return d + r;
+  }
+
+  // Texte centré en `center` (puis décalé de opts.lift vers le HAUT du texte lisible), le long de `ang` (radians, repère PDF), lisible sur la page
+  // affichée (opts.rot, voir readableAngle) ; fond blanc translucide sauf opts.bg === false.
   function labelPrims(out, center, ang, text, size, color, measure, opts) {
     if (!text) return;
-    let a = ang;
-    if (a > Math.PI / 2 + 1e-9) a -= Math.PI; else if (a <= -Math.PI / 2 + 1e-9) a += Math.PI;
+    const a = readableAngle(ang, opts && opts.rot);
     const w = measure(FONT, text, size);
     const cs = Math.cos(a), sn = Math.sin(a);
-    const R = (x, y) => [center[0] + x * cs - y * sn, center[1] + x * sn + y * cs];
+    const lift = (opts && opts.lift) || 0;
+    const c0 = [center[0] - sn * lift, center[1] + cs * lift];
+    const R = (x, y) => [c0[0] + x * cs - y * sn, c0[1] + x * sn + y * cs];
     const hw = w / 2 + size * 0.3, hh = size * 0.62;
     if (!opts || opts.bg !== false) out.push({ kind: 'path', segs: poly([R(-hw, -hh), R(hw, -hh), R(hw, hh), R(-hw, hh)], true), fill: { color: [1, 1, 1], opacity: 0.85 }, stroke: null, blend: null });
     const p = R(-w / 2, -size * 0.36);
     out.push({ kind: 'text', text, x: p[0], y: p[1], size, fontName: FONT, color, rot: (a * 180) / Math.PI, opacity: 1 });
   }
 
-  function primitives(o, measure, ctx) {
+  // rot : rotation de la page AFFICHÉE en degrés (/Rotate + onglet Pages, sens horaire) : textes lisibles et étiquettes « horizontales » droites
+  // à l'écran comme dans le PDF écrit (aperçu et écriture passent la même valeur, voir Shapes.primitives et pdf-edit).
+  function primitives(o, measure, ctx, rot) {
     const pts = o.points || [];
+    const R0 = ((((rot || 0) % 360) + 360) % 360);
+    const H = (R0 * Math.PI) / 180; // direction « horizontale à l'écran », en radians dans le repère PDF
+    const label = (center, a, txt, sz, opts) => labelPrims(out, center, a, txt, sz, color, measure, Object.assign({ rot: R0 }, opts));
     const color = o.color || [0, 0.45, 0.8];
     const width = o.width || 1.2;
     const size = o.size || 10;
@@ -189,24 +206,26 @@
       out.push(line(poly([[A[0] + nx * t, A[1] + ny * t], [A[0] - nx * t, A[1] - ny * t]])));
       out.push(line(poly([[B[0] + nx * t, B[1] + ny * t], [B[0] - nx * t, B[1] - ny * t]])));
       if (o.showDelta && Math.abs(B[0] - A[0]) > 1e-6 && Math.abs(B[1] - A[1]) > 1e-6) {
-        const K = [B[0], A[1]];
+        // dX = horizontale, dY = verticale de la page AFFICHÉE (page pivotée de 90 / 270° : x et y du PDF échangés)
+        const swap = R0 % 180 !== 0;
+        const K = swap ? [A[0], B[1]] : [B[0], A[1]];
         out.push(line(poly([A, K, B]), [3, 2]));
-        labelPrims(out, mid(A, K), 0, 'dX ' + fmtLen(v.dx, c.unit, c.precision), size * 0.85, color, measure);
-        labelPrims(out, mid(K, B), Math.PI / 2, 'dY ' + fmtLen(v.dy, c.unit, c.precision), size * 0.85, color, measure);
+        label(mid(A, K), H, 'dX ' + fmtLen(swap ? v.dy : v.dx, c.unit, c.precision), size * 0.85);
+        label(mid(K, B), H + Math.PI / 2, 'dY ' + fmtLen(swap ? v.dx : v.dy, c.unit, c.precision), size * 0.85);
       }
-      labelPrims(out, mid(A, B), a, text, size, color, measure);
+      label(mid(A, B), a, text, size);
     } else if (o.type === 'm-poly') {
       if (pts.length < 2) return out;
       out.push(line(poly(pts)));
       for (const p of pts) out.push(line(poly([[p[0] - 2, p[1]], [p[0] + 2, p[1]]])));
-      if (o.showSegments) pts.slice(1).forEach((p, i) => labelPrims(out, mid(pts[i], p), ang(pts[i], p), fmtLen(v.segments[i], c.unit, c.precision), size * 0.8, color, measure));
+      if (o.showSegments) pts.slice(1).forEach((p, i) => label(mid(pts[i], p), ang(pts[i], p), fmtLen(v.segments[i], c.unit, c.precision), size * 0.8));
       // valeur totale au milieu du plus long segment
       let bi = 0, bl = -1;
       pts.slice(1).forEach((p, i) => { const l = dist(pts[i], p); if (l > bl) { bl = l; bi = i; } });
       const c0 = mid(pts[bi], pts[bi + 1]);
       const a0 = ang(pts[bi], pts[bi + 1]);
       const off = o.showSegments ? size * 1.5 : 0;
-      labelPrims(out, [c0[0] - Math.sin(a0) * off, c0[1] + Math.cos(a0) * off], a0, text, size, color, measure);
+      label(c0, a0, text, size, { lift: off }); // au-dessus des longueurs des segments (côté haut du texte lisible)
     } else if (o.type === 'm-area') {
       if (pts.length < 3) { if (pts.length === 2) out.push(line(poly(pts))); return out; }
       const rings = [pts, ...(o.holes || [])];
@@ -218,7 +237,7 @@
         segs.push(...poly(rr, true));
       });
       out.push({ kind: 'path', segs, fill: { color, opacity: 0.16 }, stroke: stroke(), blend: null });
-      labelPrims(out, centroid(pts), 0, text, size, color, measure);
+      label(centroid(pts), H, text, size);
     } else if (o.type === 'm-angle') {
       if (pts.length < 3) { if (pts.length === 2) out.push(line(poly(pts))); return out; }
       const [A, B, C] = pts;
@@ -232,7 +251,7 @@
       for (let i = 0; i <= 24; i++) { const t = a1 + (d * i) / 24; arc.push([B[0] + r * Math.cos(t), B[1] + r * Math.sin(t)]); }
       out.push(line(poly(arc)));
       const tm = a1 + d / 2, rl = r + size * 1.6;
-      labelPrims(out, [B[0] + rl * Math.cos(tm), B[1] + rl * Math.sin(tm)], 0, text, size, color, measure);
+      label([B[0] + rl * Math.cos(tm), B[1] + rl * Math.sin(tm)], H, text, size);
     } else if (o.type === 'm-dim') {
       if (pts.length < 2) return out;
       const [A, B] = pts;
@@ -246,9 +265,8 @@
       const L = Math.min(7, dist(A, B) / 3);
       out.push({ kind: 'path', segs: arrowTri(A2, [-dx, -dy], L), fill: { color, opacity: 1 }, stroke: null, blend: null });
       out.push({ kind: 'path', segs: arrowTri(B2, [dx, dy], L), fill: { color, opacity: 1 }, stroke: null, blend: null });
-      const m = mid(A2, B2);
-      const lift = size * 0.85 * (d >= 0 ? 1 : -1);
-      labelPrims(out, [m[0] + nx * lift, m[1] + ny * lift], a, text, size, color, measure, { bg: false });
+      // valeur TOUJOURS au-dessus de la ligne de cote (côté haut du texte lisible), quel que soit le sens du tracé et le côté du décalage
+      label(mid(A2, B2), a, text, size, { bg: false, lift: size * 0.85 });
     } else if (o.type === 'm-circle') {
       if (pts.length < 3) { for (const p of pts) out.push(line(poly([[p[0] - 3, p[1]], [p[0] + 3, p[1]]]))); return out; }
       const cc = circumcircle(pts[0], pts[1], pts[2]);
@@ -258,7 +276,7 @@
       out.push(line(poly([[X - 3, Y], [X + 3, Y]])));
       out.push(line(poly([[X, Y - 3], [X, Y + 3]])));
       out.push(line(poly([[X, Y], pts[0]]), [3, 2]));
-      labelPrims(out, [X, Y - Math.max(size * 1.4, 0)], 0, text, size, color, measure);
+      label([X + Math.sin(H) * size * 1.4, Y - Math.cos(H) * size * 1.4], H, text, size); // sous le centre, à l'écran
     }
     return out;
   }
@@ -275,6 +293,6 @@
   return {
     MM_PER_PT, TYPES, LABELS, PRESETS, isMeasure, toMm, fromMm, scaleFromRatio, scaleFromTwoPoints, ratioOf, scaleLabel, fmtNum, fmtLen, fmtArea,
     dist, polyLen, perimeter, area, signedArea, centroid, angleDeg, circumcircle, netArea, valuesOf, describe, rowOf, totalsByType,
-    CSV_BOM, toCsv, primitives, defaultsFor,
+    CSV_BOM, toCsv, primitives, defaultsFor, readableAngle,
   };
 });

@@ -354,9 +354,10 @@
 
   // Primitives : { kind:'path', segs, fill:{color,opacity}|null, stroke:{color,width,opacity,dash}|null, blend:'multiply'|null }
   //              { kind:'text', text, x, y, size, fontName, color, rot, opacity }
-  // ctx : { measure: { scales, unit, precision } } — contexte d'affichage des mesures (échelle de chaque page).
+  // ctx : { measure: { scales, unit, precision }, pageRot } — contexte d'affichage des mesures (échelle de chaque page) et rotation de la page
+  //       affichée en degrés (/Rotate + onglet Pages ; mesures et champs : textes lisibles), la même à l'aperçu et à l'écriture.
   function primitives(o, measure, ctx) {
-    if (Measure.isMeasure(o)) return Measure.primitives(o, measure, ctx && ctx.measure);
+    if (Measure.isMeasure(o)) return Measure.primitives(o, measure, ctx && ctx.measure, ctx && ctx.pageRot); // pageRot : textes lisibles sur la page affichée
     if (EXT[o.type] && EXT[o.type].primitives) return EXT[o.type].primitives(o, measure, ctx);
     const k = kindOf(o);
     const op = o.opacity === undefined ? 1 : o.opacity;

@@ -69,7 +69,7 @@ const anyNear = (r, x, y, color, tol, rad = 2) => { for (let dx = -rad; dx <= ra
     const w = 10000 / k, h = 4000 / k;
     r = await save([{ type: 'm-area', points: [[50, 100], [50 + w, 100], [50 + w, 100 + h], [50, 100 + h]], fill: [0, 0.45, 0.8] }], pageIdx);
     assert(r.texts.some((t) => t === 'S = 40,00 m² · P = 28,00 m'), `surface ${label} : texte (${r.texts.join('|')})`);
-    const inside = r.px(50 + w / 2, 100 + h * 0.25);
+    const inside = r.px(50 + w * 0.2, 100 + h * 0.25); // hors de l'étiquette (horizontale à l'écran, donc verticale dans le PDF sur /Rotate 90)
     assert(inside[2] > inside[0] + 0.05 && inside[0] > 0.7, `surface ${label} : remplissage translucide ` + inside);
     // angle 90°
     r = await save([{ type: 'm-angle', points: [[200, 400], [150, 400], [150, 450]] }], pageIdx);

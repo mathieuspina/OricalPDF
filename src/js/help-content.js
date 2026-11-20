@@ -45,7 +45,8 @@ ${traps('L\'échelle n\'est pas lue dans le PDF : vérifiez-la sur une cote conn
   { id: 'distance-cote', title: 'Distance ou Cote ?', html: `
 <p>Les deux donnent la même longueur (même échelle, même aimantation) ; seul le dessin change.</p>
 <ul><li><strong>Distance</strong> (onglet Mesure) : mesure rapide directement sur le trait, valeur au milieu du trait ; option « Afficher dX / dY » (décomposition horizontale et verticale).</li>
-<li><strong>Cote</strong> : cote de plan décalée, avec flèches et traits d'attache, valeur au-dessus de la ligne de cote ; « Décalage de la cote » réglable dans le panneau Propriétés.</li></ul>` },
+<li><strong>Cote</strong> : cote de plan décalée, avec flèches et traits d'attache, valeur au-dessus de la ligne de cote ; « Décalage de la cote » réglable dans le panneau Propriétés.</li></ul>
+<p>Le texte reste toujours lisible, jamais à l'envers, quel que soit le sens du tracé, y compris sur une page pivotée (rotation du PDF ou « Pivoter » de l'onglet Pages / Accueil) ; la valeur d'une cote est toujours au-dessus de sa ligne. La rotation de l'affichage seul (onglet Affichage) n'est pas écrite dans le fichier : les textes sont orientés pour la page, pas pour la vue.</p>` },
 
   { id: 'pages', title: 'Pages : rotation, ordre, recadrage, extraction, division, numérotation', html: `
 <p>Onglet <strong>Pages</strong> et panneau des miniatures (${K('F4')}). Sélection multiple : ${K('Ctrl')}+clic, ${K('Maj')}+clic.</p>
