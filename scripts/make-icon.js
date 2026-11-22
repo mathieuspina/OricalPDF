@@ -1,6 +1,6 @@
 // Génère build/icon.ico (16, 20, 24, 32, 40, 48, 64, 256) et build/icon-512.png en rasterisant le logo avec Electron.
-// Logo d'origine SANS fond (ni carré arrondi sombre ni contour) : fond transparent à toutes les tailles. Chaque taille est dessinée à sa
-// taille (scripts/icon-geometry.js : document calé sur les pixels, anneaux adaptés à la taille) et rendue à la taille exacte, pas réduite
+// Logo Orical PDF (build/logo-orical-pdf.svg), fond transparent à toutes les tailles. Chaque taille est dessinée à sa taille
+// (scripts/icon-geometry.js : logo complet dès 40 px, halo plat et trait épaissi en dessous) et rendue à la taille exacte, pas réduite
 // depuis une grande image (sinon flou et « tache » dans l'Explorateur et la barre des tâches). Fenêtres cachées, hors écran (show: false).
 // Usage : npx electron scripts/make-icon.js [--preview dossier [--old ancienne.ico]]   (--preview écrit chaque taille en PNG et une planche
 //         d'aperçu agrandie, avant / après)

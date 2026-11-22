@@ -19,7 +19,7 @@ export function toast(msg, ms = 4500) {
   toastTimer = setTimeout(() => { t.hidden = true; }, ms);
 }
 
-// Indicateur de chargement (la page du logo qui tourne). Retourne la fonction qui l'arrête.
+// Indicateur de chargement (le logo qui tourne). Retourne la fonction qui l'arrête.
 // Affiché seulement si l'attente dépasse ~150 ms, pour éviter les clignotements.
 let busyCount = 0;
 let busyTimer = null;

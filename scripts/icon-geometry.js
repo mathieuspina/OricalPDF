@@ -1,78 +1,60 @@
-// Icône de l'application : tailles, dessin par taille, assemblage et lecture de l'ICO, décodage PNG (pour les tests).
-// Dessin = logo d'origine (build/logo.svg) SANS le fond (carré arrondi sombre et son contour), recadré sur le dessin (comme
-// build/logo-mark.svg) et redessiné à CHAQUE taille : document (dégradé, coins arrondis, pli clair, 3 lignes blanches) calé sur la grille de
-// pixels, « anneaux » (feuilles rouges en contour tournées autour du document) adaptés à la taille :
-//   - 40 à 256 px : 4 anneaux du logo (−80, −60, −40, −20°, opacités d'origine), fidèle ;
-//   - 24 et 32 px : 2 anneaux plus épais et plus opaques (comme build/logo-mark-small.svg) ;
-//   - 16 et 20 px : document agrandi, dégradé léger, un seul arc d'anneau net, en « ( » à gauche du document (légèrement incliné).
+// Icône de l'application Orical PDF : tailles, dessin par taille, assemblage et lecture de l'ICO, décodage PNG (pour les tests).
+// Source de vérité : build/logo-orical-pdf.svg (80 × 80) = halo rouge flou + disque au dégradé radial (centre 44, 40, r 22), disque sombre
+// #121214 (centre 35, 39.4, r 19.6), pictogramme « page + plus » en trait rose #FFB9B9 de 2. Fond transparent, recadré sur le dessin.
+// Chaque taille est DESSINÉE à sa taille :
+//   - 40 à 256 px : logo complet (halo flou + dégradé radial), fidèle ;
+//   - 32 px : halo simplifié = cercle rouge plat décalé, sans flou ; trait un peu épaissi ;
+//   - 16 à 24 px : halo plat, trait rose épaissi, pictogramme simplifié et agrandi dans le disque (24 : page + plus ; 16 et 20 : page seule).
 // Pur (Node seul) : utilisé par scripts/make-icon.js (génération, sous Electron) et test/test-icon.js (contrôle de build/icon.ico).
+// L'icône des FICHIERS PDF (build/pdf-file.ico) est décrite dans scripts/pdf-icon-geometry.js (mêmes outils ICO / PNG).
 const zlib = require('zlib');
 
 const SIZES = [16, 20, 24, 32, 40, 48, 64, 256];
-// Logo d'origine (unités du SVG 256) : document 80 × 116 en (88, 70), dessin contenu dans le carré (54, 54, 148, 148).
-const O = { box: 148, w: 80, h: 116, fold: 26, lineX: 14, lineW: 52, lineW3: 32 };
-const GRAD = {
-  ring: ['#FF4A4A', '#9B0F1C'],
-  doc: ['#E0272F', '#5E0710'],      // d'origine (40 px et plus)
-  docMid: ['#E3303A', '#8E0D19'],   // 24-32 px : fin du dégradé un peu plus claire (lisible sur la barre des tâches sombre)
-  docSmall: ['#EA3A43', '#B3151F'], // 16-20 px : dégradé léger
-};
+const COLORS = { halo: '#F23A3A', disc: '#121214', stroke: '#FFB9B9', grad: ['#FFD0D0', '#F64E4E', '#F02C2C', '#E31414'] };
+const HALO = { cx: 44, cy: 40, r: 22 };
+const DISC = { cx: 35, cy: 39.4, r: 19.6 };
+const BLUR = 2.4;
+// Pictogramme d'origine (page à coin plié + plus), unités du logo.
+const ICON_FULL = 'M43 41V38.375C43 37.4799 42.6444 36.6215 42.0115 35.9885C41.3786 35.3556 40.5201 35 39.625 35H38.125C37.8266 35 37.5405 34.8815 37.3295 34.6705C37.1185 34.4595 37 34.1734 37 33.875V32.375C37 31.4799 36.6444 30.6214 36.0115 29.9885C35.3785 29.3556 34.5201 29 33.625 29H31.75M35.5 38V44M38.5 41H32.5M34 29H29.125C28.504 29 28 29.504 28 30.125V47.375C28 47.996 28.504 48.5 29.125 48.5H41.875C42.496 48.5 43 47.996 43 47.375V38C43 35.6131 42.0518 33.3239 40.364 31.636C38.6761 29.9482 36.3869 29 34 29Z';
+// Simplifiés (petites tailles) : page à coin coupé (+ plus), contenus dans la même boîte (28..43 × 29..48.5) malgré un trait épais.
+const ICON_PAGE = 'M29.5 30H36.5L41.5 35V47.5H29.5Z';
+const ICON_PLUS = 'M35.5 38.5V44M32.75 41.25H38.25';
+const ICON_BOX = { x0: 28, y0: 29, x1: 43, y1: 48.5 };
+const ICON_C = { x: 35.5, y: 39 }; // centre d'agrandissement du pictogramme aux petites tailles (≈ centre du disque)
 
-function tierOf(n) { return n >= 40 ? 'full' : n >= 24 ? 'mid' : 'small'; }
+function tierOf(n) { return n >= 40 ? 'full' : n >= 32 ? 'mid' : 'small'; }
 
-// Géométrie en pixels de la taille n. Document : entiers (bords nets) ; anneaux : rectangles arrondis tournés autour du centre du document.
+// Géométrie de la taille n : cadrage (vb, en unités du logo), marge en pixels, épaisseur du trait, pictogramme, halo flou ou plat.
 function geometry(n) {
   const tier = tierOf(n);
-  const g = { n, tier };
-  if (tier !== 'small') {
-    const m = Math.max(1, Math.round(n / 48));           // marge : le pourtour reste transparent malgré l'anticrénelage
-    const sw = tier === 'full' ? 5 : 10;                 // épaisseur des anneaux (unités du logo)
-    const k = (n - 2 * m) / (O.box + sw * 0.6);
-    g.w = Math.round(O.w * k); g.h = Math.round(O.h * k);
-    g.x = Math.round((n - g.w) / 2); g.y = Math.round((n - g.h) / 2);
-    g.r = Math.max(1, Math.round((tier === 'full' ? 9 : 10) * k * 2) / 2);
-    g.fold = Math.round(O.fold / O.w * g.w);
-    g.t = Math.max(1, Math.round((tier === 'full' ? 7 : 11) / O.h * g.h));
-    const ys = tier === 'full' ? [46, 64, 82] : [42, 62, 82];
-    g.lines = ys.map((yy, i) => ({ x: g.x + Math.round(O.lineX / O.w * g.w), y: g.y + Math.round(yy / O.h * g.h), w: Math.round((i === 2 ? O.lineW3 : O.lineW) / O.w * g.w), h: g.t }));
-    const stroke = Math.max(tier === 'full' ? 1 : 1.5, sw * k);
-    const rings = tier === 'full' ? [[-80, 0.25], [-60, 0.4], [-40, 0.6], [-20, 0.82]] : [[-60, 0.6], [-30, 0.92]];
-    g.rings = rings.map(([angle, opacity]) => ({ kind: 'rect', angle, opacity, stroke, rx: g.r }));
-    g.grad = tier === 'full' ? GRAD.doc : GRAD.docMid;
-  } else {
-    // 16 / 20 px : document le plus grand possible, décalé à droite ; un seul arc d'anneau à sa gauche, derrière lui.
-    const S = { 16: { x: 5, y: 1, w: 9, h: 13, r: 1, ys: [4, 7, 10], lw: [5, 5, 3], fold: 3, rx: 6, ry: 6.3, stroke: 1.25 },
-                20: { x: 7, y: 2, w: 11, h: 16, r: 1.5, ys: [6, 9, 12], lw: [7, 7, 4], fold: 4, rx: 7.5, ry: 7.8, stroke: 1.5 } }[n];
-    Object.assign(g, { x: S.x, y: S.y, w: S.w, h: S.h, r: S.r, fold: S.fold, t: 1 });
-    g.lines = S.ys.map((yy, i) => ({ x: g.x + 2, y: g.y + yy, w: S.lw[i], h: 1 }));
-    g.rings = [{ kind: 'arc', angle: -15, opacity: 1, stroke: S.stroke, rx: S.rx, ry: S.ry, from: 105, to: 255 }];
-    g.grad = GRAD.docSmall;
-  }
-  g.cx = g.x + g.w / 2; g.cy = g.y + g.h / 2;
+  const m = n >= 64 ? Math.round(n / 64) : 0.5;           // marge : le pourtour reste transparent malgré l'anticrénelage
+  // Avec flou : carré de 60 autour du dessin et de son halo (comme la barre de titre) ; sans flou : carré de 52 autour des deux disques.
+  const vb = tier === 'full' ? { x: 14, y: 10, s: 60 } : { x: 14.7, y: 14, s: 52 };
+  const k = (n - 2 * m) / vb.s;                           // pixels par unité du logo
+  const g = { n, tier, m, vb, k, blur: tier === 'full', iconScale: 1 };
+  if (tier === 'full') { g.stroke = 2; g.icon = ICON_FULL; }
+  else if (tier === 'mid') { g.stroke = 2.5; g.icon = ICON_FULL; }
+  else { g.stroke = n >= 24 ? 2.9 : n >= 20 ? 3 : 2.9; g.icon = n >= 24 ? ICON_PAGE + ICON_PLUS : ICON_PAGE; g.iconScale = n >= 24 ? 1.1 : n >= 20 ? 1.2 : 1.3; }
   return g;
 }
 
-const f2 = (v) => +v.toFixed(3);
+// Unités du logo → pixels de l'image n × n.
+const toPx = (g, ux, uy) => ({ x: g.m + (ux - g.vb.x) * g.k, y: g.m + (uy - g.vb.y) * g.k });
+
+const f3 = (v) => +v.toFixed(3);
 function svg(n) {
   const g = geometry(n);
-  const defs = `<defs><linearGradient id="ring" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${GRAD.ring[0]}"/><stop offset="1" stop-color="${GRAD.ring[1]}"/></linearGradient>` +
-    `<linearGradient id="doc" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${g.grad[0]}"/><stop offset="1" stop-color="${g.grad[1]}"/></linearGradient></defs>`;
-  const rings = g.rings.map((r) => {
-    if (r.kind === 'rect') return `<rect x="${g.x}" y="${g.y}" width="${g.w}" height="${g.h}" rx="${r.rx}" fill="none" stroke="url(#ring)" stroke-width="${f2(r.stroke)}" opacity="${r.opacity}" transform="rotate(${r.angle} ${g.cx} ${g.cy})"/>`;
-    // Arc : partie gauche (de r.from à r.to degrés) d'une ellipse centrée sur le document ; ses extrémités passent sous le document.
-    const P = (deg) => { const t = deg * Math.PI / 180; return `${f2(g.cx + r.rx * Math.cos(t))} ${f2(g.cy + r.ry * Math.sin(t))}`; };
-    return `<path d="M${P(r.from)} A${r.rx} ${r.ry} 0 0 1 ${P(r.to)}" fill="none" stroke="${GRAD.ring[0]}" stroke-width="${r.stroke}" stroke-linecap="round" opacity="${r.opacity}" transform="rotate(${r.angle} ${g.cx} ${g.cy})"/>`;
-  }).join('');
-  const doc = `<rect x="${g.x}" y="${g.y}" width="${g.w}" height="${g.h}" rx="${g.r}" fill="url(#doc)"/>`;
-  const fold = `<path d="M${g.x + g.w - g.fold} ${g.y}L${g.x + g.w} ${g.y + g.fold}H${g.x + g.w - g.fold}Z" fill="#fff" fill-opacity="0.3"/>`;
-  const lines = g.lines.map((l) => `<rect x="${l.x}" y="${l.y}" width="${l.w}" height="${l.h}" rx="${n >= 40 ? l.h / 2 : 0}" fill="#F7F7F7" shape-rendering="${n >= 40 ? 'auto' : 'crispEdges'}"/>`).join('');
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n} ${n}" width="${n}" height="${n}">${defs}${rings}${doc}${fold}${lines}</svg>`;
-}
-
-// Point (en pixels) sur un anneau, hors du document : milieu du petit côté haut du rectangle tourné (pour les tests).
-function ringProbe(g, ring) {
-  const a = ring.angle * Math.PI / 180, dy = -g.h / 2;
-  return { x: g.cx - dy * Math.sin(a), y: g.cy + dy * Math.cos(a) };
+  const sc = f3(g.k), tx = f3(g.m - g.vb.x * g.k), ty = f3(g.m - g.vb.y * g.k);
+  const grad = `<radialGradient id="g" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(35.2 28.56) scale(34.32)">` +
+    COLORS.grad.map((c, i) => `<stop offset="${[0, 0.4, 0.72, 1][i]}" stop-color="${c}"/>`).join('') + '</radialGradient>';
+  const blur = `<filter id="b" x="17.2" y="13.2" width="53.6" height="53.6" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="${BLUR}"/></filter>`;
+  const halo = g.blur
+    ? `<g opacity="0.9" filter="url(#b)"><circle cx="${HALO.cx}" cy="${HALO.cy}" r="${HALO.r}" fill="${COLORS.halo}"/></g><circle cx="${HALO.cx}" cy="${HALO.cy}" r="${HALO.r}" fill="url(#g)"/>`
+    : `<circle cx="${HALO.cx}" cy="${HALO.cy}" r="${HALO.r}" fill="${COLORS.halo}"/>`;
+  const body = `<circle cx="${DISC.cx}" cy="${DISC.cy}" r="${DISC.r}" fill="${COLORS.disc}"/>` +
+    `<path d="${g.icon}"${g.iconScale !== 1 ? ` transform="translate(${ICON_C.x} ${ICON_C.y}) scale(${g.iconScale}) translate(${-ICON_C.x} ${-ICON_C.y})"` : ''} fill="none" stroke="${COLORS.stroke}" stroke-width="${g.stroke}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n} ${n}" width="${n}" height="${n}"><defs>${g.blur ? grad + blur : ''}</defs>` +
+    `<g transform="matrix(${sc} 0 0 ${sc} ${tx} ${ty})">${halo}${body}</g></svg>`;
 }
 
 // ICO à entrées PNG (Windows Vista et suivants).
@@ -136,4 +118,11 @@ function decodePng(buf) {
   return { width, height, rgba };
 }
 
-module.exports = { SIZES, GRAD, tierOf, geometry, svg, ringProbe, buildIco, readIco, decodePng };
+// Pixel (x, y) d'une image décodée, coordonnées arrondies et bornées.
+function pixel(p, x, y) {
+  x = Math.min(p.width - 1, Math.max(0, Math.round(x))); y = Math.min(p.height - 1, Math.max(0, Math.round(y)));
+  const i = (y * p.width + x) * 4;
+  return { r: p.rgba[i], g: p.rgba[i + 1], b: p.rgba[i + 2], a: p.rgba[i + 3] };
+}
+
+module.exports = { SIZES, COLORS, HALO, DISC, ICON_BOX, ICON_C, tierOf, geometry, toPx, svg, buildIco, readIco, decodePng, pixel };

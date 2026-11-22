@@ -100,7 +100,7 @@ fs.writeFileSync(
 );
 
 // Logo (source : build/)
-for (const f of ['logo.svg', 'logo-mark.svg', 'logo-mark-small.svg']) {
+for (const f of ['logo-orical-pdf.svg']) {
   copyFile(path.join(root, 'build', f), path.join(root, 'src', 'assets', f));
 }
 console.log('vendor/, src/icons/ et src/assets/ mis à jour.');

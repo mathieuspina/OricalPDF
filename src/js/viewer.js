@@ -146,7 +146,7 @@ function makeRec(doc, desc, page, index) {
   const hl = mk('div', 'hover-hl');
   hl.hidden = true;
   const spinner = mk('img', 'spinner page-spinner');
-  spinner.src = 'assets/logo-mark.svg';
+  spinner.src = 'assets/logo-orical-pdf.svg';
   spinner.alt = '';
   div.append(spinner, canvas, textLayer, searchLayer, overlay);
   return {

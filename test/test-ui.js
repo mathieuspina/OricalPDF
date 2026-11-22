@@ -209,7 +209,7 @@ const VISIBLE_INK = `(()=>{const v=document.querySelector('.docview.active .view
     await c.ev(`document.getElementById('busy').hidden=true`);
     await c.click('input[name=anim][value=full]'); await c.click('#settings-close');
     await c.send('Page.reload'); await sleep(250);
-    check('démarrage : l\'éventail s\'ouvre (animation en cours)', (await c.ev(`document.querySelectorAll('#brand-mark .ghost')[0].getAnimations().length`)) > 0);
+    check('démarrage : le halo du logo s\'allume (animation en cours)', (await c.ev(`document.querySelectorAll('#brand-mark .halo')[0].getAnimations().length`)) > 0);
     check('aucune erreur JavaScript pendant les tests', c.logs.length === 0, c.logs);
   } catch (e) {
     check('exécution sans exception', false, String(e && e.stack || e));

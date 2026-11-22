@@ -1,11 +1,11 @@
 // Animation de fusion (signature visuelle) : les miniatures se détachent, tournent en spirale autour du centre en rétrécissant, puis se
-// rejoignent dans la page rouge du logo (la feuille du dessus, avec ses trois lignes blanches) qui se pose et devient la carte du résultat.
+// rejoignent dans une page rouge (la feuille du dessus, avec ses trois lignes blanches) qui se pose et devient la carte du résultat.
 // Web Animations API uniquement (aucune bibliothèque), ~1,2 s. Réglage « Animations » : full = spirale ; reduced = simple fondu ; none = aucun effet.
 const NS = 'http://www.w3.org/2000/svg';
 const DURATION = 1200;
 const STAGGER = 160;
 
-// La page rouge du logo (build/logo.svg : rect 80 × 116, pli en haut à droite, trois lignes blanches), en SVG autonome.
+// Une page rouge (rect 80 × 116, pli en haut à droite, trois lignes blanches ; dessin de l'ancien logo, gardé pour l'animation), en SVG autonome.
 export function redPageSvg() {
   const svg = document.createElementNS(NS, 'svg');
   svg.setAttribute('viewBox', '82 64 92 128');

@@ -19,17 +19,15 @@ export function setAnim(m) {
   api.setSettings({ anim: m });
 }
 
-// Démarrage (~900 ms, non bloquant) : les feuilles s'ouvrent en éventail depuis la page du dessus, puis se posent.
-// Chaque feuille fantôme est dans un groupe déjà tourné de son angle final ; on anime donc la feuille
-// de -angle vers 0 autour de son centre (= centre du logo), ce qui l'amène de « empilée » à « en éventail ».
+// Démarrage (~900 ms, non bloquant) : le halo rouge sort de derrière le disque sombre (glisse vers la droite et s'allume), puis le
+// disque se pose (léger rebond).
 export function startupSpin() {
   if (mode !== 'full') return;
   const mark = $('brand-mark');
-  mark.querySelectorAll('.ghost').forEach((g, i) => {
-    const a = Number(g.dataset.angle);
+  mark.querySelectorAll('.halo').forEach((g) => {
     g.animate(
-      [{ transform: `rotate(${-a}deg)`, opacity: 0 }, { transform: 'rotate(0deg)', opacity: 1 }],
-      { duration: 650, delay: i * 120, easing: 'cubic-bezier(.2, .8, .2, 1)', fill: 'backwards' }
+      [{ transform: 'translate(-9px, 0) scale(.7)', opacity: 0 }, { transform: 'translate(0, 0) scale(1)', opacity: 1 }],
+      { duration: 650, delay: 120, easing: 'cubic-bezier(.2, .8, .2, 1)', fill: 'backwards' }
     );
   });
   mark.querySelector('.top').animate(

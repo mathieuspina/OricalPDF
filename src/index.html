@@ -6,7 +6,7 @@
         content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Orical PDF</title>
-  <link rel="icon" href="assets/logo.svg">
+  <link rel="icon" href="assets/logo-orical-pdf.svg">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="icons/icons.css">
 </head>
@@ -16,20 +16,19 @@
   <header id="topbar">
     <div class="brand">
       <span id="brand-mark" class="brand-mark">
-        <!-- Marque (variante petite taille : 2 feuilles fantômes), en SVG inline pour animer l'éventail au démarrage -->
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="54 54 148 148" width="28" height="28" aria-hidden="true" focusable="false">
+        <!-- Logo Orical PDF (build/logo-orical-pdf.svg, recadré sur le dessin), en SVG inline pour animer le halo au démarrage -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="14 10 60 60" width="28" height="28" aria-hidden="true" focusable="false">
           <defs>
-            <linearGradient id="hb-red" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF4A4A"/><stop offset="1" stop-color="#9B0F1C"/></linearGradient>
-            <linearGradient id="hb-deep" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E0272F"/><stop offset="1" stop-color="#5E0710"/></linearGradient>
+            <filter id="tb-blur" x="17.2" y="13.2" width="53.6" height="53.6" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="2.4"/></filter>
+            <radialGradient id="tb-grad" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(35.2 28.56) scale(34.32)"><stop stop-color="#FFD0D0"/><stop offset="0.4" stop-color="#F64E4E"/><stop offset="0.72" stop-color="#F02C2C"/><stop offset="1" stop-color="#E31414"/></radialGradient>
           </defs>
-          <g transform="rotate(-60 128 128)" opacity="0.55"><rect class="ghost" data-angle="-60" x="88" y="70" width="80" height="116" rx="10" fill="none" stroke="url(#hb-red)" stroke-width="10"/></g>
-          <g transform="rotate(-30 128 128)" opacity="0.9"><rect class="ghost" data-angle="-30" x="88" y="70" width="80" height="116" rx="10" fill="none" stroke="url(#hb-red)" stroke-width="10"/></g>
+          <g class="halo">
+            <g opacity="0.9" filter="url(#tb-blur)"><circle cx="44" cy="40" r="22" fill="#F23A3A"/></g>
+            <circle cx="44" cy="40" r="22" fill="url(#tb-grad)"/>
+          </g>
           <g class="top">
-            <rect x="88" y="70" width="80" height="116" rx="10" fill="url(#hb-deep)"/>
-            <path d="M142 70 L168 96 H142 Z" fill="#fff" fill-opacity="0.3"/>
-            <rect x="102" y="112" width="52" height="11" rx="5.5" fill="#F5F5F5"/>
-            <rect x="102" y="132" width="52" height="11" rx="5.5" fill="#F5F5F5"/>
-            <rect x="102" y="152" width="32" height="11" rx="5.5" fill="#F5F5F5"/>
+            <circle cx="35" cy="39.4" r="19.6" fill="#121214"/>
+            <path d="M43 41V38.375C43 37.4799 42.6444 36.6215 42.0115 35.9885C41.3786 35.3556 40.5201 35 39.625 35H38.125C37.8266 35 37.5405 34.8815 37.3295 34.6705C37.1185 34.4595 37 34.1734 37 33.875V32.375C37 31.4799 36.6444 30.6214 36.0115 29.9885C35.3785 29.3556 34.5201 29 33.625 29H31.75M35.5 38V44M38.5 41H32.5M34 29H29.125C28.504 29 28 29.504 28 30.125V47.375C28 47.996 28.504 48.5 29.125 48.5H41.875C42.496 48.5 43 47.996 43 47.375V38C43 35.6131 42.0518 33.3239 40.364 31.636C38.6761 29.9482 36.3869 29 34 29Z" fill="none" stroke="#FFB9B9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </g>
         </svg>
       </span>
@@ -421,9 +420,9 @@
     <main id="stage">
       <!-- Écran d'accueil -->
       <div id="welcome">
-        <img id="welcome-bg" class="welcome-bg" src="assets/logo-mark.svg" alt="">
+        <img id="welcome-bg" class="welcome-bg" src="assets/logo-orical-pdf.svg" alt="">
         <div class="welcome-card">
-          <img src="assets/logo.svg" alt="" width="96" height="96">
+          <img src="assets/logo-orical-pdf.svg" alt="" width="96" height="96">
           <h1>Orical PDF</h1>
           <p class="muted">Lisez, annotez et modifiez vos PDF, hors ligne.</p>
           <button id="welcome-open" class="primary"><span class="ico" data-icon="folder-open"></span>Ouvrir un PDF</button>
@@ -474,9 +473,9 @@
   <div id="recents-menu" class="menu" role="menu" hidden></div>
   <div id="lib-menu" class="menu lib-menu" role="menu" hidden></div>
 
-  <!-- Indicateur de chargement : la page du logo qui tourne -->
+  <!-- Indicateur de chargement : le logo qui tourne (le halo décalé rend la rotation visible) -->
   <div id="busy" hidden role="status" aria-live="polite">
-    <img class="spinner" src="assets/logo-mark.svg" alt="" width="60" height="60">
+    <img class="spinner" src="assets/logo-orical-pdf.svg" alt="" width="60" height="60">
     <span id="busy-label">Chargement…</span>
   </div>
 
@@ -798,6 +797,7 @@
   <!-- Aide intégrée (F1) : contenu dans js/help-content.js -->
   <section id="helpws" class="helpws" aria-label="Aide" hidden>
     <header class="help-head">
+      <img class="help-logo" src="assets/logo-orical-pdf.svg" alt="" width="28" height="28">
       <h2>Aide</h2>
       <span id="help-version" class="muted small"></span>
       <input id="help-q" type="search" placeholder="Rechercher dans l'aide (ex. échelle, caviardage, Ctrl+D)" aria-label="Rechercher dans l'aide">
@@ -945,7 +945,7 @@
   <div id="about" class="overlay-dialog" hidden>
     <div class="dialog wide" role="dialog" aria-modal="true" aria-labelledby="about-title">
       <div class="about-head">
-        <img src="assets/logo.svg" alt="" width="72" height="72">
+        <img src="assets/logo-orical-pdf.svg" alt="" width="72" height="72">
         <div><h2 id="about-title">Orical PDF</h2><p id="about-suite" class="muted"></p><p id="about-version" class="muted"></p><p id="about-license" class="muted small"></p><p id="about-copyright" class="muted small"></p></div>
       </div>
       <p id="about-offline" class="about-offline"><strong>100 % hors-ligne, aucune donnée envoyée</strong> : pas de connexion réseau, pas de télémétrie, pas de mise à jour automatique. <span id="about-net"></span></p>
