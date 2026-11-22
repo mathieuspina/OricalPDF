@@ -1,10 +1,10 @@
-# Note chaque nouveau processus lié à Spin A Doc (application, installeur, désinstalleur, Au_.exe, tasklist/taskkill lancés par l'installeur)
+# Note chaque nouveau processus lié à Orical PDF (application, installeur, désinstalleur, Au_.exe, tasklist/taskkill lancés par l'installeur)
 # avec PID, parent, chemin et ligne de commande, puis sa disparition. S'arrête quand le fichier $stop existe.
 param([string]$out, [string]$stop)
 $seen = @{}
 while (-not (Test-Path $stop)) {
   $now = Get-Date
-  $procs = Get-CimInstance Win32_Process -Filter "Name='Spin A Doc.exe' OR Name LIKE 'SpinADoc%' OR Name LIKE 'Uninstall Spin%' OR Name LIKE 'Au_%' OR Name='taskkill.exe' OR Name='tasklist.exe' OR Name='WerFault.exe'"
+  $procs = Get-CimInstance Win32_Process -Filter "Name='Orical PDF.exe' OR Name='Spin A Doc.exe' OR Name LIKE 'OricalPDF%' OR Name LIKE 'SpinADoc%' OR Name LIKE 'Uninstall Orical%' OR Name LIKE 'Uninstall Spin%' OR Name LIKE 'Au_%' OR Name='taskkill.exe' OR Name='tasklist.exe' OR Name='WerFault.exe'"
   $ids = @{}
   foreach ($p in $procs) {
     $ids[$p.ProcessId] = 1

@@ -29,7 +29,7 @@ import * as FavUI from './favorites-ui.js';
 import * as EditUI from './editable-ui.js';
 
 const { DocModel } = window;
-const APP = 'Spin A Doc';
+const APP = 'Orical PDF';
 V.hooks.toast = toast;
 
 const active = () => store.active;
@@ -572,6 +572,8 @@ $('btn-about').addEventListener('click', async () => {
   const info = await api.getAbout();
   $('about-title').textContent = info.name;
   $('about-version').textContent = `Version ${info.version}` + (info.buildDate ? ` — build du ${info.buildDate.split('-').reverse().join('/')}` : ' — version de développement');
+  $('about-suite').textContent = info.suite;
+  $('about-license').textContent = info.license;
   $('about-copyright').textContent = info.copyright;
   $('about-net').textContent = `Requêtes réseau bloquées depuis le démarrage : ${info.net.blocked}.`;
   $('about-diag-msg').textContent = '';

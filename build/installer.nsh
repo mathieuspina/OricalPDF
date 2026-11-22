@@ -1,4 +1,4 @@
-; Spin A Doc — compléments à l'installeur NSIS d'electron-builder (inclus automatiquement : build/installer.nsh).
+; Orical PDF — compléments à l'installeur NSIS d'electron-builder (inclus automatiquement : build/installer.nsh).
 ;
 ; Désinstallation : page « Données de l'utilisateur » avec la case « Supprimer aussi mes réglages et ma bibliothèque », DÉCOCHÉE par défaut.
 ; Données de l'utilisateur : $APPDATA\Spin A Doc (réglages, récents, bibliothèque de tampons et de signatures, échelles de mesure).
@@ -21,17 +21,17 @@
 !ifndef BUILD_UNINSTALLER
 !macro customInstall
   StrCpy $0 "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
-  WriteRegStr SHCTX "Software\Classes\${SPIN_PROGID}" "" "Document PDF (Spin A Doc)"
+  WriteRegStr SHCTX "Software\Classes\${SPIN_PROGID}" "" "Document PDF (Orical PDF)"
   WriteRegStr SHCTX "Software\Classes\${SPIN_PROGID}\DefaultIcon" "" "$0,0"
   WriteRegStr SHCTX "Software\Classes\${SPIN_PROGID}\shell\open\command" "" '"$0" "%1"'
   WriteRegStr SHCTX "Software\Classes\.pdf\OpenWithProgids" "${SPIN_PROGID}" ""
-  WriteRegStr SHCTX "Software\Classes\Applications\${APP_EXECUTABLE_FILENAME}" "FriendlyAppName" "Spin A Doc"
+  WriteRegStr SHCTX "Software\Classes\Applications\${APP_EXECUTABLE_FILENAME}" "FriendlyAppName" "Orical PDF"
   WriteRegStr SHCTX "Software\Classes\Applications\${APP_EXECUTABLE_FILENAME}\SupportedTypes" ".pdf" ""
   WriteRegStr SHCTX "Software\Classes\Applications\${APP_EXECUTABLE_FILENAME}\shell\open\command" "" '"$0" "%1"'
-  WriteRegStr SHCTX "${SPIN_CAPS}" "ApplicationName" "Spin A Doc"
+  WriteRegStr SHCTX "${SPIN_CAPS}" "ApplicationName" "Orical PDF"
   WriteRegStr SHCTX "${SPIN_CAPS}" "ApplicationDescription" "Lecteur et éditeur de documents PDF"
   WriteRegStr SHCTX "${SPIN_CAPS}\FileAssociations" ".pdf" "${SPIN_PROGID}"
-  WriteRegStr SHCTX "Software\RegisteredApplications" "Spin A Doc" "${SPIN_CAPS}"
+  WriteRegStr SHCTX "Software\RegisteredApplications" "Orical PDF" "${SPIN_CAPS}"
   System::Call "shell32::SHChangeNotify(i 0x08000000, i 0x1000, p 0, p 0)"
 !macroend
 !endif
@@ -53,7 +53,7 @@ Function un.spinDataPage
   ${If} $0 == error
     Abort
   ${EndIf}
-  ${NSD_CreateLabel} 0 0 100% 40u "Vos réglages et votre bibliothèque sont conservés : ils seront retrouvés si vous réinstallez Spin A Doc. Cochez la case pour les supprimer aussi (dossier « $APPDATA\Spin A Doc »)."
+  ${NSD_CreateLabel} 0 0 100% 40u "Vos réglages et votre bibliothèque sont conservés : ils seront retrouvés si vous réinstallez Orical PDF. Cochez la case pour les supprimer aussi (dossier « $APPDATA\Spin A Doc »)."
   Pop $0
   ${NSD_CreateCheckbox} 0 48u 100% 14u "Supprimer aussi mes réglages et ma bibliothèque"
   Pop $SpinDelBox
@@ -78,7 +78,7 @@ FunctionEnd
   DeleteRegValue SHCTX "Software\Classes\.pdf\OpenWithProgids" "${SPIN_PROGID}"
   DeleteRegKey SHCTX "Software\Classes\${SPIN_PROGID}"
   DeleteRegKey SHCTX "Software\Classes\Applications\${APP_EXECUTABLE_FILENAME}"
-  DeleteRegValue SHCTX "Software\RegisteredApplications" "Spin A Doc"
+  DeleteRegValue SHCTX "Software\RegisteredApplications" "Orical PDF"
   DeleteRegKey SHCTX "Software\SpinADoc"
   System::Call "shell32::SHChangeNotify(i 0x08000000, i 0x1000, p 0, p 0)"
   ${IfNot} ${isUpdated}

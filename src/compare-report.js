@@ -55,7 +55,7 @@
   async function buildReport(PDFLib, PdfEdit, pages) {
     const doc = await PDFLib.PDFDocument.create();
     doc.setTitle('Comparaison de documents');
-    doc.setProducer('Spin A Doc');
+    doc.setProducer('Orical PDF');
     const edits = [];
     for (let i = 0; i < pages.length; i++) {
       const p = pages[i];

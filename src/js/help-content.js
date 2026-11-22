@@ -8,8 +8,8 @@ const traps = (...l) => `<div class="help-traps"><strong>Pièges</strong><ul>${l
 
 export const SECTIONS = [
   { id: 'demarrer', title: 'Ouvrir, enregistrer, onglets', html: `
-<p>Spin A Doc ouvre plusieurs PDF dans des onglets. Tout ce que vous ajoutez (texte, formes, mesures, tampons…) reste modifiable tant que le
-document est ouvert. À l'enregistrement, vous choisissez : <strong>Modifiable</strong> (Spin A Doc pourra le rééditer à la réouverture) ou
+<p>Orical PDF ouvre plusieurs PDF dans des onglets. Tout ce que vous ajoutez (texte, formes, mesures, tampons…) reste modifiable tant que le
+document est ouvert. À l'enregistrement, vous choisissez : <strong>Modifiable</strong> (Orical PDF pourra le rééditer à la réouverture) ou
 <strong>Aplati</strong> (figé dans la page). Dans les deux cas, les autres lecteurs le voient comme le contenu de la page.</p>
 ${steps('Ouvrir : ' + K('Ctrl+O') + ', bouton « Ouvrir » de l\'onglet Accueil, glisser un PDF sur la fenêtre, ou la liste « Récents ».',
     'Travailler : chaque modification est annulable (' + K('Ctrl+Z') + ' / ' + K('Ctrl+Y') + ').',
@@ -56,7 +56,7 @@ ${steps('Pivoter : ' + K('Ctrl+Maj++') + ' / ' + K('Ctrl+Maj+-') + ' (page coura
     'Recadrer : tracer le cadre puis valider (le contenu hors cadre n\'est pas supprimé, il est masqué).',
     'Extraire ou diviser : vers de nouveaux fichiers (jamais d\'écrasement).',
     'Numéroter : position, format (« Page 1 / 12 », « A-01 »…), pages concernées ; aperçu avant écriture.')}
-${traps('Une opération de pages reconstruit le fichier à l\'enregistrement : les signets suivent les pages, mais les liens internes et les champs de formulaire du PDF d\'origine ne sont pas conservés (les champs créés dans Spin A Doc, eux, le sont).')}` },
+${traps('Une opération de pages reconstruit le fichier à l\'enregistrement : les signets suivent les pages, mais les liens internes et les champs de formulaire du PDF d\'origine ne sont pas conservés (les champs créés dans Orical PDF, eux, le sont).')}` },
 
   { id: 'fusion', title: 'Fusion de PDF', html: `
 <p>Assembler plusieurs PDF en un seul (onglet Pages ou Accueil, « Fusionner »).</p>
@@ -81,7 +81,7 @@ ${traps('Comparaison d\'images : pas de rotation ni de changement d\'échelle en
 <p>Rendre cherchable et copiable le texte d'un plan scanné (onglet Document, « Reconnaître le texte »), en français et en anglais, sans réseau.</p>
 ${steps('Choisir les pages, la langue, la qualité et le type de page (texte ou plan).', 'Le texte reconnu est ajouté en couche invisible ; « mots peu sûrs » les surligne.', 'Enregistrer : la couche est écrite dans le PDF.')}
 ${traps('Qualité dépendante du scan (≥ 200 dpi, net). Écriture manuscrite et petits textes mal lus.')}
-<p><b>Page posée de côté ou à l'envers</b> (type « texte », option « Détecter l'orientation de la page ») : si la lecture à l'endroit est douteuse, Spin A Doc
+<p><b>Page posée de côté ou à l'envers</b> (type « texte », option « Détecter l'orientation de la page ») : si la lecture à l'endroit est douteuse, Orical PDF
 essaie les quatre sens sur une partie de la page et garde celui qui donne le texte le plus sûr. Cela ajoute quelques secondes, seulement aux
 pages douteuses ; une page droite et nette n'est pas ralentie.</p>
 <p><b>Limites</b> : écriture manuscrite ; plans à faible contraste ou très clairsemés (peu de texte pour décider du sens : choisir le type
@@ -98,7 +98,7 @@ ${steps('Créer : choisir un type (texte, case à cocher, boutons radio, liste d
 ${traps('Pas de JavaScript : ni calcul, ni contrôle de format (la date est un texte jj/mm/aaaa).', 'Après réouverture, les champs créés se remplissent mais ne se déplacent plus.')}` },
 
   { id: 'caviardage', title: 'Caviardage : supprimer définitivement une information', html: `
-<div class="help-warn"><strong>À lire avant de diffuser.</strong> Spin A Doc ne garantit pas qu'aucune information ne subsiste : vérifiez toujours le fichier
+<div class="help-warn"><strong>À lire avant de diffuser.</strong> Orical PDF ne garantit pas qu'aucune information ne subsiste : vérifiez toujours le fichier
 produit dans un autre lecteur PDF (recherche du mot, copier-coller, propriétés du document).</div>
 <p><strong>Méthode</strong> : chaque page qui contient une zone est remplacée par une <strong>image</strong> où les zones sont peintes. Le texte, les traits,
 les images, les annotations et les champs de cette page n'existent plus dans le fichier enregistré.</p>
@@ -121,17 +121,17 @@ ${steps('Propriétés : titre, auteur, sujet, mots-clés (écrits à l\'enregist
 ${traps('Un mot de passe oublié ne peut pas être retrouvé.')}` },
 
   { id: 'modifiable', title: 'Enregistrer : modifiable ou aplati ?', html: `
-<p>À l'enregistrement d'un document annoté, Spin A Doc demande comment enregistrer les annotations (texte, formes, tampons, signatures, images, mesures,
+<p>À l'enregistrement d'un document annoté, Orical PDF demande comment enregistrer les annotations (texte, formes, tampons, signatures, images, mesures,
 légendes, numérotation, champs créés) :</p>
-<ul><li><strong>Modifiables</strong> : le PDF reste lisible partout, annotations visibles et imprimées ; rouvert dans Spin A Doc, chaque objet se
+<ul><li><strong>Modifiables</strong> : le PDF reste lisible partout, annotations visibles et imprimées ; rouvert dans Orical PDF, chaque objet se
 déplace et se modifie à nouveau. L'indicateur « Annotations modifiables » apparaît dans la barre d'état.</li>
 <li><strong>Aplaties</strong> : les annotations font partie des pages et ne se modifient plus (document définitif, signé, à diffuser).</li></ul>
 ${steps('Choix à chaque enregistrement, ou « Mémoriser mon choix » (pour le changer : Réglages > Annotations, « À l\'enregistrement »).',
     'Un document rouvert en modifiable s\'enregistre de nouveau en modifiable ; clic sur l\'indicateur de la barre d\'état : enregistrer en choisissant Modifiable ou Aplati.',
     'Un gros fichier se restaure en arrière-plan (bandeau) ; « Ouvrir sans les annotations modifiables » l\'ouvre avec ses annotations figées.')}
-${traps('Modifiable : toute personne qui ouvre le fichier avec Spin A Doc peut déplacer ou retirer les annotations, y compris les tampons et signatures. Pour un document signé ou définitif : Aplati.',
+${traps('Modifiable : toute personne qui ouvre le fichier avec Orical PDF peut déplacer ou retirer les annotations, y compris les tampons et signatures. Pour un document signé ou définitif : Aplati.',
     'Caviardage appliqué ou « Nettoyer les métadonnées » : enregistrement toujours en Aplati (aucune information cachée ne doit subsister).',
-    'Dans les autres lecteurs (Acrobat, Edge…), les annotations sont visibles mais font partie de la page : elles ne s\'y modifient pas. Si un autre outil réécrit le fichier (contenu des pages, nombre de pages), Spin A Doc l\'ouvre avec les annotations figées et l\'indique.',
+    'Dans les autres lecteurs (Acrobat, Edge…), les annotations sont visibles mais font partie de la page : elles ne s\'y modifient pas. Si un autre outil réécrit le fichier (contenu des pages, nombre de pages), Orical PDF l\'ouvre avec les annotations figées et l\'indique.',
     'À la réouverture, l\'historique d\'annulation repart de zéro ; les opérations de pages faites avant l\'enregistrement sont intégrées au fichier.',
     'Fusion : un fichier modifiable ajouté à une fusion garde ses annotations visibles, mais figées dans le fichier fusionné.')}` },
 
@@ -160,34 +160,34 @@ ${[['F1', 'Aide'], ['Ctrl+O', 'Ouvrir'], ['Ctrl+S', 'Enregistrer'], ['Ctrl+P', '
 </tbody></table>` },
 
   { id: 'limites', title: 'Limites connues', html: `<ul>
-<li><b>Annotations</b> : modifiables à la réouverture seulement si le fichier a été enregistré en « Modifiable » avec Spin A Doc (1.2.0 ou plus) et n'a pas été réécrit par un autre outil ; l'historique d'annulation repart de zéro ; dans les autres lecteurs, elles sont visibles mais non modifiables.</li>
+<li><b>Annotations</b> : modifiables à la réouverture seulement si le fichier a été enregistré en « Modifiable » avec Orical PDF (1.2.0 ou plus) et n'a pas été réécrit par un autre outil ; l'historique d'annulation repart de zéro ; dans les autres lecteurs, elles sont visibles mais non modifiables.</li>
 <li><b>Champs de formulaire créés</b> : figés après réouverture (ils se remplissent, mais leur position et leurs propriétés ne se modifient plus) ; pas de JavaScript (calculs, formats, boutons d'action) ; liste à choix unique.</li>
 <li><b>Texte</b> : non éditable sur une page pivotée ; polices d'origine incorporées non réutilisables (Helvetica, Times, Courier) ; caractères hors jeu Windows latin remplacés par « ? » dans le texte ajouté.</li>
 <li><b>Mesure</b> : l'échelle n'est pas lue dans le PDF (à saisir ou à calibrer) ; pas d'aimantation sur un plan scanné.</li>
 <li><b>OCR</b> : écriture manuscrite mal lue ; fond gris très bruité ou taché : aucun texte reconnu ; tout caractère non latin est remplacé par « ? » dans la couche de texte invisible.</li>
 <li><b>Caviardage</b> : pages caviardées transformées en images (plus lourdes, texte à reconnaître par OCR) ; aucune garantie absolue : vérifiez toujours le fichier produit dans un autre lecteur PDF avant de le diffuser.</li>
-<li><b>Pages</b> : après une opération de pages, les liens internes et les champs du PDF d'origine ne sont pas conservés (les signets suivent les pages ; les champs créés dans Spin A Doc sont conservés).</li>
+<li><b>Pages</b> : après une opération de pages, les liens internes et les champs du PDF d'origine ne sont pas conservés (les signets suivent les pages ; les champs créés dans Orical PDF sont conservés).</li>
 <li><b>Impression</b> sur imprimante physique et traceur non vérifiée au papier par les tests automatiques.</li></ul>` },
 
   { id: 'smartscreen', title: "Avertissement de Windows à l'installation", html: `
-<p>Spin A Doc n'est pas signé numériquement (un certificat de signature de code est payant, et il n'y a pas de budget pour cela pour l'instant). Windows SmartScreen peut donc afficher « Windows a protégé votre ordinateur » au lancement de l'installeur ou de la version portable. C'est le comportement habituel pour un logiciel non signé et peu téléchargé ; cela ne signale pas un problème détecté dans le fichier.</p>
+<p>Orical PDF n'est pas signé numériquement (un certificat de signature de code est payant, et il n'y a pas de budget pour cela pour l'instant). Windows SmartScreen peut donc afficher « Windows a protégé votre ordinateur » au lancement de l'installeur ou de la version portable. C'est le comportement habituel pour un logiciel non signé et peu téléchargé ; cela ne signale pas un problème détecté dans le fichier.</p>
 ${steps('Cliquer sur « Informations complémentaires ».', 'Cliquer sur « Exécuter quand même ».')}
-<p><b>Vérifier le fichier téléchargé</b> : comparer son empreinte SHA-256 avec celle du fichier <code>SHA256SUMS.txt</code> joint à la Release. Dans PowerShell, dans le dossier du téléchargement : <code>Get-FileHash .\\SpinADoc-Setup-x.y.z.exe -Algorithm SHA256</code>. Les deux valeurs doivent être identiques (la casse des lettres ne compte pas) ; sinon, ne pas lancer le fichier et le télécharger de nouveau.</p>` },
+<p><b>Vérifier le fichier téléchargé</b> : comparer son empreinte SHA-256 avec celle du fichier <code>SHA256SUMS.txt</code> joint à la Release. Dans PowerShell, dans le dossier du téléchargement : <code>Get-FileHash .\\OricalPDF-Setup-x.y.z.exe -Algorithm SHA256</code>. Les deux valeurs doivent être identiques (la casse des lettres ne compte pas) ; sinon, ne pas lancer le fichier et le télécharger de nouveau.</p>` },
 
   { id: 'confidentialite', title: 'Hors-ligne, confidentialité, diagnostic', html: `
-<p>Spin A Doc fonctionne <strong>100 % hors-ligne</strong> : aucune connexion réseau, aucune télémétrie, aucune mise à jour automatique. Toute tentative de
+<p>Orical PDF fonctionne <strong>100 % hors-ligne</strong> : aucune connexion réseau, aucune télémétrie, aucune mise à jour automatique. Toute tentative de
 requête réseau est bloquée et comptée (Réglages > À propos).</p>
 ${steps('Signaler un problème : Réglages > À propos > « Copier les informations de diagnostic ».',
     'Coller le texte dans votre message : version, Windows, mémoire, écrans, noms des imprimantes. Aucun nom de fichier, chemin ni contenu de document n\'y figure.')}` },
 
   { id: 'windows', title: 'Lecteur PDF de Windows', html: `<p>Réglages > <b>Intégration à Windows</b>.</p><ul>
-<li><b>Lecteur PDF</b> : l'installation ajoute Spin A Doc à « Ouvrir avec » (clic droit sur un PDF), sans remplacer votre lecteur actuel. Pour en faire le lecteur par défaut : bouton « Applications par défaut de Windows… ».</li></ul>` },
+<li><b>Lecteur PDF</b> : l'installation ajoute Orical PDF à « Ouvrir avec » (clic droit sur un PDF), sans remplacer votre lecteur actuel. Pour en faire le lecteur par défaut : bouton « Applications par défaut de Windows… ».</li></ul>` },
   { id: 'informatique', title: 'Notes pour le service informatique', html: `<ul>
-<li>Installeur par utilisateur (NSIS), sans droits administrateur. Dossier par défaut : <code>%LOCALAPPDATA%\\Programs\\Spin A Doc</code> (modifiable).</li>
+<li>Installeur par utilisateur (NSIS), sans droits administrateur. Dossier par défaut : <code>%LOCALAPPDATA%\\Programs\\Orical PDF</code> (modifiable).</li>
 <li>Données de l'utilisateur (réglages, récents, bibliothèque de tampons et signatures, échelles) : <code>%APPDATA%\\Spin A Doc</code>.</li>
 <li>Aucun service Windows, aucune tâche planifiée, aucune connexion réseau, aucune télémétrie.</li>
-<li>Installation silencieuse : <code>SpinADoc-Setup-x.y.z.exe /S</code> ; dossier imposé : <code>/D=C:\\Programmes\\SpinADoc</code> (toujours en dernier, sans guillemets).</li>
-<li>Désinstallation : Paramètres > Applications, ou <code>"Uninstall Spin A Doc.exe" /S</code> dans le dossier d'installation ; les données de l'utilisateur sont conservées,
+<li>Installation silencieuse : <code>OricalPDF-Setup-x.y.z.exe /S</code> ; dossier imposé : <code>/D=C:\\Programmes\\OricalPDF</code> (toujours en dernier, sans guillemets).</li>
+<li>Désinstallation : Paramètres > Applications, ou <code>"Uninstall Orical PDF.exe" /S</code> dans le dossier d'installation ; les données de l'utilisateur sont conservées,
 sauf si la case « Supprimer aussi mes réglages et ma bibliothèque » est cochée (en silencieux : <code>/DELETEDATA=1</code>).</li>
 <li>Association .pdf : inscription dans « Ouvrir avec » seulement (<code>HKCU\Software\Classes\.pdf\OpenWithProgids</code> = <code>SpinADoc.pdf</code>, RegisteredApplications) ; la valeur par défaut de <code>.pdf</code> n'est jamais modifiée. Tout est retiré à la désinstallation.</li>
 <li>Version portable : aucun installateur, mêmes données dans <code>%APPDATA%\\Spin A Doc</code>.</li>

@@ -87,7 +87,7 @@
 
   // Messages de repli (le fichier s'ouvre comme un PDF normal, annotations figées).
   const REASONS = {
-    version: 'il a été enregistré par une version plus récente de Spin A Doc',
+    version: 'il a été enregistré par une version plus récente d’Orical PDF',
     corrompu: 'les informations de modification sont illisibles',
     pages: 'le nombre de pages a changé depuis l\'enregistrement (fichier modifié par un autre outil)',
     flux: 'le contenu des pages a été réécrit par un autre outil depuis l\'enregistrement',

@@ -1,4 +1,4 @@
-# Spin A Doc
+# Orical PDF
 
 Lecteur et éditeur de PDF pour Windows, pensé pour les plans (charpente, bâtiment) : annoter, mesurer, organiser les pages, imprimer à la taille
 réelle, comparer deux indices, reconnaître le texte, créer et remplir des formulaires, caviarder. **100 % hors-ligne** : aucune connexion réseau,
@@ -8,7 +8,7 @@ Version actuelle : **1.0.0** (historique : [CHANGELOG.md](CHANGELOG.md)).
 
 ## Fonctions
 
-| Domaine | Ce que fait Spin A Doc |
+| Domaine | Ce que fait Orical PDF |
 |---|---|
 | Lecture | Onglets, miniatures, signets, recherche, zoom, plein écran, rotation de l'affichage |
 | Annotations | Texte, modification de texte existant (par recouvrement), formes, flèches, nuages, surlignage, crayon, légende fléchée aimantée, notes, tampons, images, signature dessinée |
@@ -16,7 +16,7 @@ Version actuelle : **1.0.0** (historique : [CHANGELOG.md](CHANGELOG.md)).
 | Pages | Rotation, déplacement, duplication, suppression, insertion, recadrage, extraction, division, numérotation ; les signets suivent les pages |
 | Fusion | Plusieurs PDF en un, plages, rotation par fichier, un signet par fichier |
 | Impression | Taille réelle (plans A1 / A0), marges, couleur / gris / noir et blanc, file d'attente non bloquante |
-| Windows | « Ouvrir avec » pour les PDF (sans remplacer le lecteur par défaut) ; un PDF ouvert alors que Spin A Doc tourne s'ajoute en onglet |
+| Windows | « Ouvrir avec » pour les PDF (sans remplacer le lecteur par défaut) ; un PDF ouvert alors qu'Orical PDF tourne s'ajoute en onglet |
 | Comparaison | Superposition deux couleurs, côte à côte, fondu, zones modifiées, comparaison du texte, rapport PDF |
 | OCR | Français et anglais, sans réseau ; couche de texte invisible cherchable |
 | Formulaires | Remplissage des champs existants ; création de champs (texte, case, radio, listes, date), ordre de tabulation, prévisualisation |
@@ -29,18 +29,18 @@ Ce que chaque fonction fait exactement, ses étapes et ses pièges : aide intég
 
 ## Installation
 
-- **Installeur** `SpinADoc-Setup-x.y.z.exe` : par utilisateur, sans droits administrateur, dossier par défaut `%LOCALAPPDATA%\Programs\Spin A Doc`.
-  Installation silencieuse : `SpinADoc-Setup-x.y.z.exe /S` (dossier imposé : `/D=C:\Programmes\SpinADoc`, toujours en dernier).
-- **Portable** `SpinADoc-Portable-x.y.z.exe` : aucun installateur.
+- **Installeur** `OricalPDF-Setup-x.y.z.exe` : par utilisateur, sans droits administrateur, dossier par défaut `%LOCALAPPDATA%\Programs\Orical PDF`.
+  Installation silencieuse : `OricalPDF-Setup-x.y.z.exe /S` (dossier imposé : `/D=C:\Programmes\OricalPDF`, toujours en dernier).
+- **Portable** `OricalPDF-Portable-x.y.z.exe` : aucun installateur.
 - Données de l'utilisateur (réglages, récents, bibliothèque de tampons et signatures, échelles) : `%APPDATA%\Spin A Doc`.
 - Désinstallation : Paramètres Windows > Applications ; les données sont conservées sauf si la case « Supprimer aussi mes réglages et ma bibliothèque »
   est cochée (en silencieux : `/DELETEDATA=1`).
-- Fichiers PDF : Spin A Doc est ajouté à « Ouvrir avec », sans remplacer le lecteur par défaut (choix dans les Paramètres de Windows).
+- Fichiers PDF : Orical PDF est ajouté à « Ouvrir avec », sans remplacer le lecteur par défaut (choix dans les Paramètres de Windows).
 - Service informatique : [docs/NOTES-INFORMATIQUE.md](docs/NOTES-INFORMATIQUE.md).
 
 ## Avertissement de Windows au premier lancement
 
-Spin A Doc n'est pas signé numériquement (un certificat de signature de code est payant, et il n'y a pas de budget pour cela pour l'instant).
+Orical PDF n'est pas signé numériquement (un certificat de signature de code est payant, et il n'y a pas de budget pour cela pour l'instant).
 Windows SmartScreen peut donc afficher « Windows a protégé votre ordinateur » au lancement de l'installeur ou de la version portable.
 C'est le comportement habituel pour un logiciel non signé et peu téléchargé ; cela ne signale pas un problème détecté dans le fichier.
 
@@ -50,7 +50,7 @@ Pour vérifier que le fichier est bien celui publié, comparer son empreinte SHA
 Release (PowerShell, dans le dossier du téléchargement) :
 
 ```powershell
-Get-FileHash .\SpinADoc-Setup-1.2.1.exe -Algorithm SHA256
+Get-FileHash .\OricalPDF-Setup-1.2.1.exe -Algorithm SHA256
 ```
 
 Les deux valeurs doivent être identiques (la casse des lettres ne compte pas). Si elles diffèrent, ne pas lancer le fichier et le télécharger
@@ -58,7 +58,7 @@ de nouveau depuis la page des Releases du dépôt.
 
 ## Développement
 
-Prérequis : Windows, Node.js 20 ou plus récent. Exemple de dossier de travail : `C:\Projets\SpinADoc`.
+Prérequis : Windows, Node.js 20 ou plus récent. Exemple de dossier de travail : `C:\Projets\OricalPDF`.
 
 ```bash
 npm install
@@ -88,7 +88,7 @@ npm start
 
 ## Licence
 
-Spin A Doc © SpinASoft, tous droits réservés : le code est publié pour être consulté (voir `LICENSE`). Utilisation du logiciel : gratuite,
+Orical PDF © Orical, tous droits réservés : le code est publié pour être consulté (voir `LICENSE`). Utilisation du logiciel : gratuite,
 personnelle ou professionnelle, selon le contrat de licence `EULA.fr.md` (affiché par l'installeur). Confidentialité : aucune donnée collectée
 ni envoyée (`POLITIQUE-CONFIDENTIALITE.md`). Composants tiers : licences permissives (MIT, Apache-2.0, BSD, ISC, OFL), texte complet dans
 `THIRD_PARTY_LICENSES` et dans l'application (Réglages > À propos).

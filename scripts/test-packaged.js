@@ -2,6 +2,7 @@
 // un dossier temporaire, puis désinstallation). Lance les tests d'accueil sur chaque variante (+ mise en page sur l'app dépaquetée).
 // Usage : npm run dist && node scripts/test-packaged.js
 const { spawnSync } = require('child_process');
+const Names = require('./install-names.js');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -20,20 +21,17 @@ function run(label, exe, tests) {
   }
 }
 
-const unpacked = path.join(dist, 'win-unpacked', 'Spin A Doc.exe');
-const portable = path.join(dist, `SpinADoc-Portable-${version}.exe`);
-const setup = path.join(dist, `SpinADoc-Setup-${version}.exe`);
+const unpacked = path.join(dist, 'win-unpacked', 'Orical PDF.exe');
+const portable = path.join(dist, `OricalPDF-Portable-${version}.exe`);
+const setup = path.join(dist, `OricalPDF-Setup-${version}.exe`);
 for (const f of [unpacked, portable, setup]) if (!fs.existsSync(f)) { console.error('Introuvable : ' + f + ' (lancez « npm run dist »)'); process.exit(2); }
 // Garde : l'installeur de test a la même identité (appId) qu'une vraie installation ; sa désinstallation retirerait les raccourcis et la clé
-// de désinstallation de l'installation de l'utilisateur. Si Spin A Doc est déjà installé sur ce compte, on refuse de lancer le test.
+// de désinstallation de l'installation de l'utilisateur. Si Orical PDF est déjà installé sur ce compte, on refuse de lancer le test.
 {
-  const lnk = [path.join(process.env.USERPROFILE || '', 'Desktop', 'Spin A Doc.lnk'), path.join(process.env.APPDATA || '', 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Spin A Doc.lnk')].filter((p) => fs.existsSync(p));
-  const unKey = String.fromCharCode(92);
-  const q = spawnSync('reg', ['query', ['HKCU', 'Software', 'Microsoft', 'Windows', 'CurrentVersion', 'Uninstall'].join(unKey), '/s', '/f', 'Spin A Doc', '/d'], { encoding: 'utf8' });
-  const registered = /Spin A Doc/.test(q.stdout || '');
-  if (lnk.length || registered) {
-    console.error('REFUS : Spin A Doc est déjà installé sur ce compte (' + [registered ? 'entrée de désinstallation' : '', ...lnk.map((p) => path.basename(path.dirname(p)) + '\\' + path.basename(p))].filter(Boolean).join(', ') +
-      ').\nLa désinstallation de test les retirerait. Désinstallez Spin A Doc (Paramètres > Applications) puis relancez « npm run test:packaged ».');
+  const found = Names.existingInstall();
+  if (found.length) {
+    console.error('REFUS : Orical PDF (ou l\'ancienne version Spin A Doc) est déjà installé sur ce compte (' + found.join(', ') +
+      ').\nLa désinstallation de test les retirerait. Désinstallez-le (Paramètres > Applications) puis relancez « npm run test:packaged ».');
     process.exit(3);
   }
 }
@@ -45,13 +43,13 @@ run('portable', portable, ['test-home-ui.js']);
 //  1. tests sur la version installée, puis désinstallation SANS option : le dossier de données de test est conservé ;
 //  2. réinstallation, puis désinstallation avec /DELETEDATA=1 : le dossier de données de test est supprimé.
 // Le dossier de données de test (/DATADIR=, avec le fichier témoin .spinadoc-test exigé par l'installeur) remplace le profil réel, qui n'est
-// jamais touché : son contenu est comparé avant / après. La désinstallation doit avoir retiré « Spin A Doc.exe » elle-même.
+// jamais touché : son contenu est comparé avant / après. La désinstallation doit avoir retiré « Orical PDF.exe » elle-même.
 const dir = path.join(os.tmpdir(), 'spinadoc-installed');
-const running = () => { const r = spawnSync('tasklist', ['/FI', 'IMAGENAME eq Spin A Doc.exe', '/NH'], { encoding: 'utf8' }); return /Spin A Doc\.exe/i.test(r.stdout || ''); };
+const running = () => { const r = spawnSync('tasklist', ['/FI', 'IMAGENAME eq Orical PDF.exe', '/NH'], { encoding: 'utf8' }); return /Orical PDF\.exe/i.test(r.stdout || ''); };
 const wait = (s) => spawnSync(node, ['-e', 'setTimeout(()=>{},' + s * 1000 + ')']);
-const candidates = [dir, path.join(dir, 'Spin A Doc')];
-const findInstalled = () => candidates.find((d) => fs.existsSync(path.join(d, 'Spin A Doc.exe')));
-// Plantage sporadique de l'INSTALLEUR (le processus SpinADoc-Setup-x.y.z.exe lui-même ; code 0xC0000005 = violation d'accès) vu une fois en
+const candidates = [dir, path.join(dir, 'Orical PDF')];
+const findInstalled = () => candidates.find((d) => fs.existsSync(path.join(d, 'Orical PDF.exe')));
+// Plantage sporadique de l'INSTALLEUR (le processus OricalPDF-Setup-x.y.z.exe lui-même ; code 0xC0000005 = violation d'accès) vu une fois en
 // 0.12.0 au 1er essai ; NON reproduit en 40 installations silencieuses (enquête 5b : même fichier, empreinte unique = analyse antivirus
 // « première vue », ordre exact de test:packaged, dossier fixe). Cause inconnue. Il n'est PAS masqué : chaque code non nul est décrit (code,
 // durée, état du dossier, événements Application / Defender), ajouté au journal cumulatif test-logs/installer-crashes.log et rappelé en fin
@@ -73,9 +71,9 @@ function reportCrash(what, exe, r, t0, t1, attempt) {
   const code = r.status == null ? -1 : r.status;
   const lines = [
     '!!!!! ' + what + ' : code ' + code + ' (' + hex(code) + (STATUS[code >>> 0] ? ' = ' + STATUS[code >>> 0] : '') + '), essai ' + attempt + ', ' + ((t1 - t0) / 1000).toFixed(1) + ' s',
-    '      processus : ' + path.basename(exe) + ' (version ' + version + ') ; « Spin A Doc.exe » en cours : ' + running(),
+    '      processus : ' + path.basename(exe) + ' (version ' + version + ') ; « Orical PDF.exe » en cours : ' + running(),
     '      dossier cible : ' + (fs.existsSync(dir) ? fs.readdirSync(dir).length : 0) + ' élément(s), application ' + (findInstalled() ? 'présente' : 'absente') +
-      ', désinstalleur ' + (fs.existsSync(path.join(dir, 'Uninstall Spin A Doc.exe')) ? 'présent' : 'absent'),
+      ', désinstalleur ' + (fs.existsSync(path.join(dir, 'Uninstall Orical PDF.exe')) ? 'présent' : 'absent'),
     '      événements (Application 1000/1001/1002/1005/1026, Defender hors 1150/1151) : ' + eventsBetween(t0, t1),
   ];
   lines.forEach((l) => console.log(l));
@@ -103,13 +101,13 @@ const realProfile = path.join(process.env.APPDATA || '', 'Spin A Doc');
 const snapshot = () => (fs.existsSync(realProfile) ? fs.readdirSync(realProfile).sort().join('|') : '(absent)');
 const fakeData = (tag) => { const d = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-uninst-' + tag + '-')); fs.writeFileSync(path.join(d, '.spinadoc-test'), ''); fs.writeFileSync(path.join(d, 'settings.json'), '{}'); fs.mkdirSync(path.join(d, 'library')); return d; };
 function uninstall(home, args) {
-  const un = path.join(home, 'Uninstall Spin A Doc.exe');
+  const un = path.join(home, 'Uninstall Orical PDF.exe');
   if (!fs.existsSync(un)) { console.error('Désinstalleur absent : ' + un); failed++; return false; }
   for (let i = 0; i < 30 && running(); i++) wait(1);
   const t0 = new Date();
   const r = spawnSync(un, ['/S', ...args, '_?=' + home], { stdio: 'inherit' });
   if (r.status !== 0) { reportCrash('DÉSINSTALLEUR', un, r, t0, new Date(), 1); failed++; }
-  const gone = !fs.existsSync(path.join(home, 'Spin A Doc.exe'));
+  const gone = !fs.existsSync(path.join(home, 'Orical PDF.exe'));
   console.log('Désinstallée (programme retiré par le désinstalleur) : ' + gone);
   if (!gone) failed++;
   return gone;
@@ -119,12 +117,12 @@ const BS = String.fromCharCode(92); // barre oblique inverse (chemins du registr
 const key = (...parts) => parts.join(BS);
 const regQuery = (k, extra) => { const r = spawnSync('reg', ['query', k, ...(extra || [])], { encoding: 'utf8' }); return r.status === 0 ? r.stdout.split(/\r?\n/).map((l) => l.trim()).filter((l) => l && !l.startsWith('HKEY_')).join(' ; ') : '(absent)'; };
 function systemTrace(label) {
-  const desk = path.join(process.env.USERPROFILE || '', 'Desktop', 'Spin A Doc.lnk');
-  const start = path.join(process.env.APPDATA || '', 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Spin A Doc.lnk');
-  const un = spawnSync('reg', ['query', key('HKCU', 'Software', 'Microsoft', 'Windows', 'CurrentVersion', 'Uninstall'), '/s', '/f', 'Spin A Doc', '/d'], { encoding: 'utf8' });
-  const t = { pdfDefault: regQuery(key('HKCU', 'Software', 'Classes', '.pdf'), ['/ve']), openWith: regQuery(key('HKCU', 'Software', 'Classes', '.pdf', 'OpenWithProgids')), uninstallKey: /Spin A Doc/.test(un.stdout || ''), desktopLnk: fs.existsSync(desk), startLnk: fs.existsSync(start),
-    progId: regQuery(key('HKCU', 'Software', 'Classes', 'SpinADoc.pdf', 'shell', 'open', 'command'), ['/ve']), app: regQuery(key('HKCU', 'Software', 'Classes', 'Applications', 'Spin A Doc.exe', 'SupportedTypes')),
-    registered: regQuery(key('HKCU', 'Software', 'RegisteredApplications'), ['/v', 'Spin A Doc']), caps: regQuery(key('HKCU', 'Software', 'SpinADoc', 'Capabilities', 'FileAssociations')) };
+  const desk = path.join(process.env.USERPROFILE || '', 'Desktop', 'Orical PDF.lnk');
+  const start = path.join(process.env.APPDATA || '', 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Orical PDF.lnk');
+  const un = spawnSync('reg', ['query', key('HKCU', 'Software', 'Microsoft', 'Windows', 'CurrentVersion', 'Uninstall'), '/s', '/f', 'Orical PDF', '/d'], { encoding: 'utf8' });
+  const t = { pdfDefault: regQuery(key('HKCU', 'Software', 'Classes', '.pdf'), ['/ve']), openWith: regQuery(key('HKCU', 'Software', 'Classes', '.pdf', 'OpenWithProgids')), uninstallKey: /Orical PDF/.test(un.stdout || ''), desktopLnk: fs.existsSync(desk), startLnk: fs.existsSync(start),
+    progId: regQuery(key('HKCU', 'Software', 'Classes', 'SpinADoc.pdf', 'shell', 'open', 'command'), ['/ve']), app: regQuery(key('HKCU', 'Software', 'Classes', 'Applications', 'Orical PDF.exe', 'SupportedTypes')),
+    registered: regQuery(key('HKCU', 'Software', 'RegisteredApplications'), ['/v', 'Orical PDF']), caps: regQuery(key('HKCU', 'Software', 'SpinADoc', 'Capabilities', 'FileAssociations')) };
   console.log('Registre et raccourcis (' + label + ') : ' + JSON.stringify(t));
   return t;
 }
@@ -134,19 +132,19 @@ let home = install();
 if (home) {
   // Association 0.12.1 : « Ouvrir avec » seulement ; la valeur par défaut de HKCU\Software\Classes\.pdf ne doit PAS changer.
   const t = systemTrace('après installation');
-  const exe = path.join(home, 'Spin A Doc.exe');
+  const exe = path.join(home, 'Orical PDF.exe');
   const assoc = [
     ['valeur par défaut de .pdf inchangée', t.pdfDefault === sysBefore.pdfDefault],
     ['« Ouvrir avec » : SpinADoc.pdf ajouté, entrées existantes conservées', /SpinADoc\.pdf/.test(t.openWith) && sysBefore.openWith.split(' ; ').filter((l) => l !== '(absent)').every((l) => t.openWith.includes(l))],
     ['classe SpinADoc.pdf : commande = application installée "%1"', t.progId.includes('"' + exe + '" "%1"')],
-    ['Applications\\Spin A Doc.exe : type .pdf', /\.pdf/.test(t.app)],
+    ['Applications\\Orical PDF.exe : type .pdf', /\.pdf/.test(t.app)],
     ['RegisteredApplications + Capabilities (page « Applications par défaut »)', /SpinADoc/.test(t.registered) && /SpinADoc\.pdf/.test(t.caps)],
   ];
   for (const [n, ok] of assoc) { console.log('Association : ' + n + ' : ' + ok); if (!ok) failed++; }
 }
-if (!home) { console.error('Installation échouée : Spin A Doc.exe absent de ' + dir); failed++; }
+if (!home) { console.error('Installation échouée : Orical PDF.exe absent de ' + dir); failed++; }
 else {
-  run('installée', path.join(home, 'Spin A Doc.exe'), ['test-home-ui.js', 'test-about-ui.js', 'test-ocr-ui.js']);
+  run('installée', path.join(home, 'Orical PDF.exe'), ['test-home-ui.js', 'test-about-ui.js', 'test-ocr-ui.js']);
   const keep = fakeData('garde');
   uninstall(home, ['/DATADIR=' + keep]);
   const kept = fs.existsSync(path.join(keep, 'settings.json'));

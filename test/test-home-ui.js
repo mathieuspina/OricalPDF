@@ -1,6 +1,6 @@
 // Test complet de l'écran d'accueil et de l'onglet Accueil du ruban, élément par élément.
 // Usage : node test/test-home-ui.js                      (version de développement)
-//         SPINADOC_EXE="chemin\Spin A Doc.exe" node test/test-home-ui.js   (app empaquetée / portable / installée)
+//         SPINADOC_EXE="chemin\Orical PDF.exe" node test/test-home-ui.js   (app empaquetée / portable / installée)
 const fs = require('fs');
 const os = require('os');
 const path = require('path');

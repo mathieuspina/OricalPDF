@@ -42,7 +42,7 @@ function check(name, cond, detail) {
     const lim = await c.ev(`document.getElementById('aide-limites').textContent`);
     check('limites : réouverture, champs figés, page pivotée, échelle, OCR (manuscrit, fond bruité, « ? »), caviardage', ['réouverture', 'figés', 'pivotée', 'échelle', 'manuscrite', 'bruité', 'couche de texte invisible', 'autre lecteur'].every((w) => lim.includes(w)), lim);
     const ss = await c.ev(`document.getElementById('aide-smartscreen').textContent`);
-    check('avertissement SmartScreen : non signé, « Exécuter quand même », Get-FileHash', /pas signé/.test(ss) && /Exécuter quand même/.test(ss) && ss.includes('Get-FileHash .\\SpinADoc-Setup-'), ss);
+    check('avertissement SmartScreen : non signé, « Exécuter quand même », Get-FileHash', /pas signé/.test(ss) && /Exécuter quand même/.test(ss) && ss.includes('Get-FileHash .\\OricalPDF-Setup-'), ss);
     let bad = [];
     for (const href of links) {
       await c.ev(`(()=>{document.querySelector('#help-nav a[href="${href}"]').scrollIntoView({block:'nearest'}); return 1})()`);

@@ -16,8 +16,8 @@ function section(changelog, version) {
 function notes(changelog, version) {
   const s = section(changelog, version);
   if (!s) return null;
-  return `${s}\n\n### Installation\n- \`SpinADoc-Setup-${version}.exe\` : installeur par utilisateur, sans droits administrateur. Mise à jour : lancer le nouvel installeur par-dessus l'ancien (réglages et bibliothèque conservés).\n` +
-    `- \`SpinADoc-Portable-${version}.exe\` : version portable, sans installation.\n\n### Vérifier le fichier téléchargé\nComparer à la ligne correspondante de \`SHA256SUMS.txt\` :\n\n\`\`\`powershell\nGet-FileHash .\\SpinADoc-Setup-${version}.exe -Algorithm SHA256\n\`\`\`\n\nFichiers non signés numériquement : SmartScreen peut afficher un avertissement (« Informations complémentaires » > « Exécuter quand même »).\n`;
+  return `${s}\n\n### Installation\n- \`OricalPDF-Setup-${version}.exe\` : installeur par utilisateur, sans droits administrateur. Mise à jour : lancer le nouvel installeur par-dessus l'ancien (réglages et bibliothèque conservés).\n` +
+    `- \`OricalPDF-Portable-${version}.exe\` : version portable, sans installation.\n\n### Vérifier le fichier téléchargé\nComparer à la ligne correspondante de \`SHA256SUMS.txt\` :\n\n\`\`\`powershell\nGet-FileHash .\\OricalPDF-Setup-${version}.exe -Algorithm SHA256\n\`\`\`\n\nFichiers non signés numériquement : SmartScreen peut afficher un avertissement (« Informations complémentaires » > « Exécuter quand même »).\n`;
 }
 
 if (require.main === module) {

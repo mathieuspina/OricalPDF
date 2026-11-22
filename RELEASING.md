@@ -1,4 +1,4 @@
-# Publier une version de Spin A Doc
+# Publier une version d'Orical PDF
 
 Procédure pas à pas, sur le poste de développement (Windows, Node.js 20 ou plus, dépôt à jour, `gh` connecté au dépôt GitHub).
 Règles permanentes : **jamais** d'exécutable ni de PDF dans git (les binaires vont uniquement dans la Release GitHub), 100 % hors-ligne,
@@ -38,12 +38,12 @@ Les trois doivent être verts. Les tests d'interface tournent hors écran : ils 
 npm run dist
 ```
 
-Produit dans `dist/` : `SpinADoc-Setup-x.y.z.exe` (installeur), `SpinADoc-Portable-x.y.z.exe` (portable) et `win-unpacked/`.
+Produit dans `dist/` : `OricalPDF-Setup-x.y.z.exe` (installeur), `OricalPDF-Portable-x.y.z.exe` (portable) et `win-unpacked/`.
 `THIRD_PARTY_LICENSES` est vérifié par `npm run licences` et embarqué dans l'application.
 
 ## 4. Tester les versions empaquetées
 
-`test:packaged` et `test:update` installent et désinstallent l'application : ils **refusent de tourner** si Spin A Doc est déjà installé
+`test:packaged` et `test:update` installent et désinstallent l'application : ils **refusent de tourner** si Orical PDF est déjà installé
 sur le compte (même identité que l'installeur de test). Désinstaller d'abord sa propre copie (Paramètres > Applications), ou lancer ces
 tests sur un autre compte Windows.
 
@@ -80,10 +80,10 @@ npm run release-notes
 ## 5 bis. Aucune donnée personnelle (dépôt public)
 
 Les motifs privés (noms réels, chemins, adresses) sont dans un fichier **hors du dépôt** (une ligne par motif, voir l'en-tête du script).
-Extraire l'installeur (`node_modules/7zip-bin/win/x64/7za.exe x dist/SpinADoc-Setup-x.y.z.exe -o<dossier temporaire>`), puis :
+Extraire l'installeur (`node_modules/7zip-bin/win/x64/7za.exe x dist/OricalPDF-Setup-x.y.z.exe -o<dossier temporaire>`), puis :
 
 ```bash
-node scripts/scan-private.js --patterns ../private-patterns.txt --tree . --history . --dir <dossier>/resources --asar <dossier>/resources/app.asar --exe "<dossier>/Spin A Doc.exe" --exe dist/SpinADoc-Setup-x.y.z.exe
+node scripts/scan-private.js --patterns ../private-patterns.txt --tree . --history . --dir <dossier>/resources --asar <dossier>/resources/app.asar --exe "<dossier>/Orical PDF.exe" --exe dist/OricalPDF-Setup-x.y.z.exe
 ```
 
 Attendu : aucune occurrence privée ; les e-mails et chemins génériques restants sont fictifs (`exemple.fr`, `C:\Projets\…`) ou ceux des
@@ -100,7 +100,7 @@ git commit -m "Version x.y.z"
 ```
 
 ```bash
-git tag -a vx.y.z -m "Spin A Doc x.y.z"
+git tag -a vx.y.z -m "Orical PDF x.y.z"
 ```
 
 ```bash
@@ -114,7 +114,7 @@ Vérifier avant le commit que `git status` ne liste aucun `.exe`, `.pdf` ni secr
 Créer un **brouillon** (rien n'est visible tant qu'il n'est pas publié) :
 
 ```bash
-gh release create vx.y.z --draft --verify-tag --title "Spin A Doc x.y.z" --notes-file dist/RELEASE-NOTES-x.y.z.md dist/SpinADoc-Setup-x.y.z.exe dist/SpinADoc-Portable-x.y.z.exe dist/SHA256SUMS.txt
+gh release create vx.y.z --draft --verify-tag --title "Orical PDF x.y.z" --notes-file dist/RELEASE-NOTES-x.y.z.md dist/OricalPDF-Setup-x.y.z.exe dist/OricalPDF-Portable-x.y.z.exe dist/SHA256SUMS.txt
 ```
 
 Contrôler le brouillon sur GitHub (fichiers joints, tailles, notes), puis publier :
@@ -123,7 +123,7 @@ Contrôler le brouillon sur GitHub (fichiers joints, tailles, notes), puis publi
 gh release edit vx.y.z --draft=false
 ```
 
-Sans `gh` : GitHub > dépôt > « Releases » > « Draft a new release », choisir le tag `vx.y.z`, titre « Spin A Doc x.y.z », coller le contenu
+Sans `gh` : GitHub > dépôt > « Releases » > « Draft a new release », choisir le tag `vx.y.z`, titre « Orical PDF x.y.z », coller le contenu
 de `dist/RELEASE-NOTES-x.y.z.md`, joindre les trois fichiers, « Save draft », relire, puis « Publish release ».
 
 ## 8. Après la publication
@@ -143,7 +143,7 @@ de `dist/RELEASE-NOTES-x.y.z.md`, joindre les trois fichiers, « Save draft », 
 
 **Avant le passage en public**
 - [ ] Contrat de licence (EULA) rédigé sans conseil juridique : à faire relire par un juriste avant une diffusion large (`EULA.fr.md` ; de même pour `POLITIQUE-CONFIDENTIALITE.md`).
-- [ ] Recherche d'antériorité de la marque « Spin A Doc » / « SpinASoft » : bases INPI (data.inpi.fr) et EUIPO (TMview / eSearch plus).
+- [ ] Recherche d'antériorité de la marque « Orical PDF » / « Orical » : bases INPI (data.inpi.fr) et EUIPO (TMview / eSearch plus).
 - [ ] Scan privé final (section 5 bis) : zéro occurrence privée sur l'arbre, `git log -p --all`, l'installeur extrait et les propriétés des exécutables.
 
 **Passage en public** (Settings > General > Danger Zone > Change repository visibility > Public)
@@ -156,20 +156,20 @@ de `dist/RELEASE-NOTES-x.y.z.md`, joindre les trois fichiers, « Save draft », 
 - [ ] Publier le brouillon (`gh release edit vx.y.z --draft=false`).
 
 **Après la publication**
-- [ ] Télécharger l'installeur depuis la page de la Release, puis `Get-FileHash .SpinADoc-Setup-x.y.z.exe -Algorithm SHA256` : identique à
+- [ ] Télécharger l'installeur depuis la page de la Release, puis `Get-FileHash .OricalPDF-Setup-x.y.z.exe -Algorithm SHA256` : identique à
       `SHA256SUMS.txt` (et à `dist/SHA256SUMS.txt` du poste de construction).
 - [ ] Envoyer l'installeur et le portable à **VirusTotal** (virustotal.com, « File ») ; noter le résultat (quelques détections
       heuristiques sont possibles pour un exécutable non signé) et garder le lien des rapports.
 
 ## Mettre à jour un poste
 
-Spin A Doc n'a **pas de mise à jour automatique** : il ne se connecte jamais à Internet (principe du 100 % hors-ligne). Pour passer à une
+Orical PDF n'a **pas de mise à jour automatique** : il ne se connecte jamais à Internet (principe du 100 % hors-ligne). Pour passer à une
 nouvelle version :
 
-1. Fermer Spin A Doc.
-2. Télécharger `SpinADoc-Setup-x.y.z.exe` (et, si le service informatique le demande, vérifier son empreinte avec `SHA256SUMS.txt`).
+1. Fermer Orical PDF.
+2. Télécharger `OricalPDF-Setup-x.y.z.exe` (et, si le service informatique le demande, vérifier son empreinte avec `SHA256SUMS.txt`).
 3. Lancer le nouvel installeur **par-dessus l'ancien**, sans désinstaller : le programme est remplacé, les réglages, documents récents,
    tampons, signatures et échelles de mesure (`%APPDATA%\Spin A Doc`) sont conservés. Les raccourcis et l'entrée « Ouvrir avec » restent.
 4. Version portable : remplacer simplement l'ancien fichier `.exe` ; les données sont les mêmes (`%APPDATA%\Spin A Doc`).
 
-En silencieux (déploiement par le service informatique) : `SpinADoc-Setup-x.y.z.exe /S`. Ce scénario est vérifié par `npm run test:update`.
+En silencieux (déploiement par le service informatique) : `OricalPDF-Setup-x.y.z.exe /S`. Ce scénario est vérifié par `npm run test:update`.

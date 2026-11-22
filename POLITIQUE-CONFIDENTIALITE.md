@@ -1,10 +1,10 @@
-# Politique de confidentialité — Spin A Doc
+# Politique de confidentialité — Orical PDF
 
-Version du 12 novembre 2026. Éditeur : SpinASoft.
+Version du 12 novembre 2026. Éditeur : Orical.
 
 ## En résumé
 
-**Spin A Doc ne collecte, ne transmet et ne vend aucune donnée.** Le logiciel fonctionne entièrement hors ligne : il n'a ni compte
+**Orical PDF ne collecte, ne transmet et ne vend aucune donnée.** Le logiciel fonctionne entièrement hors ligne : il n'a ni compte
 utilisateur, ni télémétrie, ni statistiques d'usage, ni rapport de plantage automatique, ni mise à jour automatique, ni publicité.
 
 ## Ce qui est vérifié dans le logiciel
@@ -14,7 +14,7 @@ utilisateur, ni télémétrie, ni statistiques d'usage, ni rapport de plantage a
   politique de sécurité de contenu (CSP) qui n'autorise que les fichiers de l'application elle-même. Des tests automatiques vérifient ces
   deux points à chaque version.
 - **Pas de rapport de plantage** ni de module de mise à jour : aucun n'est inclus.
-- **Vérification orthographique** : assurée par le correcteur intégré à Windows, sur le poste ; Spin A Doc ne télécharge aucun dictionnaire.
+- **Vérification orthographique** : assurée par le correcteur intégré à Windows, sur le poste ; Orical PDF ne télécharge aucun dictionnaire.
 - **Reconnaissance de texte (OCR)** : faite sur le poste, avec des modèles de langue livrés avec le logiciel ; aucun document n'est envoyé.
 
 ## Données conservées sur votre poste uniquement
@@ -23,7 +23,7 @@ Dans `%APPDATA%\Spin A Doc` : réglages, liste des documents récents (chemins d
 échelles de mesure mémorisées par document, caches techniques du moteur d'affichage. Ces données ne quittent jamais le poste. Vous pouvez
 les effacer : Réglages (documents récents), ou en cochant « Supprimer aussi mes réglages et ma bibliothèque » lors de la désinstallation.
 
-Vos documents PDF restent là où vous les enregistrez ; Spin A Doc ne les copie nulle part ailleurs.
+Vos documents PDF restent là où vous les enregistrez ; Orical PDF ne les copie nulle part ailleurs.
 
 ## Informations de diagnostic
 

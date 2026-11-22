@@ -1,6 +1,6 @@
 // Empreintes SHA-256 de l'installeur et de la version portable : écrit dist/SHA256SUMS.txt (format de sha256sum : « empreinte  nom »),
 // à joindre à la Release pour que chacun (collègues, service informatique) vérifie le fichier téléchargé :
-//   PowerShell : Get-FileHash .\SpinADoc-Setup-x.y.z.exe -Algorithm SHA256   (comparer à la ligne du fichier)
+//   PowerShell : Get-FileHash .\OricalPDF-Setup-x.y.z.exe -Algorithm SHA256   (comparer à la ligne du fichier)
 // Usage : npm run checksums   (version de package.json ; les fichiers doivent exister dans dist/)
 const crypto = require('crypto');
 const fs = require('fs');
@@ -22,7 +22,7 @@ function writeSums(dir, names) {
   return text;
 }
 
-const releaseFiles = (version) => [`SpinADoc-Setup-${version}.exe`, `SpinADoc-Portable-${version}.exe`];
+const releaseFiles = (version) => [`OricalPDF-Setup-${version}.exe`, `OricalPDF-Portable-${version}.exe`];
 
 if (require.main === module) {
   const version = require('../package.json').version;

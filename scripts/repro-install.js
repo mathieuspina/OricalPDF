@@ -3,6 +3,7 @@
 //   A = même fichier à chaque fois ; B = copie à empreinte unique (octets ajoutés en fin de fichier) => analyse antivirus « première vue » ;
 //   C = dossier fixe %TEMP%/spinadoc-installed (comme test:packaged). Relevé des processus en parallèle : scripts/watch-procs.ps1.
 const { spawnSync, spawn } = require('child_process');
+const Names = require('./install-names.js');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -21,43 +22,42 @@ function events(t0, t1) {
     `@($a)+@($d)+@($w) | ?{$_} | %{ '  [' + $_.LogName + ' ' + $_.Id + ' ' + $_.TimeCreated.ToString('HH:mm:ss') + '] ' + (($_.Message -split "\`n" | select -first 8) -join ' / ') }`;
   return ps(cmd);
 }
-// Surveille l'apparition de « Spin A Doc.exe » pendant l'installation (application lancée à la fin ?)
+// Surveille l'apparition de « Orical PDF.exe » pendant l'installation (application lancée à la fin ?)
 function watchApp() {
-  const w = spawn(process.execPath, ['-e', `const {spawnSync}=require('child_process');let seen=0;const t=setInterval(()=>{const o=spawnSync('tasklist',['/FI','IMAGENAME eq Spin A Doc.exe','/NH'],{encoding:'utf8'}).stdout||'';if(/Spin A Doc/i.test(o))seen++;},400);process.stdin.on('data',()=>{clearInterval(t);process.stdout.write(String(seen));process.exit(0);});`], { stdio: ['pipe', 'pipe', 'ignore'] });
+  const w = spawn(process.execPath, ['-e', `const {spawnSync}=require('child_process');let seen=0;const t=setInterval(()=>{const o=spawnSync('tasklist',['/FI','IMAGENAME eq Orical PDF.exe','/NH'],{encoding:'utf8'}).stdout||'';if(/Orical PDF/i.test(o))seen++;},400);process.stdin.on('data',()=>{clearInterval(t);process.stdout.write(String(seen));process.exit(0);});`], { stdio: ['pipe', 'pipe', 'ignore'] });
   let buf = '';
   w.stdout.on('data', (d) => (buf += d));
   return { stop: () => new Promise((r) => { w.on('exit', () => r(+buf || 0)); w.stdin.write('x'); }) };
 }
 // Série D (motif vu en 0.12.2) : désinstallation puis RÉINSTALLATION IMMÉDIATE, N fois, dans le dossier fixe %TEMP%/spinadoc-installed, exactement
-// comme test:packaged (stdio hérité, dossier vidé juste avant, attente que « Spin A Doc.exe » ne tourne plus, /DATADIR= d'un dossier témoin).
+// comme test:packaged (stdio hérité, dossier vidé juste avant, attente que « Orical PDF.exe » ne tourne plus, /DATADIR= d'un dossier témoin).
 // Aucune relance : un code non nul est noté, puis une installation de RATTRAPAGE (comptée à part) remet l'application pour l'essai suivant.
-// Refus si Spin A Doc est déjà installé sur le compte (même identité que l'installeur de test).
+// Refus si Orical PDF est déjà installé sur le compte (même identité que l'installeur de test).
 function seriesD() {
   const BS = String.fromCharCode(92);
-  const q = spawnSync('reg', ['query', ['HKCU', 'Software', 'Microsoft', 'Windows', 'CurrentVersion', 'Uninstall'].join(BS), '/s', '/f', 'Spin A Doc', '/d'], { encoding: 'utf8' });
-  const lnk = [path.join(process.env.USERPROFILE || '', 'Desktop', 'Spin A Doc.lnk'), path.join(process.env.APPDATA || '', 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Spin A Doc.lnk')].filter((p) => fs.existsSync(p));
-  if (/Spin A Doc/.test(q.stdout || '') || lnk.length) { out('REFUS : Spin A Doc est installé sur ce compte (entrée de désinstallation ou raccourci) : série D non lancée.'); return; }
+  const found = Names.existingInstall();
+  if (found.length) { out('REFUS : Orical PDF ou Spin A Doc est installé sur ce compte (' + found.join(', ') + ') : série D non lancée.'); return; }
   const dir = path.join(os.tmpdir(), 'spinadoc-installed');
   const keep = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-uninst-repro-'));
   fs.writeFileSync(path.join(keep, '.spinadoc-test'), '');
   const hexOf = (c) => (c == null ? 'null' : '0x' + (c >>> 0).toString(16).toUpperCase());
   const install = (label) => {
     fs.rmSync(dir, { recursive: true, force: true });
-    for (let k = 0; k < 30 && running('Spin A Doc.exe'); k++) wait(1000);
+    for (let k = 0; k < 30 && running('Orical PDF.exe'); k++) wait(1000);
     const t0 = Date.now();
     const r = spawnSync(setupSrc, ['/S', '/D=' + dir], { stdio: 'inherit' });
     const ms = Date.now() - t0;
-    let ok = fs.existsSync(path.join(dir, 'Spin A Doc.exe'));
-    for (let k = 0; k < 45 && !ok && r.status === 0; k++) { wait(1000); ok = fs.existsSync(path.join(dir, 'Spin A Doc.exe')); }
+    let ok = fs.existsSync(path.join(dir, 'Orical PDF.exe'));
+    for (let k = 0; k < 45 && !ok && r.status === 0; k++) { wait(1000); ok = fs.existsSync(path.join(dir, 'Orical PDF.exe')); }
     out(`${label} installeur : code ${r.status} (${hexOf(r.status)}), ${(ms / 1000).toFixed(1)} s, installé : ${ok}`);
     return { code: r.status, ok };
   };
   const uninstall = (label) => {
-    const un = path.join(dir, 'Uninstall Spin A Doc.exe');
-    for (let k = 0; k < 30 && running('Spin A Doc.exe'); k++) wait(1000);
+    const un = path.join(dir, 'Uninstall Orical PDF.exe');
+    for (let k = 0; k < 30 && running('Orical PDF.exe'); k++) wait(1000);
     const t0 = Date.now();
     const u = spawnSync(un, ['/S', '/DATADIR=' + keep, '_?=' + dir], { stdio: 'inherit' });
-    out(`${label} désinstalleur : code ${u.status} (${hexOf(u.status)}), ${((Date.now() - t0) / 1000).toFixed(1)} s, programme retiré : ${!fs.existsSync(path.join(dir, 'Spin A Doc.exe'))}`);
+    out(`${label} désinstalleur : code ${u.status} (${hexOf(u.status)}), ${((Date.now() - t0) / 1000).toFixed(1)} s, programme retiré : ${!fs.existsSync(path.join(dir, 'Orical PDF.exe'))}`);
   };
   const t0 = new Date();
   out(`=== Série D : ${N} × (désinstallation → réinstallation immédiate) — ${t0.toISOString()} — ${path.basename(setupSrc)}`);
@@ -90,20 +90,20 @@ function seriesD() {
       fs.copyFileSync(setupSrc, setup);
       fs.appendFileSync(setup, Buffer.from('SPINREPRO' + Date.now() + Math.random()));
     }
-    for (let k = 0; k < 30 && running('Spin A Doc.exe'); k++) wait(1000);
+    for (let k = 0; k < 30 && running('Orical PDF.exe'); k++) wait(1000);
     const watcher = watchApp();
     const t0 = new Date();
     const r = spawnSync(setup, ['/S', '/D=' + dir], { stdio: 'ignore' });
     const t1 = new Date();
     const appSeen = await watcher.stop();
-    let installed = fs.existsSync(path.join(dir, 'Spin A Doc.exe'));
-    for (let k = 0; k < 30 && !installed; k++) { wait(1000); installed = fs.existsSync(path.join(dir, 'Spin A Doc.exe')); }
+    let installed = fs.existsSync(path.join(dir, 'Orical PDF.exe'));
+    for (let k = 0; k < 30 && !installed; k++) { wait(1000); installed = fs.existsSync(path.join(dir, 'Orical PDF.exe')); }
     const code = r.status, hex = code == null ? String(r.signal || r.error) : '0x' + (code >>> 0).toString(16).toUpperCase();
     if (code !== 0) crashes++;
     out(`#${i} installeur : code ${code} (${hex}), ${((t1 - t0) / 1000).toFixed(1)} s, installé : ${installed}, application vue pendant l'installation : ${appSeen ? 'oui (' + appSeen + ')' : 'non'}`);
     // désinstallation silencieuse
     let ucode = '(pas de désinstalleur)', ut1 = new Date();
-    const un = path.join(dir, 'Uninstall Spin A Doc.exe');
+    const un = path.join(dir, 'Uninstall Orical PDF.exe');
     if (fs.existsSync(un)) { const u = spawnSync(un, ['/S', '_?=' + dir], { stdio: 'ignore' }); ucode = u.status + ' (0x' + ((u.status >>> 0).toString(16).toUpperCase()) + ')'; ut1 = new Date(); }
     out(`#${i} désinstalleur : code ${ucode}`);
     const ev = events(t0, ut1);

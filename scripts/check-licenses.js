@@ -25,9 +25,9 @@ checker.init({ start: root, production: true, excludePrivatePackages: true }, (e
   entries.forEach(([n, i]) => console.log(`  ${n} — ${[].concat(i.licenses).join(', ')}`));
 
   if (generate) {
-    let out = 'Spin A Doc — licences tierces\n';
+    let out = 'Orical PDF — licences tierces\n';
     out += '================================\n\n';
-    out += 'Spin A Doc embarque les composants suivants. Aucune licence copyleft (GPL/AGPL/LGPL).\n\n';
+    out += 'Orical PDF embarque les composants suivants. Aucune licence copyleft (GPL/AGPL/LGPL).\n\n';
     out += '- Electron (MIT) — https://www.electronjs.org — Copyright (c) Electron contributors, GitHub Inc.\n';
     out += '  Les licences de Chromium et de ses composants sont fournies avec l\'application (LICENSES.chromium.html).\n';
     out += '- Données de langue de l\'OCR (français, anglais) : modèles « tessdata_best » du projet Tesseract OCR (Apache-2.0,\n';

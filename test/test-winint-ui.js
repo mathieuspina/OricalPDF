@@ -36,7 +36,7 @@ function check(name, cond, detail) {
     check(`boîte : cliquable (${ck.n}) et sans débordement (${ov.n})`, ck.n >= 2 && ck.bad.length === 0 && ov.bad.length === 0, [ck.bad, ov.bad].map((x) => x.slice(0, 3)));
     await c.click('#winint-defaults'); await sleep(300);
     const e = fs.existsSync(ext) ? fs.readFileSync(ext, 'utf8') : '';
-    check('« Applications par défaut » : ms-settings:defaultapps?registeredAppUser=Spin%20A%20Doc', e.includes('uri\tms-settings:defaultapps?registeredAppUser=Spin%20A%20Doc'), e);
+    check('« Applications par défaut » : ms-settings:defaultapps?registeredAppUser=Orical%20PDF', e.includes('uri\tms-settings:defaultapps?registeredAppUser=Orical%20PDF'), e);
     await c.key('Escape', { code: 'Escape', windowsVirtualKeyCode: 27 }); await sleep(150);
     check('Échap ferme la boîte', !(await vis('winint')));
 

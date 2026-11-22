@@ -19,7 +19,7 @@ const main = read('main.js');
 check('package.json : pas de fileAssociations (qui écrirait la valeur par défaut de .pdf)', !pkg.build.fileAssociations);
 check('installer.nsh : jamais d\'écriture de la valeur par défaut de Software\\Classes\\.pdf', !/WriteRegStr\s+\S+\s+"Software\\Classes\\\.pdf"\s+""/.test(ins) && !/APP_ASSOCIATE/.test(ins));
 check('installer.nsh : OpenWithProgids SpinADoc.pdf écrit puis retiré', /WriteRegStr SHCTX "Software\\Classes\\\.pdf\\OpenWithProgids" "\$\{SPIN_PROGID\}" ""/.test(ins) && /DeleteRegValue SHCTX "Software\\Classes\\\.pdf\\OpenWithProgids" "\$\{SPIN_PROGID\}"/.test(ins));
-check('installer.nsh : Applications\\…exe et RegisteredApplications écrits', /Software\\Classes\\Applications\\\$\{APP_EXECUTABLE_FILENAME\}\\SupportedTypes" "\.pdf"/.test(ins) && /WriteRegStr SHCTX "Software\\RegisteredApplications" "Spin A Doc"/.test(ins));
+check('installer.nsh : Applications\\…exe et RegisteredApplications écrits', /Software\\Classes\\Applications\\\$\{APP_EXECUTABLE_FILENAME\}\\SupportedTypes" "\.pdf"/.test(ins) && /WriteRegStr SHCTX "Software\\RegisteredApplications" "Orical PDF"/.test(ins));
 const caps = /!define SPIN_CAPS "([^"]+)"/.exec(ins)[1];
 const expand = (k) => k.split('${SPIN_CAPS}').join(caps);
 const written = [...ins.matchAll(/WriteRegStr SHCTX "([^"]+)"/g)].map((m) => m[1]);
@@ -36,7 +36,7 @@ check('main.js / preload.js : plus d\'IPC vprinter ni de dossier « Impressions 
 
 // 3. Processus principal : deuxième lancement et page « Applications par défaut »
 check('main.js : instance unique, fichiers d\'un deuxième lancement ouverts (ou mis en attente si la fenêtre n\'est pas prête)', /requestSingleInstanceLock/.test(main) && /'second-instance'/.test(main) && /pending\.push\(\.\.\.files\)/.test(main));
-check('main.js : app:default-apps → ms-settings:defaultapps?registeredAppUser=Spin A Doc', /'app:default-apps'/.test(main) && /ms-settings:defaultapps\?registeredAppUser=' \+ encodeURIComponent\('Spin A Doc'\)/.test(main));
+check('main.js : app:default-apps → ms-settings:defaultapps?registeredAppUser=Orical PDF', /'app:default-apps'/.test(main) && /ms-settings:defaultapps\?registeredAppUser=' \+ encodeURIComponent\('Orical PDF'\)/.test(main));
 
 console.log(failures.length ? `\n${failures.length} échec(s) / ${passed + failures.length}` : `\nOK : ${passed} vérifications.`);
 process.exit(failures.length ? 1 : 0);

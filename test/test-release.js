@@ -23,7 +23,7 @@ const txt = writeSums(tmp, ['a.exe', 'b.exe']);
 const lines = fs.readFileSync(path.join(tmp, 'SHA256SUMS.txt'), 'utf8').trim().split('\n');
 check('SHA256SUMS.txt : une ligne « empreinte  nom » par fichier', lines.length === 2 && lines.every((l) => /^[0-9a-f]{64} {2}\S+\.exe$/.test(l)) && txt.endsWith('\n'), lines);
 check('gros fichier lu par blocs = même empreinte que d\'un coup', lines[1].startsWith(require('crypto').createHash('sha256').update(fs.readFileSync(path.join(tmp, 'b.exe'))).digest('hex')));
-check('fichiers de la Release : installeur et portable de la version', JSON.stringify(releaseFiles('1.2.3')) === JSON.stringify(['SpinADoc-Setup-1.2.3.exe', 'SpinADoc-Portable-1.2.3.exe']));
+check('fichiers de la Release : installeur et portable de la version', JSON.stringify(releaseFiles('1.2.3')) === JSON.stringify(['OricalPDF-Setup-1.2.3.exe', 'OricalPDF-Portable-1.2.3.exe']));
 fs.rmSync(tmp, { recursive: true, force: true });
 
 // 2. CHANGELOG et notes de version
@@ -31,7 +31,7 @@ const cl = fs.readFileSync(path.join(root, 'CHANGELOG.md'), 'utf8');
 check(`CHANGELOG : section de la version courante (${version})`, !!section(cl, version));
 check('CHANGELOG : de 0.1.0 à la version courante, sans trou dans les versions publiées du dépôt', ['0.1.0', '0.2.0', '0.3.0', '0.4.0', '0.5.0', '0.6.0', '0.7.0', '0.8.0', '0.9.0', '0.10.0', '0.11.0', '0.12.0', '0.12.1', '0.12.2'].every((v) => !!section(cl, v)));
 const n = notes(cl, version);
-check('notes de version : section + installation + vérification des empreintes', n && n.includes(section(cl, version)) && n.includes(`SpinADoc-Setup-${version}.exe`) && n.includes('SHA256SUMS.txt') && n.includes('Get-FileHash'));
+check('notes de version : section + installation + vérification des empreintes', n && n.includes(section(cl, version)) && n.includes(`OricalPDF-Setup-${version}.exe`) && n.includes('SHA256SUMS.txt') && n.includes('Get-FileHash'));
 check('notes : version inconnue → null', notes(cl, '99.0.0') === null);
 
 // 3. RELEASING.md

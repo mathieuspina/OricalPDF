@@ -1,4 +1,4 @@
-# Journal des versions — Spin A Doc
+# Journal des versions — Orical PDF
 
 Une ligne par fonction importante. Les dates sont celles du dépôt. Les versions 0.x sont des versions de travail.
 Pour la mise à jour d'un poste, voir [RELEASING.md](RELEASING.md#mettre-à-jour-un-poste).

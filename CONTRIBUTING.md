@@ -1,6 +1,6 @@
 # Contribuer
 
-Merci de votre intérêt pour Spin A Doc.
+Merci de votre intérêt pour Orical PDF.
 
 - **Signalements de bogues et suggestions** : bienvenus. Décrivez la version (Réglages > À propos), Windows, les étapes pour reproduire et
   le résultat attendu. Ne joignez aucun document confidentiel : utilisez un fichier d'exemple sans donnée réelle.

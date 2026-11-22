@@ -1,4 +1,4 @@
-// Dépôt public (logique, lecture des sources) : titulaire des droits « SpinASoft », pas de fournisseur de mise à jour (publish: null),
+// Dépôt public (logique, lecture des sources) : titulaire des droits « Orical », pas de fournisseur de mise à jour (publish: null),
 // page de licence de l'installeur (EULA), politique de confidentialité, fichiers privés ignorés par git, CLAUDE.md sans chemin local ni
 // adresse de dépôt ; si un build existe : pas de resources/app-update.yml, EULA / politique / licences tierces livrées.
 // 1.2.1 : aucune mention de brouillon (« à faire relire par un juriste »…) dans le texte visible (EULA, page de licence de l'installeur,
@@ -17,9 +17,9 @@ const read = (p) => fs.readFileSync(path.join(root, p), 'utf8');
 const pkg = require('../package.json');
 
 // 1. Titulaire des droits
-check('LICENSE : « Copyright (c) 2026 SpinASoft », tous droits réservés, renvoi à l\'EULA et aux licences tierces', /^Copyright \(c\) 2026 SpinASoft\. Tous droits réservés\./.test(read('LICENSE')) && /EULA\.fr\.md/.test(read('LICENSE')) && /THIRD_PARTY_LICENSES/.test(read('LICENSE')));
-check('package.json : author et copyright = SpinASoft (propriétés de l\'exécutable)', pkg.author === 'SpinASoft' && pkg.build.copyright === 'Copyright © 2026 SpinASoft');
-check('À propos : © SpinASoft', /© \$\{year\} SpinASoft\. Tous droits réservés\./.test(read('app-info.js')));
+check('LICENSE : « Copyright (c) 2026 Orical », tous droits réservés, renvoi à l\'EULA et aux licences tierces', /^Copyright \(c\) 2026 Orical\. Tous droits réservés\./.test(read('LICENSE')) && /EULA\.fr\.md/.test(read('LICENSE')) && /THIRD_PARTY_LICENSES/.test(read('LICENSE')));
+check('package.json : author et copyright = Orical (propriétés de l\'exécutable)', pkg.author === 'Orical' && pkg.build.copyright === 'Copyright © 2026 Orical');
+check('À propos : © Orical', /© \$\{year\} Orical\. Tous droits réservés\./.test(read('app-info.js')));
 
 // 2. Pas de mise à jour automatique ni de fournisseur de publication
 check('package.json : build.publish = null (pas de resources/app-update.yml)', pkg.build.publish === null);
@@ -48,9 +48,14 @@ check('EULA en texte brut : titres, gras, code et liens simplifiés, fins de lig
   };
   const hit = Object.entries(visible).filter(([, s]) => DRAFT.test(s)).map(([k, s]) => k + ' : ' + s.match(DRAFT)[0]);
   check('aucune mention de brouillon / relecture juridique dans le texte visible (EULA, installeur, politique, README, aide, notes, LICENSE, À propos)', hit.length === 0, hit);
-  check('EULA.fr.md : reste du contrat inchangé (empreinte de la 1.2.0 sans la mention), en-tête conservé (titre, version du 12 novembre 2026, Éditeur, Logiciel)',
-    sha(eula) === '1ee696864b9132f0f639ab162e75f3b88581b6eef2fc158133bd868a52ac2d66' && /^# Contrat de licence utilisateur final — Spin A Doc\n\nVersion du 12 novembre 2026\. Éditeur : SpinASoft/.test(eula), sha(eula));
-  check('POLITIQUE-CONFIDENTIALITE.md : reste inchangé (empreinte de la 1.2.0 sans la mention)', sha(read('POLITIQUE-CONFIDENTIALITE.md')) === 'a9e184eddf1ff126e98001515470aff7eb4b45fb9e07fd49f3315574bdf40585');
+  // 1.3.0 : seuls le nom du produit (Spin A Doc → Orical PDF) et celui de l'éditeur (SpinASoft → Orical) ont changé. En remettant les
+  // anciens noms, on retrouve EXACTEMENT le texte de la 1.2.1 (empreinte d'origine) ; l'empreinte actuelle fige le texte renommé.
+  const unrename = (t) => t.split('Orical PDF').join('Spin A Doc').split('Orical').join('SpinASoft');
+  check('EULA.fr.md : reste du contrat inchangé (empreinte 1.2.1 en remettant les anciens noms), en-tête conservé (titre, version du 12 novembre 2026, Éditeur, Logiciel)',
+    sha(unrename(eula)) === '1ee696864b9132f0f639ab162e75f3b88581b6eef2fc158133bd868a52ac2d66' && sha(eula) === '88f0615400a45095a99961d1806fe7adc6a4e229b639a9d84e27c99b8f4790a7' &&
+    /^# Contrat de licence utilisateur final — Orical PDF\n\nVersion du 12 novembre 2026\. Éditeur : Orical \(« l'Éditeur »\)\. Logiciel : Orical PDF,/.test(eula), sha(eula));
+  check('POLITIQUE-CONFIDENTIALITE.md : reste inchangé (empreinte 1.2.1 en remettant les anciens noms) ; seuls les noms changent en 1.3.0',
+    sha(unrename(read('POLITIQUE-CONFIDENTIALITE.md'))) === 'a9e184eddf1ff126e98001515470aff7eb4b45fb9e07fd49f3315574bdf40585' && sha(read('POLITIQUE-CONFIDENTIALITE.md')) === 'b5878f62ccd3ff69a1cd1a9543ad3655333158ee14d351054f6393a9ed53eac3');
   check('EULA : pas de double ligne vide laissée par le retrait', !/\n\n\n/.test(eula) && !/\n\n\n/.test(read('POLITIQUE-CONFIDENTIALITE.md')));
   const rel = read('RELEASING.md');
   check('rappel interne dans RELEASING.md : « Contrat de licence (EULA) rédigé sans conseil juridique : à faire relire par un juriste avant une diffusion large »',

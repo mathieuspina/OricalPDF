@@ -40,8 +40,10 @@ function about(app, dir, resourcesPath) {
   const b = buildInfo(dir);
   const year = b && b.date ? b.date.slice(0, 4) : String(new Date().getFullYear());
   return {
-    name: 'Spin A Doc', version: app.getVersion(), buildDate: b && b.date ? b.date : null,
-    copyright: `© ${year} SpinASoft. Tous droits réservés.`, licenses, net: netStats(),
+    name: 'Orical PDF', version: app.getVersion(), buildDate: b && b.date ? b.date : null,
+    suite: 'Orical PDF — fait partie de la suite Orical',
+    license: 'Sous licence Orical : utilisation régie par le contrat de licence utilisateur final (EULA), gratuite.',
+    copyright: `© ${year} Orical. Tous droits réservés.`, licenses, net: netStats(),
   };
 }
 
@@ -69,7 +71,7 @@ async function diagnostic(app, screen, webContents, dir) {
   try { printers = (await webContents.getPrintersAsync()).map((p) => p.name); } catch { printers = []; }
   const user = (() => { try { return os.userInfo().username; } catch { return ''; } })();
   const lines = [
-    'Spin A Doc — informations de diagnostic',
+    'Orical PDF — informations de diagnostic',
     `Version : ${app.getVersion()}${b && b.date ? ' (build du ' + b.date + ')' : ' (développement)'}`,
     `Electron ${process.versions.electron}, Chromium ${process.versions.chrome}, Node ${process.versions.node}`,
     `Système : ${windowsName()}, ${os.arch()}`,

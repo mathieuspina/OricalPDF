@@ -10,7 +10,7 @@ const UserData = require('./src/user-data.js');
 
 // Nom affiché dans toutes les boîtes natives, et dossier de données stable (dev et version installée) : %APPDATA%\Spin A Doc, nom
 // historique gardé depuis le renommage en « Orical PDF » (src/user-data.js). SPINADOC_USER_DATA : dossier alternatif des tests automatisés.
-app.setName('Spin A Doc');
+app.setName('Orical PDF');
 app.setPath('userData', UserData.resolve(process.env, app.getPath('appData'), path.join));
 
 const isDev = process.argv.includes('--dev');
@@ -88,7 +88,7 @@ function createWindow() {
     ...(saved && saved.bounds.x !== undefined ? { x: saved.bounds.x, y: saved.bounds.y } : {}),
     minWidth: 900,
     minHeight: 560,
-    title: 'Spin A Doc',
+    title: 'Orical PDF',
     backgroundColor: '#0F0F11',
     // Barre de titre native masquée : l'en-tête de l'application (logo + onglets du ruban) en tient lieu. Les boutons natifs de
     // Windows (réduire, agrandir avec les dispositions d'ancrage de Windows 11, fermer) restent affichés par-dessus (overlay).
@@ -325,10 +325,10 @@ ipcMain.handle('app:diag', async () => {
   return text;
 });
 ipcMain.handle('app:net', () => AppInfo.netStats());
-// Windows 11 : page « Applications par défaut » de Spin A Doc (nom inscrit dans RegisteredApplications par l'installeur).
+// Windows 11 : page « Applications par défaut » d'Orical PDF (nom inscrit dans RegisteredApplications par l'installeur).
 // SPINADOC_TEST_EXTERNAL : l'adresse est notée dans ce fichier au lieu d'ouvrir les Paramètres de Windows (tests).
 ipcMain.handle('app:default-apps', () => {
-  const uri = 'ms-settings:defaultapps?registeredAppUser=' + encodeURIComponent('Spin A Doc');
+  const uri = 'ms-settings:defaultapps?registeredAppUser=' + encodeURIComponent('Orical PDF');
   if (process.env.SPINADOC_TEST_EXTERNAL) { fs.appendFileSync(process.env.SPINADOC_TEST_EXTERNAL, 'uri\t' + uri + '\n'); return true; }
   return shell.openExternal(uri).then(() => true, () => false);
 });

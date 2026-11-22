@@ -1,4 +1,4 @@
-// Champs de formulaire CRÉÉS dans Spin A Doc (logique pure, UMD). Un champ est un objet de l'historique comme les autres :
+// Champs de formulaire CRÉÉS dans Orical PDF (logique pure, UMD). Un champ est un objet de l'historique comme les autres :
 //   { type: 'field', ftype, page, cx, cy, w, h, rot: 0, name, tip, value, options, export, multiline, maxLen, fontSize, align, font, color,
 //     fill, border, borderWidth, required, readOnly, visible, tab }
 // (cadre en coordonnées PDF de la page, comme les rectangles) : il suit donc les opérations de pages (page-ops remappe edits[].page), il est

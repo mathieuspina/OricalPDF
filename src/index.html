@@ -5,7 +5,7 @@
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Spin A Doc</title>
+  <title>Orical PDF</title>
   <link rel="icon" href="assets/logo.svg">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="icons/icons.css">
@@ -33,7 +33,7 @@
           </g>
         </svg>
       </span>
-      <span class="brand-name">Spin A Doc</span>
+      <span class="brand-name">Orical PDF</span>
     </div>
     <div id="ribbon-tabs" role="tablist" aria-label="Ruban">
       <button role="tab" id="rtab-home" aria-controls="rpanel-home" aria-selected="true" tabindex="0">Accueil</button>
@@ -424,7 +424,7 @@
         <img id="welcome-bg" class="welcome-bg" src="assets/logo-mark.svg" alt="">
         <div class="welcome-card">
           <img src="assets/logo.svg" alt="" width="96" height="96">
-          <h1>Spin A Doc</h1>
+          <h1>Orical PDF</h1>
           <p class="muted">Lisez, annotez et modifiez vos PDF, hors ligne.</p>
           <button id="welcome-open" class="primary"><span class="ico" data-icon="folder-open"></span>Ouvrir un PDF</button>
           <p class="muted small">ou glissez un fichier ici — <kbd>Ctrl</kbd>+<kbd>O</kbd></p>
@@ -460,7 +460,7 @@
     <span id="tool-label" class="tool-label" title="Outil actif (Échap pour revenir à la sélection)"></span>
     <span id="snap-busy" class="snap-busy" role="status" aria-live="polite" hidden>Analyse du plan en cours…</span>
     <button id="scale-label" class="link" title="Échelle de la page : cliquer pour la définir" disabled></button>
-    <button id="sb-editable" class="link sb-editable" type="button" hidden title="Annotations modifiables : ce document sera enregistré en Modifiable (Spin A Doc pourra rééditer ses annotations). Cliquer pour enregistrer en choisissant Modifiable ou Aplati."><span class="ico" data-icon="pencil"></span>Annotations modifiables</button>
+    <button id="sb-editable" class="link sb-editable" type="button" hidden title="Annotations modifiables : ce document sera enregistré en Modifiable (Orical PDF pourra rééditer ses annotations). Cliquer pour enregistrer en choisissant Modifiable ou Aplati."><span class="ico" data-icon="pencil"></span>Annotations modifiables</button>
     <div class="spacer"></div>
     <div class="zoomer">
       <button id="zoom-out" class="icon-btn" aria-label="Zoom arrière"><span class="ico" data-icon="minus"></span></button>
@@ -814,7 +814,7 @@
   <div id="fldorder" class="overlay-dialog" hidden>
     <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="fldorder-title">
       <h2 id="fldorder-title">Ordre de tabulation</h2>
-      <p class="muted small">Ordre dans lequel la touche Tab parcourt les champs (dans Spin A Doc et dans le fichier : ordre des champs sur chaque page). Choisissez une ligne, puis Monter / Descendre (ou Alt + flèches).</p>
+      <p class="muted small">Ordre dans lequel la touche Tab parcourt les champs (dans Orical PDF et dans le fichier : ordre des champs sur chaque page). Choisissez une ligne, puis Monter / Descendre (ou Alt + flèches).</p>
       <ol id="fldorder-list" class="fo-list" role="listbox" tabindex="0" aria-label="Champs dans l'ordre de tabulation"></ol>
       <div class="fo-tools"><button type="button" id="fldorder-up" class="secondary">Monter</button><button type="button" id="fldorder-down" class="secondary">Descendre</button><button type="button" id="fldorder-auto" class="secondary">Par position</button></div>
       <div class="dialog-actions"><button id="fldorder-cancel" type="button" class="secondary">Annuler</button><button id="fldorder-ok" type="button" class="primary">Valider</button></div>
@@ -918,10 +918,10 @@
       <h2 id="savemode-title">Enregistrer les annotations</h2>
       <fieldset>
         <legend>Les annotations seront</legend>
-        <label class="radio sm-choice"><input type="radio" name="savemode" id="sm-editable" value="editable"> <span><strong>Modifiables</strong><br><span class="muted small">Le PDF reste lisible partout, annotations visibles. Spin A Doc pourra les déplacer et les modifier à la réouverture.</span></span></label>
+        <label class="radio sm-choice"><input type="radio" name="savemode" id="sm-editable" value="editable"> <span><strong>Modifiables</strong><br><span class="muted small">Le PDF reste lisible partout, annotations visibles. Orical PDF pourra les déplacer et les modifier à la réouverture.</span></span></label>
         <label class="radio sm-choice"><input type="radio" name="savemode" id="sm-flat" value="flat"> <span><strong>Aplaties</strong><br><span class="muted small">Elles font partie des pages et ne sont plus modifiables (document définitif, signé, à diffuser).</span></span></label>
       </fieldset>
-      <p id="sm-warn" class="sm-warn small" hidden><strong>Attention :</strong> toute personne qui ouvre ce fichier avec Spin A Doc pourra déplacer ou retirer les annotations, y compris les tampons et signatures. <span id="sm-sensitive"></span> Pour un document signé ou définitif, choisissez Aplaties.</p>
+      <p id="sm-warn" class="sm-warn small" hidden><strong>Attention :</strong> toute personne qui ouvre ce fichier avec Orical PDF pourra déplacer ou retirer les annotations, y compris les tampons et signatures. <span id="sm-sensitive"></span> Pour un document signé ou définitif, choisissez Aplaties.</p>
       <label class="radio small"><input type="checkbox" id="sm-remember"> Mémoriser mon choix (modifiable dans Réglages > Annotations)</label>
       <div class="dialog-actions"><button id="sm-cancel" type="button" class="secondary">Annuler</button><button id="sm-ok" type="button" class="primary">Enregistrer</button></div>
     </div>
@@ -934,7 +934,7 @@
       <h2 id="winint-title">Intégration à Windows</h2>
       <fieldset>
         <legend>Lecteur PDF</legend>
-        <p class="small">Spin A Doc figure dans « Ouvrir avec » pour les fichiers PDF, sans remplacer votre lecteur actuel. Pour en faire le lecteur par défaut, choisissez-le dans les Paramètres de Windows.</p>
+        <p class="small">Orical PDF figure dans « Ouvrir avec » pour les fichiers PDF, sans remplacer votre lecteur actuel. Pour en faire le lecteur par défaut, choisissez-le dans les Paramètres de Windows.</p>
         <div class="winint-actions"><button id="winint-defaults" type="button" class="secondary">Applications par défaut de Windows…</button></div>
       </fieldset>
       <div class="dialog-actions"><button id="winint-close" class="primary">Fermer</button></div>
@@ -946,7 +946,7 @@
     <div class="dialog wide" role="dialog" aria-modal="true" aria-labelledby="about-title">
       <div class="about-head">
         <img src="assets/logo.svg" alt="" width="72" height="72">
-        <div><h2 id="about-title">Spin A Doc</h2><p id="about-version" class="muted"></p><p id="about-copyright" class="muted small"></p></div>
+        <div><h2 id="about-title">Orical PDF</h2><p id="about-suite" class="muted"></p><p id="about-version" class="muted"></p><p id="about-license" class="muted small"></p><p id="about-copyright" class="muted small"></p></div>
       </div>
       <p id="about-offline" class="about-offline"><strong>100 % hors-ligne, aucune donnée envoyée</strong> : pas de connexion réseau, pas de télémétrie, pas de mise à jour automatique. <span id="about-net"></span></p>
       <div class="about-diag"><button id="about-diag" type="button" class="secondary">Copier les informations de diagnostic</button><span id="about-diag-msg" class="muted small" aria-live="polite"></span></div>

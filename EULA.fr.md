@@ -1,6 +1,6 @@
-# Contrat de licence utilisateur final — Spin A Doc
+# Contrat de licence utilisateur final — Orical PDF
 
-Version du 12 novembre 2026. Éditeur : SpinASoft (« l'Éditeur »). Logiciel : Spin A Doc, lecteur et éditeur de documents PDF pour Windows,
+Version du 12 novembre 2026. Éditeur : Orical (« l'Éditeur »). Logiciel : Orical PDF, lecteur et éditeur de documents PDF pour Windows,
 dans la version installable ou portable distribuée par l'Éditeur (« le Logiciel »).
 
 En installant ou en utilisant le Logiciel, vous acceptez le présent contrat. Si vous ne l'acceptez pas, n'installez pas et n'utilisez pas le

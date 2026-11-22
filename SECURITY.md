@@ -7,7 +7,7 @@ onglet **« Security »** du dépôt, puis **« Report a vulnerability »**. Le 
 
 Décrivez si possible :
 
-- la version de Spin A Doc (Réglages > À propos) et la version de Windows ;
+- la version d'Orical PDF (Réglages > À propos) et la version de Windows ;
 - les étapes pour reproduire le problème et l'effet observé ;
 - les informations de diagnostic (Réglages > À propos > « Copier les informations de diagnostic » : elles ne contiennent aucun nom de
   fichier, chemin ni contenu de document).
@@ -17,7 +17,7 @@ donnée réelle.
 
 ## Rappel : application hors-ligne
 
-Spin A Doc fonctionne entièrement hors-ligne : aucune connexion réseau, aucune télémétrie, aucune mise à jour automatique. Toute tentative
+Orical PDF fonctionne entièrement hors-ligne : aucune connexion réseau, aucune télémétrie, aucune mise à jour automatique. Toute tentative
 de requête réseau de l'application est bloquée et comptée (Réglages > À propos). Les documents ouverts ne quittent jamais le poste.
 
 ## Versions prises en charge
