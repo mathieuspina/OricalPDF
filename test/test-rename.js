@@ -24,7 +24,11 @@ const DEV_FILES = new Set(['scripts/install-names.js', 'scripts/test-packaged.js
 // Lignes autorisées ailleurs : identifiants techniques.
 const ALLOWED_LINE = [
   /%APPDATA%\\+Spin A Doc/, /\$APPDATA\\Spin A Doc/, /\bLEGACY/, /SPIN_LEGACY/, /app: 'Spin A Doc'/,
+  // Mentions EXPLICITES du renommage ou de l'ancienne installation (documentation pour le service informatique, aide, notes de version).
+  /ancien nom|[Rr]enommage|devient « ?Orical|laissées? par la 1\.2\.1|Applications\\+Spin A Doc\.exe|« Spin A Doc » de `?RegisteredApplications/,
 ];
+// Commentaires de code (.nsh, .js, .ps1) : jamais affichés à l'utilisateur.
+const isComment = (f, l) => /\.(nsh|js|ps1)$/.test(f) && /^\s*(;|\/\/|#|\*)/.test(l);
 
 const ls = spawnSync('git', ['ls-files', '--cached', '--others', '--exclude-standard'], { cwd: root, encoding: 'utf8' });
 const files = ls.stdout.split(/\r?\n/).filter((f) => f && !f.startsWith('src/icons/') && !f.startsWith('vendor/') && /\.(js|html|css|md|nsh|json|ps1|txt)$|^LICENSE$|^THIRD_PARTY_LICENSES$/.test(f) && fs.existsSync(path.join(root, f)));
@@ -32,7 +36,7 @@ check('fichiers du dépôt listés (git ls-files)', ls.status === 0 && files.len
 const hits = [];
 for (const f of files) {
   if (DEV_FILES.has(f) || f === 'package-lock.json') continue;
-  read(f).split(/\r?\n/).forEach((l, i) => { if (OLD.test(l) && !ALLOWED_LINE.some((re) => re.test(l))) hits.push(`${f}:${i + 1}: ${l.trim().slice(0, 120)}`); });
+  read(f).split(/\r?\n/).forEach((l, i) => { if (OLD.test(l) && !isComment(f, l) && !ALLOWED_LINE.some((re) => re.test(l))) hits.push(`${f}:${i + 1}: ${l.trim().slice(0, 120)}`); });
 }
 check('aucune occurrence visible de « Spin A Doc », « SpinASoft » ni des anciens noms d\'installeurs (hors liste blanche)', hits.length === 0, hits.slice(0, 20));
 

@@ -89,6 +89,10 @@
       {
         "from": "THIRD_PARTY_LICENSES",
         "to": "THIRD_PARTY_LICENSES.txt"
+      },
+      {
+        "from": "build/pdf-file.ico",
+        "to": "pdf-file.ico"
       }
     ]
   }

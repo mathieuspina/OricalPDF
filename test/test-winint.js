@@ -28,6 +28,20 @@ const orphan = written.map(expand).filter((k) => k !== 'Software\\Classes\\.pdf\
 check(`installer.nsh : chaque clé écrite (${written.length}) est retirée à la désinstallation`, written.length >= 8 && orphan.length === 0, orphan);
 check('installer.nsh : case « Supprimer aussi mes réglages » et /DELETEDATA conservées', /Supprimer aussi mes réglages et ma bibliothèque/.test(ins) && /"\/DELETEDATA="/.test(ins));
 
+// 1 bis. Orical PDF (1.3.0) : icône des fichiers PDF, noms affichés, traces de l'ancien nom retirées, identifiants techniques gardés
+const customInstall = /!macro customInstall([\s\S]*?)!macroend/.exec(ins)[1];
+check('icône des fichiers PDF : DefaultIcon de la classe = resources\\pdf-file.ico livré par extraResources (fichier présent)',
+  /WriteRegStr SHCTX "Software\\Classes\\\$\{SPIN_PROGID\}\\DefaultIcon" "" "\$INSTDIR\\resources\\pdf-file\.ico,0"/.test(ins) &&
+  pkg.build.extraResources.some((r) => r.from === 'build/pdf-file.ico' && r.to === 'pdf-file.ico') && fs.existsSync(path.join(root, 'build', 'pdf-file.ico')));
+check('noms affichés = « Orical PDF » (classe, FriendlyAppName, ApplicationName, RegisteredApplications), aucun « Spin A Doc » écrit',
+  /"Software\\Classes\\\$\{SPIN_PROGID\}" "" "Document PDF \(Orical PDF\)"/.test(ins) && /"FriendlyAppName" "Orical PDF"/.test(ins) && /"ApplicationName" "Orical PDF"/.test(ins) &&
+  /"Software\\RegisteredApplications" "Orical PDF" "\$\{SPIN_CAPS\}"/.test(ins) && ![...ins.matchAll(/WriteRegStr[^\n]*/g)].some((m) => /Spin A Doc|SPIN_LEGACY/.test(m[0])));
+check('installation : clé Applications\\Spin A Doc.exe et valeur « Spin A Doc » de RegisteredApplications (1.2.1) supprimées',
+  /!define SPIN_LEGACY_EXE "Spin A Doc\.exe"/.test(ins) && /!define SPIN_LEGACY_NAME "Spin A Doc"/.test(ins) &&
+  /DeleteRegKey SHCTX "Software\\Classes\\Applications\\\$\{SPIN_LEGACY_EXE\}"/.test(customInstall) && /DeleteRegValue SHCTX "Software\\RegisteredApplications" "\$\{SPIN_LEGACY_NAME\}"/.test(customInstall));
+check('identifiants gardés : ProgId SpinADoc.pdf, Software\\SpinADoc\\Capabilities, appId', /!define SPIN_PROGID "SpinADoc\.pdf"/.test(ins) && caps === 'Software\\SpinADoc\\Capabilities' && pkg.build.appId === 'com.spinadoc.app');
+check('exécutable « Orical PDF.exe » (productName) : la clé Applications\\<exe> suit le nouveau nom', pkg.build.productName === 'Orical PDF' && !pkg.build.win.executableName);
+
 // 2. Imprimante virtuelle retirée (0.12.2)
 check('installer.nsh : plus d\'imprimante (case, /REMOVEPRINTER, PowerShell, vprinter.nsh)', !/imprimante|printer|powershell|vprinter/i.test(ins));
 check('fichiers de l\'imprimante supprimés', ['vprinter-main.js', 'src/vprinter.js', 'src/js/vprinter-ui.js', 'build/vprinter.nsh', 'scripts/make-vprinter-nsh.js'].every((p) => !fs.existsSync(path.join(root, p))));

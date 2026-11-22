@@ -36,6 +36,7 @@ Ce que chaque fonction fait exactement, ses étapes et ses pièges : aide intég
 - Désinstallation : Paramètres Windows > Applications ; les données sont conservées sauf si la case « Supprimer aussi mes réglages et ma bibliothèque »
   est cochée (en silencieux : `/DELETEDATA=1`).
 - Fichiers PDF : Orical PDF est ajouté à « Ouvrir avec », sans remplacer le lecteur par défaut (choix dans les Paramètres de Windows).
+  L'icône Orical des fichiers PDF n'apparaît que pour les PDF dont l'application par défaut est Orical PDF.
 - Service informatique : [docs/NOTES-INFORMATIQUE.md](docs/NOTES-INFORMATIQUE.md).
 
 ## Avertissement de Windows au premier lancement

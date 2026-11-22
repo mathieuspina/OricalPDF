@@ -2,7 +2,7 @@
 // Vérifie, à TOUTES les tailles : fond transparent (coins, pourtour), halo rouge à droite du disque, disque sombre, trait rose du
 // pictogramme, aucun pixel sombre hors du disque, aucun blanc (lignes blanches de l'ancien logo) ; flou seulement à 40 px et plus ;
 // logo source identique dans build/ et src/assets/, anciens logos absents ; références cohérentes (package.json, main.js, installeur).
-// Si build/pdf-file.ico existe : mêmes contrôles de format pour l'icône des fichiers PDF (détail dans test-pdf-icon, appelé à la fin).
+// Icône des fichiers PDF (build/pdf-file.ico, scripts/pdf-icon-geometry.js) : section 4.
 // Usage : node test/test-icon.js   (régénérer l'icône : npx electron scripts/make-icon.js)
 const fs = require('fs');
 const path = require('path');
@@ -30,14 +30,14 @@ check('niveaux de détail : flou à 40 px et plus seulement, halo plat en dessou
 check('pictogramme : d\'origine à 32 px et plus, page + plus à 24 px, page seule à 16 / 20 px (agrandi dans le disque)', G.geometry(32).iconScale === 1 && /M35\.5 38V44/.test(G.svg(32)) && /M35\.5 38\.5V44/.test(G.svg(24)) && !/V44/.test(G.svg(20)) && !/V44/.test(G.svg(16)) && G.geometry(16).iconScale > 1);
 
 // 3. Images de build/icon.ico
-function analyse(file, probes) {
+function analyse(file, probes, sidesOnly) {
   const ico = G.readIco(fs.readFileSync(path.join(root, file)));
   const imgs = ico.map((e) => Object.assign({ size: e.size }, G.decodePng(e.data)));
   const report = { tailles: ico.map((e) => e.size), carre: imgs.every((p) => p.width === p.size && p.height === p.size), fond: [], details: [] };
   for (const p of imgs) {
     const n = p.size;
     let edge = 0;
-    for (let i = 0; i < n; i++) for (const [x, y] of [[i, 0], [i, n - 1], [0, i], [n - 1, i]]) if (G.pixel(p, x, y).a > 8) edge++;
+    for (let i = 0; i < n; i++) for (const [x, y] of (sidesOnly ? [[0, i], [n - 1, i]] : [[i, 0], [i, n - 1], [0, i], [n - 1, i]])) if (G.pixel(p, x, y).a > 8) edge++;
     let transparent = 0;
     for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (G.pixel(p, x, y).a === 0) transparent++;
     // Pourtour transparent à 40 px et plus ; en dessous, le dessin peut toucher le bord (au plus le quart du pourtour, coins transparents).
@@ -75,11 +75,39 @@ check('build/icon.ico contient exactement ces tailles, en PNG carrés', JSON.str
 check('toutes les tailles : fond transparent (coins, pourtour, au moins 15 % de l\'image)', !app.fond.length, app.fond);
 check('toutes les tailles : halo rouge, disque sombre, trait rose ; rien de sombre hors du disque ; aucun blanc de l\'ancien logo', !app.details.length, app.details);
 
-// 4. Références
+// 4. Icône des fichiers PDF (build/pdf-file.ico, scripts/pdf-icon-geometry.js) : mêmes tailles, fond transparent, page rouge unie à coin
+// rose, disque sombre et plus rose ; lettrage « PDF » en tracés à 32 px et plus, omis de 16 à 24 px.
+const P = require('../scripts/pdf-icon-geometry.js');
+check('icône PDF : lettrage en TRACÉS (aucun <text>, aucune police), omis à 16-24 px ; page unie retenue', G.SIZES.every((n) => !/<text|font/.test(P.svg(n)) && /M28\.2 25\.8V17\.2/.test(P.svg(n)) === (n >= 32)) && P.PAGE_FILL === 'flat' && /fill="#F23A3A"/.test(P.svg(64)));
+const pdf = analyse('build/pdf-file.ico', (p, n) => {
+  const g = P.geometry(n), miss = [];
+  const at = (ux, uy) => { const q = P.toPx(g, ux, uy); return G.pixel(p, q.x, q.y); };
+  if (!isRed(at(25, 30))) miss.push('page rouge');
+  if (!isPink(at(62, 22))) miss.push('coin plié rose');
+  if (!isDark(at(P.DISC.cx - P.DISC.r + 4, P.DISC.cy))) miss.push('disque sombre');
+  const c = P.toPx(g, P.DISC.cx, P.DISC.cy), R = P.DISC.r * g.k;
+  let pink = 0, letters = 0, white = 0;
+  const a = P.toPx(g, P.LETTER_BOX.x0, P.LETTER_BOX.y0), b = P.toPx(g, P.LETTER_BOX.x1, P.LETTER_BOX.y1);
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+    const q = G.pixel(p, x, y);
+    if (isPink(q) && Math.hypot(x + 0.5 - c.x, y + 0.5 - c.y) < R) pink++;
+    if (x >= a.x && x <= b.x && y >= a.y && y <= b.y && q.a > 200 && Math.max(q.r, q.g, q.b) < 120) letters++;
+    if (isWhite(q)) white++;
+  }
+  if (pink < Math.max(4, n / 3)) miss.push('plus / pictogramme rose (' + pink + ' px)');
+  if (n >= 32 ? letters < n / 4 : letters > 0) miss.push('lettrage « PDF » (' + letters + ' px sombres)');
+  if (white) miss.push(white + ' pixel(s) blanc(s)');
+  return miss;
+}, true); // la page occupe toute la hauteur : seuls les côtés gauche et droit du pourtour sont contrôlés
+check('build/pdf-file.ico : exactement les 8 tailles, en PNG carrés', JSON.stringify(pdf.tailles) === JSON.stringify(G.SIZES) && pdf.carre, pdf.tailles);
+check('icône PDF, toutes les tailles : fond transparent (coins ; bords gauche et droit à 40 px et plus ; au moins 15 %)', !pdf.fond.length, pdf.fond);
+check('icône PDF, toutes les tailles : page rouge, coin rose, disque sombre, plus rose, lettrage seulement à 32 px et plus, aucun blanc', !pdf.details.length, pdf.details);
+
+// 5. Références
 const pkg = require('../package.json');
 check('package.json : build.icon et build.win.icon = build/icon.ico (exécutable, installeur, désinstalleur)', pkg.build.icon === 'build/icon.ico' && pkg.build.win.icon === 'build/icon.ico' && pkg.build.files.includes('build/icon.ico'));
 check('main.js : icône de la fenêtre (barre des tâches) = build/icon.ico', read('main.js').includes("icon: path.join(__dirname, 'build', 'icon.ico')"));
-check('make-icon : chaque taille dessinée à sa taille par icon-geometry (pas de réduction d\'une grande image)', /rasterize\(svg\(n\), n\)/.test(read('scripts/make-icon.js')));
+check('make-icon : chaque taille dessinée à sa taille par icon-geometry (pas de réduction d\'une grande image)', /rasterize\(svgOf\(n\), n\)/.test(read('scripts/make-icon.js')) && /AppIcon\.svg\(n\)/.test(read('scripts/make-icon.js')) && /PdfIcon\.svg\(n\)/.test(read('scripts/make-icon.js')));
 
 module.exports = { analyse, isRed, isDark, isPink, isWhite };
 if (require.main === module) {

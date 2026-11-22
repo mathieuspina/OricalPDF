@@ -181,7 +181,8 @@ ${steps('Signaler un problème : Réglages > À propos > « Copier les informati
     'Coller le texte dans votre message : version, Windows, mémoire, écrans, noms des imprimantes. Aucun nom de fichier, chemin ni contenu de document n\'y figure.')}` },
 
   { id: 'windows', title: 'Lecteur PDF de Windows', html: `<p>Réglages > <b>Intégration à Windows</b>.</p><ul>
-<li><b>Lecteur PDF</b> : l'installation ajoute Orical PDF à « Ouvrir avec » (clic droit sur un PDF), sans remplacer votre lecteur actuel. Pour en faire le lecteur par défaut : bouton « Applications par défaut de Windows… ».</li></ul>` },
+<li><b>Lecteur PDF</b> : l'installation ajoute Orical PDF à « Ouvrir avec » (clic droit sur un PDF), sans remplacer votre lecteur actuel. Pour en faire le lecteur par défaut : bouton « Applications par défaut de Windows… ».</li>
+<li><b>Icône des fichiers PDF</b> : l'installation ne change jamais le lecteur par défaut ; l'icône Orical des fichiers PDF n'apparaît donc que si vous avez choisi Orical PDF comme application par défaut pour les PDF.</li></ul>` },
   { id: 'informatique', title: 'Notes pour le service informatique', html: `<ul>
 <li>Installeur par utilisateur (NSIS), sans droits administrateur. Dossier par défaut : <code>%LOCALAPPDATA%\\Programs\\Orical PDF</code> (modifiable).</li>
 <li>Données de l'utilisateur (réglages, récents, bibliothèque de tampons et signatures, échelles) : <code>%APPDATA%\\Spin A Doc</code>.</li>

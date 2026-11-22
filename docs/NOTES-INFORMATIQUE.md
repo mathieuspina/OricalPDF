@@ -11,8 +11,14 @@ Version de référence : 1.2.1. Tout ce qui suit est vérifié dans la configura
 - Association `.pdf` (mesuré par `test:packaged`) : inscription dans **« Ouvrir avec » seulement**. La valeur par défaut de
   `HKCU\Software\Classes\.pdf` n'est **jamais** écrite : le lecteur PDF de l'utilisateur reste le sien. Clés écrites (dans `HKCU` pour une
   installation par utilisateur) : `Software\Classes\.pdf\OpenWithProgids` (valeur `SpinADoc.pdf`), classe `Software\Classes\SpinADoc.pdf`
-  (icône, commande `"…\Orical PDF.exe" "%1"`), `Software\Classes\Applications\Orical PDF.exe` (type `.pdf`), `Software\SpinADoc\Capabilities`
-  et la valeur « Orical PDF » de `Software\RegisteredApplications` (page « Applications par défaut » de Windows). Toutes retirées à la désinstallation.
+  (icône des fichiers PDF `…\resources\pdf-file.ico`, commande `"…\Orical PDF.exe" "%1"`), `Software\Classes\Applications\Orical PDF.exe` (type `.pdf`),
+  `Software\SpinADoc\Capabilities` et la valeur « Orical PDF » de `Software\RegisteredApplications` (page « Applications par défaut » de Windows).
+  Toutes retirées à la désinstallation. Les noms techniques `SpinADoc.pdf` et `Software\SpinADoc` datent de l'ancien nom (Spin A Doc) et sont
+  gardés : un choix « application par défaut » déjà fait survit à la mise à jour. La 1.3.0 retire `Applications\Spin A Doc.exe` et la valeur
+  « Spin A Doc » de `RegisteredApplications` laissées par la 1.2.1.
+- Icône des fichiers PDF : elle n'apparaît que pour les PDF dont l'application par défaut est Orical PDF (choix de l'utilisateur ; la version
+  portable n'écrit rien). Windows garde les icônes en cache : après une installation ou une mise à jour, si l'ancienne icône reste affichée,
+  `ie4uinit.exe -show` (sans droits administrateur) ou une réouverture de session la rafraîchit.
 - **Aucun** service Windows, **aucune** tâche planifiée, **aucun** pilote ni imprimante ajoutés, **aucune** connexion réseau, **aucune** télémétrie, **aucune** mise à jour
   automatique. Toute tentative de requête réseau de l'application est bloquée et comptée (Réglages > À propos).
 

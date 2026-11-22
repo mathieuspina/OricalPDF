@@ -25,6 +25,17 @@ const unpacked = path.join(dist, 'win-unpacked', 'Orical PDF.exe');
 const portable = path.join(dist, `OricalPDF-Portable-${version}.exe`);
 const setup = path.join(dist, `OricalPDF-Setup-${version}.exe`);
 for (const f of [unpacked, portable, setup]) if (!fs.existsSync(f)) { console.error('Introuvable : ' + f + ' (lancez « npm run dist »)'); process.exit(2); }
+// Icône embarquée (ressources RT_ICON) : exactement les 8 images de build/icon.ico (donc plus l'ancien logo) dans l'application, la version
+// portable et l'installeur ; le désinstalleur est contrôlé après l'installation.
+const PeIcons = require('./pe-icons.js');
+const icoEntries = require('./icon-geometry.js').readIco(fs.readFileSync(path.join(root, 'build', 'icon.ico')));
+function exeIcon(label, exe) {
+  let r; try { r = PeIcons.compareWithIco(fs.readFileSync(exe), icoEntries); } catch (e) { r = { same: false, error: String(e) }; }
+  const ok = r.same && r.images === icoEntries.length;
+  console.log('Icône de ' + label + ' (' + path.basename(exe) + ') = build/icon.ico : ' + ok + ' ' + JSON.stringify(r));
+  if (!ok) failed++;
+}
+exeIcon('l\'application', unpacked); exeIcon('la version portable', portable); exeIcon('l\'installeur', setup);
 // Garde : l'installeur de test a la même identité (appId) qu'une vraie installation ; sa désinstallation retirerait les raccourcis et la clé
 // de désinstallation de l'installation de l'utilisateur. Si Orical PDF est déjà installé sur ce compte, on refuse de lancer le test.
 {
@@ -122,7 +133,10 @@ function systemTrace(label) {
   const un = spawnSync('reg', ['query', key('HKCU', 'Software', 'Microsoft', 'Windows', 'CurrentVersion', 'Uninstall'), '/s', '/f', 'Orical PDF', '/d'], { encoding: 'utf8' });
   const t = { pdfDefault: regQuery(key('HKCU', 'Software', 'Classes', '.pdf'), ['/ve']), openWith: regQuery(key('HKCU', 'Software', 'Classes', '.pdf', 'OpenWithProgids')), uninstallKey: /Orical PDF/.test(un.stdout || ''), desktopLnk: fs.existsSync(desk), startLnk: fs.existsSync(start),
     progId: regQuery(key('HKCU', 'Software', 'Classes', 'SpinADoc.pdf', 'shell', 'open', 'command'), ['/ve']), app: regQuery(key('HKCU', 'Software', 'Classes', 'Applications', 'Orical PDF.exe', 'SupportedTypes')),
-    registered: regQuery(key('HKCU', 'Software', 'RegisteredApplications'), ['/v', 'Orical PDF']), caps: regQuery(key('HKCU', 'Software', 'SpinADoc', 'Capabilities', 'FileAssociations')) };
+    registered: regQuery(key('HKCU', 'Software', 'RegisteredApplications'), ['/v', 'Orical PDF']), caps: regQuery(key('HKCU', 'Software', 'SpinADoc', 'Capabilities', 'FileAssociations')),
+    defaultIcon: regQuery(key('HKCU', 'Software', 'Classes', 'SpinADoc.pdf', 'DefaultIcon'), ['/ve']),
+    legacyApp: regQuery(key('HKCU', 'Software', 'Classes', 'Applications', Names.LEGACY + '.exe')), legacyRegistered: regQuery(key('HKCU', 'Software', 'RegisteredApplications'), ['/v', Names.LEGACY]),
+    legacyLnk: Names.shortcuts(Names.LEGACY).filter((p) => fs.existsSync(p)).length };
   console.log('Registre et raccourcis (' + label + ') : ' + JSON.stringify(t));
   return t;
 }
@@ -139,8 +153,11 @@ if (home) {
     ['classe SpinADoc.pdf : commande = application installée "%1"', t.progId.includes('"' + exe + '" "%1"')],
     ['Applications\\Orical PDF.exe : type .pdf', /\.pdf/.test(t.app)],
     ['RegisteredApplications + Capabilities (page « Applications par défaut »)', /SpinADoc/.test(t.registered) && /SpinADoc\.pdf/.test(t.caps)],
+    ['icône des fichiers PDF : DefaultIcon = resources\\pdf-file.ico (fichier installé)', t.defaultIcon.includes(path.join(home, 'resources', 'pdf-file.ico')) && fs.existsSync(path.join(home, 'resources', 'pdf-file.ico'))],
+    ['aucune trace de l\'ancien nom (Applications\\Spin A Doc.exe, RegisteredApplications, raccourcis)', t.legacyApp === '(absent)' && t.legacyRegistered === '(absent)' && t.legacyLnk === 0],
   ];
   for (const [n, ok] of assoc) { console.log('Association : ' + n + ' : ' + ok); if (!ok) failed++; }
+  exeIcon('le désinstalleur', path.join(home, 'Uninstall Orical PDF.exe'));
 }
 if (!home) { console.error('Installation échouée : Orical PDF.exe absent de ' + dir); failed++; }
 else {

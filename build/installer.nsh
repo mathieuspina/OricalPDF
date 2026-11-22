@@ -10,6 +10,12 @@
 ; Association .pdf (0.12.1) : inscription dans « Ouvrir avec » SEULEMENT (OpenWithProgids, Applications, RegisteredApplications pour la page
 ; « Applications par défaut » de Windows). La valeur par défaut de Software\Classes\.pdf n'est JAMAIS écrite : le lecteur choisi par
 ; l'utilisateur reste le sien. Clés écrites dans SHCTX (HKCU pour une installation par utilisateur), toutes retirées à la désinstallation.
+; L'icône des fichiers PDF (DefaultIcon de la classe = resources\pdf-file.ico, extraResources) n'apparaît donc que pour les PDF dont
+; l'application par défaut, choisie par l'utilisateur, est Orical PDF. La version portable n'écrit aucune clé.
+;
+; Renommage 1.3.0 (Spin A Doc → Orical PDF) : appId, ProgId SpinADoc.pdf et Software\SpinADoc gardés (même désinstallation, choix
+; « application par défaut » conservé) ; l'exécutable change de nom : la clé Applications\Spin A Doc.exe et la valeur « Spin A Doc » de
+; RegisteredApplications de la 1.2.1 sont retirées à l'installation (la désinstallation « --updated » de la 1.2.1 les retire déjà).
 
 !include LogicLib.nsh
 !include nsDialogs.nsh
@@ -17,12 +23,19 @@
 
 !define SPIN_PROGID "SpinADoc.pdf"
 !define SPIN_CAPS "Software\SpinADoc\Capabilities"
+!define SPIN_LEGACY_NAME "Spin A Doc"
+!define SPIN_LEGACY_EXE "Spin A Doc.exe"
 
 !ifndef BUILD_UNINSTALLER
 !macro customInstall
   StrCpy $0 "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
+  ; Traces de l'ancien nom (1.2.1 et avant) : jamais deux entrées « Ouvrir avec » ni deux noms dans « Applications par défaut ».
+  ${If} "${APP_EXECUTABLE_FILENAME}" != "${SPIN_LEGACY_EXE}"
+    DeleteRegKey SHCTX "Software\Classes\Applications\${SPIN_LEGACY_EXE}"
+    DeleteRegValue SHCTX "Software\RegisteredApplications" "${SPIN_LEGACY_NAME}"
+  ${EndIf}
   WriteRegStr SHCTX "Software\Classes\${SPIN_PROGID}" "" "Document PDF (Orical PDF)"
-  WriteRegStr SHCTX "Software\Classes\${SPIN_PROGID}\DefaultIcon" "" "$0,0"
+  WriteRegStr SHCTX "Software\Classes\${SPIN_PROGID}\DefaultIcon" "" "$INSTDIR\resources\pdf-file.ico,0"
   WriteRegStr SHCTX "Software\Classes\${SPIN_PROGID}\shell\open\command" "" '"$0" "%1"'
   WriteRegStr SHCTX "Software\Classes\.pdf\OpenWithProgids" "${SPIN_PROGID}" ""
   WriteRegStr SHCTX "Software\Classes\Applications\${APP_EXECUTABLE_FILENAME}" "FriendlyAppName" "Orical PDF"
@@ -79,6 +92,8 @@ FunctionEnd
   DeleteRegKey SHCTX "Software\Classes\${SPIN_PROGID}"
   DeleteRegKey SHCTX "Software\Classes\Applications\${APP_EXECUTABLE_FILENAME}"
   DeleteRegValue SHCTX "Software\RegisteredApplications" "Orical PDF"
+  DeleteRegKey SHCTX "Software\Classes\Applications\${SPIN_LEGACY_EXE}"
+  DeleteRegValue SHCTX "Software\RegisteredApplications" "${SPIN_LEGACY_NAME}"
   DeleteRegKey SHCTX "Software\SpinADoc"
   System::Call "shell32::SHChangeNotify(i 0x08000000, i 0x1000, p 0, p 0)"
   ${IfNot} ${isUpdated}
