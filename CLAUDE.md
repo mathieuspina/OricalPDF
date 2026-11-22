@@ -5,7 +5,7 @@ documents réels) vont dans `CLAUDE.local.md`, ignoré par git (`.gitignore`). A
 (motifs privés dans un fichier HORS du dépôt, voir l'en-tête du script ; résultat attendu : aucune donnée personnelle). Format : texte littéral (casse ignorée), `re:` (expression, casse ignorée), `rec:` (casse respectée) ; nom court = limite de mot `re:\bNOM\b` (sinon faux positifs dans les noms de glyphes de pdf.js, ex. « Edieresis »). JAMAIS un vrai nom dans le dépôt, même en exemple. Avant tout push : scan complet (arbre, historique, installeur extrait) + `git log -1 --format='%an <%ae> | %cn <%ce>'`.
 
 Éditeur/visionneuse PDF Windows (Electron, JS sans framework). Produit : « Orical PDF » (suite Orical, éditeur « Orical » ; « Spin A Doc » jusqu'à la 1.2.1).
-Dépôt GitHub : nom OricalPDF prévu (ancien : SpinADoc ; renommé par l'utilisateur ; aucune adresse du dépôt dans les fichiers, seul le remote local change).
+Dépôt GitHub : OricalPDF (renommé le 2026-11-22, ancien nom SpinADoc, redirigé par GitHub ; aucune adresse du dépôt dans les fichiers, seul le remote local a changé).
 Dépôt : GitHub (branche main). Règle : un push à la fin de chaque sous-étape, après le commit (jamais de --force, jamais d'.exe/.pdf/secret dans git ; installeurs hors git).
 Contraintes permanentes : licences permissives uniquement (jamais GPL/AGPL/LGPL), 100 % hors-ligne (CSP stricte), interface en français,
 annotations « figées » à l'enregistrement (aperçu et écriture partagent la même géométrie), outils persistants, panneaux flottants.
@@ -39,7 +39,12 @@ commits), puis ATTENDRE le « go » de l'utilisateur. Ne jamais prétendre avoir
 - Rapports courts : sans répéter ce qui n'a pas changé ; « Ce que je n'ai PAS pu tester » et la checklist manuelle restent complètes.
 
 ## État du projet
-Version : 1.3.0 PRÊTE, NON PUBLIÉE (lot 1.3, branche `orical-pdf-1.3` fusionnée en avance rapide sur main ; ni tag ni Release : attendre le « go »).
+Version : 1.3.0 PUBLIÉE (2026-11-22 : commit 2db7a90 sur main, tag annoté v1.3.0 « Orical PDF 1.3.0 » poussé, Release publique « Orical PDF 1.3.0 » (Latest) du dépôt
+OricalPDF : OricalPDF-Setup-1.3.0.exe 89,8 Mo (SHA-256 a2cfe6919dd6483f2f6a795d62f42c4f99a36f9581ca80a305a91d115c670136) + OricalPDF-Portable-1.3.0.exe 89,5 Mo
+(fefa4a3ed5c0d87dd2fb716980cf26f3754900c2729ce12a455425b1e475400c) + SHA256SUMS.txt ; brouillon d'abord, empreintes vérifiées après téléchargement du brouillon
+puis des adresses publiques ; artefacts = commit (fichiers de app.asar comparés à HEAD) ; scan complet propre ; notes = section 1.3.0 du CHANGELOG SANS la ligne
+« Les versions ci-dessous… » (à retirer à la main du fichier généré, ou à exclure dans scripts/release-notes.js) + paragraphe « Depuis Spin A Doc 1.2.1 »).
+Lot 1.3 (branche `orical-pdf-1.3` fusionnée en avance rapide sur main) :
 1.3.0 RENOMMAGE « Spin A Doc » → « Orical PDF » : VISIBLE = productName, titre, accueil, À propos (`about-suite` « fait partie de la suite Orical »,
 `about-license` « Sous licence Orical »), aide, boîtes, installeur (raccourcis, textes, nom affiché), exécutable `Orical PDF.exe`, installeurs
 `OricalPDF-Setup-x.y.z.exe` / `OricalPDF-Portable-x.y.z.exe`, docs, LICENSE / EULA / politique (NOMS SEULEMENT : test-public compare l'empreinte
@@ -213,5 +218,5 @@ Pièges : tests de pointeur dans la zone visible de la page (coordonnées en poi
 | ocr, doc-model.ocr, pdf-edit (couche invisible) | test-ocr (37 vérifications) | 3f (voir git log) |
 | ocr-ui, ocr-engine, viewer (calque, recherche), pages-ui (menu) | test-ocr-ui (39, tesseract réel), test-click-ui (25) | 3f (voir git log) |
 | compare-ui, compare-view, compare-render, compare-worker (3 modes + texte, navigation, décalage, annulation, export, A0) | test-compare-ui (55), test-click-ui (24, vue ajoutée) | 3e (voir git log) |
-| lot 1.3 : user-data, renommage (test-rename), logo et icônes (icon-geometry, pdf-icon-geometry, make-icon, pe-icons), installer.nsh (DefaultIcon, ancien nom, dossier voisin), test-update, test-editable § 8 | test-user-data (9), test-rename (10), test-icon (17), test-winint (20), test-editable (58), test-about-ui (6), test-public, suite complète, test:packaged, test:update 1.2.1 → 1.3.0 | A ddb9ac0, B 1f7787a, C 0261224, D 0b90cd1, E dd93d28, F (voir git log) |
+| lot 1.3 : user-data, renommage (test-rename), logo et icônes (icon-geometry, pdf-icon-geometry, make-icon, pe-icons), installer.nsh (DefaultIcon, ancien nom, dossier voisin), test-update, test-editable § 8 | test-user-data (9), test-rename (10), test-icon (17), test-winint (20), test-editable (58), test-about-ui (6), test-public, suite complète, test:packaged, test:update 1.2.1 → 1.3.0 | A ddb9ac0, B 1f7787a, C 0261224, D 0b90cd1, E dd93d28, F e202e7a, 2db7a90 ; publiée (tag v1.3.0) |
 | publication 1.2.1 (tag, Release, SHA256SUMS) ; package-lock resynchronisé entre les deux copies, icônes lucide 1.77.0 | suite complète, test:packaged, scan complet (arbre, historique, installeur extrait) ; après resynchronisation : npm test, licences, test-help-ui, test-ribbon-layout-ui, test-ocr-ui | 6716621 ; resynchronisation (voir git log) |
