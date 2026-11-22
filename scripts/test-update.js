@@ -31,8 +31,10 @@ const BS = String.fromCharCode(92);
 const key = (...p) => p.join(BS);
 const ps = (cmd) => (spawnSync('powershell', ['-NoProfile', '-NonInteractive', '-Command', cmd], { encoding: 'utf8' }).stdout || '').trim();
 const regQuery = (k, extra) => { const r = spawnSync('reg', ['query', k, ...(extra || [])], { encoding: 'utf8' }); return r.status === 0 ? r.stdout.split(/\r?\n/).map((l) => l.trim()).filter((l) => l && !l.startsWith('HKEY_')).join(' ; ') : '(absent)'; };
-// Entrées de désinstallation des deux noms : [{ name, version, location }]
-const entries = () => { const o = ps(`Get-ChildItem 'HKCU:${BS}Software${BS}Microsoft${BS}Windows${BS}CurrentVersion${BS}Uninstall' | % { $p = Get-ItemProperty $_.PSPath; if ($p.DisplayName -like 'Orical PDF*' -or $p.DisplayName -like 'Spin A Doc*') { $p.DisplayName + '|' + $p.DisplayVersion + '|' + $p.InstallLocation } }`); return o ? o.split(/\r?\n/).map((l) => { const [name, v, loc] = l.split('|'); return { name, version: v, location: loc }; }) : []; };
+// Entrées de désinstallation des deux noms : [{ name, version, uninstall, location }]. electron-builder n'écrit pas InstallLocation dans la
+// clé de désinstallation : l'emplacement (relu par la mise à jour suivante) est sous HKCU\Software\<même identifiant que la clé>.
+const entries = () => { const o = ps(`Get-ChildItem 'HKCU:${BS}Software${BS}Microsoft${BS}Windows${BS}CurrentVersion${BS}Uninstall' | % { $p = Get-ItemProperty $_.PSPath; if ($p.DisplayName -like 'Orical PDF*' -or $p.DisplayName -like 'Spin A Doc*') { $k = Get-ItemProperty ('HKCU:${BS}Software${BS}' + $_.PSChildName) -ErrorAction SilentlyContinue; $p.DisplayName + '|' + $p.DisplayVersion + '|' + $p.UninstallString + '|' + $k.InstallLocation } }`); return o ? o.split(/\r?\n/).map((l) => { const [name, v, un, loc] = l.split('|'); return { name, version: v, uninstall: un, location: loc }; }) : []; };
+const rmRetry = (p) => { try { fs.rmSync(p, { recursive: true, force: true, maxRetries: 20, retryDelay: 500 }); } catch (e) { console.log('     (nettoyage : ' + p + ' non supprimé : ' + e.code + ')'); } };
 const lnksOf = (name) => Names.shortcuts(name).filter((p) => fs.existsSync(p));
 const allLnks = () => [...lnksOf(Names.CURRENT), ...lnksOf(Names.LEGACY)];
 const fileVersion = (exe) => ps(`(Get-Item -LiteralPath '${exe.split("'").join("''")}').VersionInfo.ProductVersion`);
@@ -75,6 +77,8 @@ function treeHash(dir) {
     check(`installation ${oldVersion} : code 0`, r.status === 0, r.status);
     for (let i = 0; i < 45 && !fs.existsSync(oldExe); i++) await sleep(1000);
     check(`programme ${oldVersion} installé dans « ${oldName} » (version du fichier)`, fs.existsSync(oldExe) && fileVersion(oldExe).startsWith(oldVersion), fs.existsSync(oldExe) && fileVersion(oldExe));
+    // Ancienne version absente (installeur planté, voir « PLANTAGE DE L'INSTALLEUR ») : arrêt propre, nettoyage ci-dessous.
+    if (!fs.existsSync(oldExe)) throw new Error(`ancienne version non installée (code ${r.status}${r.status > 0x7fffffff || r.status === 3221225477 ? ' = 0x' + r.status.toString(16).toUpperCase() : ''}) : mise à jour non testée`);
     let c = await launchApp({ exe: oldExe, files: [f.a], env: { SPINADOC_USER_DATA: profile } });
     try {
       await c.waitFor(`document.querySelectorAll('.docview.active canvas').length>0`, 20000);
@@ -98,7 +102,7 @@ function treeHash(dir) {
     if (oldDir !== newDir) check(`ancien dossier « ${oldName} » supprimé (aucun reste)`, !fs.existsSync(oldDir), fs.existsSync(oldDir) && fs.readdirSync(oldDir));
     check('aucun dossier imbriqué « …\\Spin A Doc\\Orical PDF »', !fs.existsSync(path.join(oldDir, Names.CURRENT)));
     const e = entries();
-    check(`une seule entrée de désinstallation : « ${Names.CURRENT} » ${version}, dans le nouveau dossier`, e.length === 1 && e[0].version === version && e[0].name.startsWith(Names.CURRENT) && path.resolve(e[0].location) === path.resolve(newDir), e);
+    check(`une seule entrée de désinstallation : « ${Names.CURRENT} » ${version}, dans le nouveau dossier`, e.length === 1 && e[0].version === version && e[0].name.startsWith(Names.CURRENT) && !!e[0].location && path.resolve(e[0].location) === path.resolve(newDir) && e[0].uninstall.includes(path.join(newDir, 'Uninstall ' + Names.CURRENT + '.exe')), e);
     check(`un seul raccourci par type (Bureau, menu Démarrer), au nom « ${Names.CURRENT} »`, lnksOf(Names.CURRENT).length === 2, lnksOf(Names.CURRENT));
     check(`aucun raccourci « ${Names.LEGACY} »`, lnksOf(Names.LEGACY).length === 0, lnksOf(Names.LEGACY));
     const reg = {
@@ -131,12 +135,17 @@ function treeHash(dir) {
     check('exécution sans exception', false, String(err && err.stack || err));
   } finally {
     // 4. Désinstallation (données conservées : profil de test supprimé ensuite par le script) ; reste d'une mise à jour ratée : ancien désinstalleur
+    // Comme test:packaged : attendre la fin des processus de l'application (fermée juste avant), sinon le désinstalleur rend la main
+    // avant d'avoir tout retiré (constaté : entrée, raccourcis et clés retirés quelques secondes APRÈS le code 0).
+    const running = () => Names.NAMES.some((n) => /\.exe/i.test(spawnSync('tasklist', ['/FI', `IMAGENAME eq ${n}.exe`, '/NH'], { encoding: 'utf8' }).stdout || ''));
+    for (let i = 0; i < 30 && running(); i++) await sleep(1000);
     for (const [d, n] of [[newDir, Names.CURRENT], [oldDir, oldName]]) {
       const un = path.join(d, `Uninstall ${n}.exe`);
       if (fs.existsSync(un)) { const u = spawnSync(un, ['/S', '_?=' + d], { stdio: 'inherit' }); check(`désinstallation (${n}) : code 0`, u.status === 0, u.status); }
     }
-    fs.rmSync(base, { recursive: true, force: true });
-    fs.rmSync(profile, { recursive: true, force: true });
+    for (let i = 0; i < 30 && (entries().length || allLnks().length); i++) await sleep(1000);
+    rmRetry(base);
+    rmRetry(profile);
     const leftovers = { entries: entries(), lnk: allLnks(), app: regQuery(key('HKCU', 'Software', 'Classes', 'Applications', Names.CURRENT + '.exe')), legacyApp: regQuery(key('HKCU', 'Software', 'Classes', 'Applications', Names.LEGACY + '.exe')), progId: regQuery(key('HKCU', 'Software', 'Classes', 'SpinADoc.pdf')) };
     check('registre et raccourcis revenus à l\'état initial (des deux noms)', leftovers.entries.length === 0 && leftovers.lnk.length === 0 && leftovers.app === '(absent)' && leftovers.legacyApp === '(absent)' && leftovers.progId === '(absent)', leftovers);
     check('profil réel %APPDATA%\\Spin A Doc inchangé', treeHash(realProfile) === realBefore);

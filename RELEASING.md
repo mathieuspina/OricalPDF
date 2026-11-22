@@ -111,6 +111,10 @@ Vérifier avant le commit que `git status` ne liste aucun `.exe`, `.pdf` ni secr
 
 ## 7. Release GitHub (brouillon, puis publication)
 
+Dépôt GitHub : nom **OricalPDF** depuis la 1.3.0 (ancien nom : SpinADoc ; GitHub redirige l'ancienne adresse). Aucune adresse du dépôt
+n'est écrite dans les fichiers du projet ; après le renommage, seul le remote local change : `git remote set-url origin` suivi de la
+nouvelle adresse du dépôt, puis `gh repo view --json nameWithOwner` pour vérifier.
+
 Créer un **brouillon** (rien n'est visible tant qu'il n'est pas publié) :
 
 ```bash

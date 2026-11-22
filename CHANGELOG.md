@@ -3,6 +3,21 @@
 Une ligne par fonction importante. Les dates sont celles du dépôt. Les versions 0.x sont des versions de travail.
 Pour la mise à jour d'un poste, voir [RELEASING.md](RELEASING.md#mettre-à-jour-un-poste).
 
+## 1.3.0 — 2026-11-22
+« Spin A Doc » devient « Orical PDF » (suite Orical).
+- Nouveau nom partout : fenêtre, accueil, À propos (« fait partie de la suite Orical », sous licence Orical), aide, installeur et raccourcis,
+  exécutable `Orical PDF.exe`, installeurs `OricalPDF-Setup-x.y.z.exe` et `OricalPDF-Portable-x.y.z.exe`. Contrat de licence et politique de
+  confidentialité : seuls le nom du produit et celui de l'éditeur changent.
+- Nouveau logo (barre de titre, accueil, À propos, aide) et nouvelle icône de l'application, dessinée à chaque taille (16 à 256 px).
+- Nouvelle icône des fichiers PDF, visible pour les PDF dont l'application par défaut est Orical PDF (l'installeur ne change jamais le lecteur
+  par défaut).
+- Intégration à Windows : « Ouvrir avec » et « Applications par défaut » au nouveau nom ; les traces de l'ancien nom sont retirées.
+- Mise à jour par-dessus la 1.2.1 sans rien perdre : réglages, documents récents, bibliothèque et échelles conservés (dossier
+  `%APPDATA%\Spin A Doc`, nom historique), choix « application par défaut » conservé, une seule entrée de désinstallation, raccourcis
+  renommés, ancien dossier du programme remplacé. Les PDF enregistrés en « Modifiables » par les versions précédentes se rouvrent à l'identique.
+
+*Les versions ci-dessous portaient le nom Spin A Doc (Spin A Doc devient Orical PDF en 1.3.0).*
+
 ## 1.2.1 — 2026-11-20
 - Contrat de licence : retrait de la mention de brouillon (de même dans la politique de confidentialité ; texte inchangé par ailleurs).
 

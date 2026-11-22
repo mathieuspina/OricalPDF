@@ -32,7 +32,8 @@ Ce que chaque fonction fait exactement, ses étapes et ses pièges : aide intég
 - **Installeur** `OricalPDF-Setup-x.y.z.exe` : par utilisateur, sans droits administrateur, dossier par défaut `%LOCALAPPDATA%\Programs\Orical PDF`.
   Installation silencieuse : `OricalPDF-Setup-x.y.z.exe /S` (dossier imposé : `/D=C:\Programmes\OricalPDF`, toujours en dernier).
 - **Portable** `OricalPDF-Portable-x.y.z.exe` : aucun installateur.
-- Données de l'utilisateur (réglages, récents, bibliothèque de tampons et signatures, échelles) : `%APPDATA%\Spin A Doc`.
+- Données de l'utilisateur (réglages, récents, bibliothèque de tampons et signatures, échelles) : `%APPDATA%\Spin A Doc` (nom historique,
+  gardé pour retrouver les données des versions précédentes).
 - Désinstallation : Paramètres Windows > Applications ; les données sont conservées sauf si la case « Supprimer aussi mes réglages et ma bibliothèque »
   est cochée (en silencieux : `/DELETEDATA=1`).
 - Fichiers PDF : Orical PDF est ajouté à « Ouvrir avec », sans remplacer le lecteur par défaut (choix dans les Paramètres de Windows).

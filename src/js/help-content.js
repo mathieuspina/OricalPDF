@@ -185,7 +185,7 @@ ${steps('Signaler un problème : Réglages > À propos > « Copier les informati
 <li><b>Icône des fichiers PDF</b> : l'installation ne change jamais le lecteur par défaut ; l'icône Orical des fichiers PDF n'apparaît donc que si vous avez choisi Orical PDF comme application par défaut pour les PDF.</li></ul>` },
   { id: 'informatique', title: 'Notes pour le service informatique', html: `<ul>
 <li>Installeur par utilisateur (NSIS), sans droits administrateur. Dossier par défaut : <code>%LOCALAPPDATA%\\Programs\\Orical PDF</code> (modifiable).</li>
-<li>Données de l'utilisateur (réglages, récents, bibliothèque de tampons et signatures, échelles) : <code>%APPDATA%\\Spin A Doc</code>.</li>
+<li>Données de l'utilisateur (réglages, récents, bibliothèque de tampons et signatures, échelles) : <code>%APPDATA%\\Spin A Doc</code> (nom historique, gardé pour retrouver les données des versions précédentes).</li>
 <li>Aucun service Windows, aucune tâche planifiée, aucune connexion réseau, aucune télémétrie.</li>
 <li>Installation silencieuse : <code>OricalPDF-Setup-x.y.z.exe /S</code> ; dossier imposé : <code>/D=C:\\Programmes\\OricalPDF</code> (toujours en dernier, sans guillemets).</li>
 <li>Désinstallation : Paramètres > Applications, ou <code>"Uninstall Orical PDF.exe" /S</code> dans le dossier d'installation ; les données de l'utilisateur sont conservées,

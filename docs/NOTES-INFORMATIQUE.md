@@ -27,7 +27,7 @@ Version de référence : 1.2.1. Tout ce qui suit est vérifié dans la configura
 | Quoi | Où |
 |---|---|
 | Programme | `%LOCALAPPDATA%\Programs\Orical PDF` (ou le dossier choisi) |
-| Données de l'utilisateur : réglages, documents récents, bibliothèque de tampons et de signatures, échelles de mesure | `%APPDATA%\Spin A Doc` |
+| Données de l'utilisateur : réglages, documents récents, bibliothèque de tampons et de signatures, échelles de mesure | `%APPDATA%\Spin A Doc` (nom historique, gardé depuis la 1.3.0) |
 | Version portable | aucun fichier hors de l'exécutable, sauf les mêmes données dans `%APPDATA%\Spin A Doc` |
 
 ## Installation et désinstallation silencieuses
