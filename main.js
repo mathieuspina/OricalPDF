@@ -6,11 +6,12 @@ const Recents = require('./src/recents.js');
 const PrintMain = require('./print-main.js');
 const AppInfo = require('./app-info.js');
 const WindowState = require('./src/window-state.js');
+const UserData = require('./src/user-data.js');
 
-// Nom affiché dans toutes les boîtes natives, et dossier de données stable (dev et version installée).
-// SPINADOC_USER_DATA : dossier alternatif, utilisé par les tests automatisés.
+// Nom affiché dans toutes les boîtes natives, et dossier de données stable (dev et version installée) : %APPDATA%\Spin A Doc, nom
+// historique gardé depuis le renommage en « Orical PDF » (src/user-data.js). SPINADOC_USER_DATA : dossier alternatif des tests automatisés.
 app.setName('Spin A Doc');
-app.setPath('userData', process.env.SPINADOC_USER_DATA || path.join(app.getPath('appData'), 'Spin A Doc'));
+app.setPath('userData', UserData.resolve(process.env, app.getPath('appData'), path.join));
 
 const isDev = process.argv.includes('--dev');
 let win = null;
