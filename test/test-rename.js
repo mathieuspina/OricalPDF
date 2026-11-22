@@ -25,7 +25,7 @@ const DEV_FILES = new Set(['scripts/install-names.js', 'scripts/test-packaged.js
 const ALLOWED_LINE = [
   /%APPDATA%\\+Spin A Doc/, /\$APPDATA\\Spin A Doc/, /\bLEGACY/, /SPIN_LEGACY/, /app: 'Spin A Doc'/,
   // Mentions EXPLICITES du renommage ou de l'ancienne installation (documentation pour le service informatique, aide, notes de version).
-  /ancien nom|[Rr]enommage|devient « ?Orical|laissées? par la 1\.2\.1|Applications\\+Spin A Doc\.exe|« Spin A Doc » de `?RegisteredApplications/,
+  /ancien nom|[Rr]enommage|ancien dossier s'appelle|raccourcis « Spin A Doc » sont remplacés|SpinADoc-Setup-(…|1\.2\.1)|devient « ?Orical|laissées? par la 1\.2\.1|Applications\\+Spin A Doc\.exe|« Spin A Doc » de `?RegisteredApplications/,
 ];
 // Commentaires de code (.nsh, .js, .ps1) : jamais affichés à l'utilisateur.
 const isComment = (f, l) => /\.(nsh|js|ps1)$/.test(f) && /^\s*(;|\/\/|#|\*)/.test(l);

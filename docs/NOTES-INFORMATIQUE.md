@@ -71,6 +71,9 @@ Get-FileHash "$env:LOCALAPPDATA\Programs\Orical PDF\Orical PDF.exe" -Algorithm S
 Aucune mise à jour automatique (l'application ne se connecte jamais à Internet). Pour mettre à jour : lancer le nouvel installeur
 par-dessus l'ancien, sans désinstaller (`OricalPDF-Setup-x.y.z.exe /S` en silencieux). Le programme est remplacé ; `%APPDATA%\Spin A Doc`
 (réglages, récents, bibliothèque) est conservé — scénario vérifié par `npm run test:update` (profil comparé à l'octet près).
+Depuis la 1.2.1 (ancien nom Spin A Doc) : même identité d'installation (une seule entrée de désinstallation, mise à jour par-dessus).
+Si l'ancien dossier s'appelle « …\Spin A Doc », la 1.3.0 s'installe dans le dossier voisin « …\Orical PDF » et l'ancien dossier est supprimé ;
+les raccourcis « Spin A Doc » sont remplacés par « Orical PDF » ; le dossier des données garde son nom historique (`%APPDATA%\Spin A Doc`).
 
 ## Licences
 

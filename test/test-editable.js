@@ -298,6 +298,43 @@ async function pixels(bytes) { const im = await loadImage(Buffer.from(bytes)); c
     check('A0 : état restauré à l\'identique, taille du modifiable ≤ aplati + 5 %', r.status === 'ok' && JSON.stringify(r.state.edits) === JSON.stringify(E0) && w.out.length <= fl.length * 1.05, [w.out.length, fl.length]);
   }
 
+  // Non-régression du renommage (1.3.0, Spin A Doc → Orical PDF) : un fichier modifiable écrit par le code de la 1.2.1 LUI-MÊME (sources du
+  // tag v1.2.1 extraites par git archive dans un dossier temporaire) se rouvre à l'identique avec le code actuel ; identifiants techniques
+  // (/SpinADoc, /SpinADocState, SpinADoc BMC) inchangés ; même état écrit par les deux versions.
+  console.log('8. Fichier modifiable écrit par la 1.2.1 (sources du tag v1.2.1), relu par la version actuelle');
+  {
+    const fs = require('fs'); const os = require('os'); const { spawnSync } = require('child_process');
+    const root = path.join(__dirname, '..');
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-v121-'));
+    // Fichiers .js de src/ au tag v1.2.1 (git ls-tree + git show : aucune dépendance à tar).
+    const ls = spawnSync('git', ['ls-tree', '-r', '--name-only', 'v1.2.1', 'src'], { cwd: root, encoding: 'utf8' });
+    const files = ls.status === 0 ? ls.stdout.split(/\r?\n/).filter((p) => /^src\/[^/]+\.js$/.test(p)) : [];
+    for (const p of files) { const r = spawnSync('git', ['show', 'v1.2.1:' + p], { cwd: root, maxBuffer: 1 << 26 }); if (r.status === 0) { fs.mkdirSync(path.join(tmp, 'src'), { recursive: true }); fs.writeFileSync(path.join(tmp, p), r.stdout); } }
+    if (!files.length || !fs.existsSync(path.join(tmp, 'src', 'pdf-edit.js'))) {
+      check('sources du tag v1.2.1 extraites (git ls-tree / git show) : test de non-régression impossible sans le tag', false, ls.stderr);
+    } else {
+      require(path.join(tmp, 'src', 'callout.js'));
+      const OldEdit = require(path.join(tmp, 'src', 'pdf-edit.js'));
+      const OldES = require(path.join(tmp, 'src', 'editable-state.js'));
+      check('1.2.1 : mêmes identifiants techniques que la version actuelle (clé /SpinADoc, /Type /SpinADocState, étiquette SpinADoc)', OldES.KEY === ES.KEY && OldES.TYPE === ES.TYPE && OldES.TAG === ES.TAG && ES.KEY === 'SpinADoc' && ES.TYPE === 'SpinADocState' && ES.TAG === 'SpinADoc', [OldES.KEY, OldES.TYPE, OldES.TAG]);
+      const assetsOf = (Mod) => ({ images: IMAGES, measure: { scales: scalesFor(3), unit: 'm', precision: 2, include: true }, numbering: Numbering.resolve([RULE], ident(3)),
+        editable: { numbering: Mod.numberingToIndex([RULE], ident(3)), nextId: 999 }, onEditable: () => {} });
+      const old = await OldEdit.applyEdits(PDFLib, orig, E, assetsOf(OldES));
+      check('1.2.1 : fichier modifiable écrit (/SpinADocState, flux « /SpinADoc BMC »)', ES.detect(old) && has(old, '/SpinADocState') && scan(old, 'SpinADoc BMC').hits.length > 0);
+      const rOld = await EP.read(PDFLib, old);
+      check('relu par la version actuelle : état restauré à l\'identique (objets, pages, nextId)', rOld.status === 'ok' && JSON.stringify(rOld.state.edits) === JSON.stringify(E) && rOld.state.pages === 3 && rOld.state.nextId === 999, rOld.status === 'ok' ? null : rOld);
+      const rBaseOld = await renderAll(rOld.base, 1);
+      check('base restaurée = original (pixels et texte)', same(diff(rOrig, rBaseOld)), diff(rOrig, rBaseOld));
+      const now = await PdfEdit.applyEdits(PDFLib, orig, E, assetsOf(ES));
+      const rNow = await EP.read(PDFLib, now);
+      const strip = (st) => JSON.stringify(Object.assign({}, st, { streams: (st.streams || []).map((s) => ({ i: s.i, added: s.added })) }));
+      check('même état écrit par la 1.2.1 et la version actuelle (format inchangé, hors empreintes des flux)', rNow.status === 'ok' && strip(rNow.state) === strip(rOld.state), rNow.status === 'ok' ? null : rNow);
+      const re = await save(rOld.base, rOld.state.edits);
+      check('réenregistré en modifiable par la version actuelle : rendu identique au fichier de la 1.2.1', same(diff(await renderAll(old, 1), await renderAll(re.out, 1))));
+    }
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+
   console.log(`\n${passed} vérifications réussies, ${failures.length} échec(s).`);
   if (failures.length) { console.log('Échecs :\n - ' + failures.join('\n - ')); process.exit(1); }
   console.log('OK : annotations modifiables (format, écriture, lecture).');

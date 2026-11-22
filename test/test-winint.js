@@ -42,6 +42,15 @@ check('installation : clé Applications\\Spin A Doc.exe et valeur « Spin A Doc 
 check('identifiants gardés : ProgId SpinADoc.pdf, Software\\SpinADoc\\Capabilities, appId', /!define SPIN_PROGID "SpinADoc\.pdf"/.test(ins) && caps === 'Software\\SpinADoc\\Capabilities' && pkg.build.appId === 'com.spinadoc.app');
 check('exécutable « Orical PDF.exe » (productName) : la clé Applications\\<exe> suit le nouveau nom', pkg.build.productName === 'Orical PDF' && !pkg.build.win.executableName);
 
+// 1 ter. Mise à jour depuis la 1.2.1 : dossier « …\Spin A Doc » remplacé par le dossier voisin « …\Orical PDF » (silencieux et assistant)
+const fixFn = (/Function spinFixInstDir([\s\S]*?)FunctionEnd/.exec(ins) || [])[1] || '';
+check('dossier d\'installation : « Spin A Doc » (nom exact) → dossier voisin ${APP_FILENAME}, ancien dossier noté',
+  /\$\{GetFileName\} "\$INSTDIR" \$R8/.test(fixFn) && /\$R8 == "\$\{SPIN_LEGACY_NAME\}"/.test(fixFn) && /\$\{GetParent\} "\$INSTDIR" \$R9/.test(fixFn) && /StrCpy \$INSTDIR "\$R9\\\$\{APP_FILENAME\}"/.test(fixFn) && /StrCpy \$SpinOldDir "\$INSTDIR"/.test(fixFn));
+check('redirection appliquée à l\'initialisation (silencieux) ET après la page du dossier (assistant, avant instFilesPre)',
+  /!macro customInit\s+Call spinFixInstDir\s+!macroend/.test(ins) && /!macro customPageAfterChangeDir\s+Page custom spinFixDirPage\s+!macroend/.test(ins) && /Function spinFixDirPage\s+Call spinFixInstDir\s+Abort/.test(ins));
+check('ancien dossier : seulement RMDir non récursif (s\'il est vide) ; tout le code d\'installation hors du désinstalleur', /RMDir "\$SpinOldDir"/.test(customInstall) && !/RMDir \/r "\$SpinOldDir"/.test(ins) &&
+  ins.indexOf('Var SpinOldDir') > ins.indexOf('!ifndef BUILD_UNINSTALLER') && ins.indexOf('Var SpinOldDir') < ins.indexOf('!ifdef BUILD_UNINSTALLER'));
+
 // 2. Imprimante virtuelle retirée (0.12.2)
 check('installer.nsh : plus d\'imprimante (case, /REMOVEPRINTER, PowerShell, vprinter.nsh)', !/imprimante|printer|powershell|vprinter/i.test(ins));
 check('fichiers de l\'imprimante supprimés', ['vprinter-main.js', 'src/vprinter.js', 'src/js/vprinter-ui.js', 'build/vprinter.nsh', 'scripts/make-vprinter-nsh.js'].every((p) => !fs.existsSync(path.join(root, p))));

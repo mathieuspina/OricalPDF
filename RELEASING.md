@@ -173,3 +173,8 @@ nouvelle version :
 4. Version portable : remplacer simplement l'ancien fichier `.exe` ; les données sont les mêmes (`%APPDATA%\Spin A Doc`).
 
 En silencieux (déploiement par le service informatique) : `OricalPDF-Setup-x.y.z.exe /S`. Ce scénario est vérifié par `npm run test:update`.
+Depuis la 1.2.1 (ancien nom Spin A Doc) : même identité d'installation (une seule entrée de désinstallation, mise à jour par-dessus).
+Si l'ancien dossier s'appelle « …\Spin A Doc », la 1.3.0 s'installe dans le dossier voisin « …\Orical PDF » et l'ancien dossier est supprimé ;
+les raccourcis « Spin A Doc » sont remplacés par « Orical PDF » ; le dossier des données garde son nom historique (`%APPDATA%\Spin A Doc`).
+`npm run test:update` prend par défaut l'installeur de version inférieure le plus récent de dist/ (`OricalPDF-Setup-…` ou `SpinADoc-Setup-…`) :
+pour la 1.3.0, garder `dist/SpinADoc-Setup-1.2.1.exe` (celui de la Release 1.2.1).

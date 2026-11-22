@@ -27,7 +27,36 @@
 !define SPIN_LEGACY_EXE "Spin A Doc.exe"
 
 !ifndef BUILD_UNINSTALLER
+; Dossier d'installation (1.3.0) : electron-builder reprend le dossier de l'installation précédente (InstallLocation), « …\Spin A Doc » pour
+; la 1.2.1, et y ajouterait « \Orical PDF » (instFilesPre). Si le dossier choisi s'appelle exactement « Spin A Doc », on installe dans le
+; dossier VOISIN « Orical PDF » ; la désinstallation « --updated » de la 1.2.1 (lancée sur l'ancien dossier, lu dans le registre) le vide et
+; le supprime. Appelé à l'initialisation (installation silencieuse : aucune page) et après la page du dossier (assistant).
+Var SpinOldDir
+Function spinFixInstDir
+  ${GetFileName} "$INSTDIR" $R8
+  ${If} $R8 == "${SPIN_LEGACY_NAME}"
+    ${GetParent} "$INSTDIR" $R9
+    StrCpy $SpinOldDir "$INSTDIR"
+    StrCpy $INSTDIR "$R9\${APP_FILENAME}"
+  ${EndIf}
+FunctionEnd
+Function spinFixDirPage
+  Call spinFixInstDir
+  Abort ; page invisible
+FunctionEnd
+!macro customInit
+  Call spinFixInstDir
+!macroend
+!macro customPageAfterChangeDir
+  Page custom spinFixDirPage
+!macroend
+
 !macro customInstall
+  ; Ancien dossier « Spin A Doc » : retiré s'il est resté vide (jamais de suppression récursive ici).
+  ${If} $SpinOldDir != ""
+  ${AndIf} $SpinOldDir != $INSTDIR
+    RMDir "$SpinOldDir"
+  ${EndIf}
   StrCpy $0 "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
   ; Traces de l'ancien nom (1.2.1 et avant) : jamais deux entrées « Ouvrir avec » ni deux noms dans « Applications par défaut ».
   ${If} "${APP_EXECUTABLE_FILENAME}" != "${SPIN_LEGACY_EXE}"
