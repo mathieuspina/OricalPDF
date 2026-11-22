@@ -17,7 +17,7 @@ const appData = 'C:\\Users\\exemple\\AppData\\Roaming';
 
 check('nom historique du dossier = « Spin A Doc »', UD.LEGACY_DIR === 'Spin A Doc');
 check('résolu sans variable : %APPDATA%\\Spin A Doc', UD.resolve({}, appData, path.win32.join) === 'C:\\Users\\exemple\\AppData\\Roaming\\Spin A Doc');
-check('SPINADOC_USER_DATA respecté (tests)', UD.resolve({ SPINADOC_USER_DATA: 'D:\\profil-test' }, appData, path.win32.join) === 'D:\\profil-test');
+check('SPINADOC_USER_DATA respecté (tests)', UD.resolve({ SPINADOC_USER_DATA: 'C:\\Tests\\profil-test' }, appData, path.win32.join) === 'C:\\Tests\\profil-test');
 check('SPINADOC_USER_DATA vide : dossier historique', UD.resolve({ SPINADOC_USER_DATA: '' }, appData, path.win32.join).endsWith('\\Spin A Doc'));
 check('indépendant du nom du produit : user-data.js ne lit ni productName ni app.getName', !/\.productName|getName\(/.test(fs.readFileSync(path.join(root, 'src', 'user-data.js'), 'utf8')));
 
