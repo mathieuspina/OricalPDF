@@ -60,7 +60,7 @@ export function onPageMouseDown(doc, rec, ev) {
       // Le texte doit apparaître droit dans l'orientation affichée (page /Rotate, affichage pivoté) : rot = rotation d'affichage.
       return openEditor(doc, rec, { type: tool, page: rec.index, obj: Object.assign(d, { x: px, y: py, text: '', rot: rec.vp.rotation || 0 }) });
     }
-    case 'stamp': case 'image': case 'signature':
+    case 'stamp': case 'tstamp': case 'image': case 'signature':
       ev.preventDefault();
       clearSelection(doc);
       return placeAt(doc, rec, pdfPoint(rec, ev));

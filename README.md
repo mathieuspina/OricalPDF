@@ -11,7 +11,7 @@ Version actuelle : **1.0.0** (historique : [CHANGELOG.md](CHANGELOG.md)).
 | Domaine | Ce que fait Orical PDF |
 |---|---|
 | Lecture | Onglets, miniatures, signets, recherche, zoom, plein écran, rotation de l'affichage |
-| Annotations | Texte, modification de texte existant (par recouvrement), formes, flèches, nuages, surlignage, crayon, légende fléchée aimantée, notes, tampons, images, signature dessinée |
+| Annotations | Texte, modification de texte existant (par recouvrement), formes, flèches, nuages, surlignage, crayon, légende fléchée aimantée, notes, tampons, tampons techniques (silhouettes de profilés et repères de plan, sans cotes), images, signature dessinée |
 | Mesure | Échelle connue ou calibrage, distances, polylignes, surfaces, angles, cotes, cercles, aimantation sur les traits du plan, export CSV |
 | Pages | Rotation, déplacement, duplication, suppression, insertion, recadrage, extraction, division, numérotation ; les signets suivent les pages |
 | Fusion | Plusieurs PDF en un, plages, rotation par fichier, un signet par fichier |

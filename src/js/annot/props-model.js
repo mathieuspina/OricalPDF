@@ -11,20 +11,25 @@ import { restyleEditor } from './texted.js';
 
 // Champs éditables dans le panneau de propriétés : clé, libellé, genre de contrôle, types d'objets concernés.
 export const STROKE = ['line', 'arrow', 'rect', 'ellipse', 'polygon', 'polyline', 'cloud', 'pen'];
-export const ALL = [...STROKE, 'hlrect', 'highlight', 'underline', 'strike', 'add', 'note', 'replace', 'stamp', 'sig'];
+export const ALL = [...STROKE, 'hlrect', 'highlight', 'underline', 'strike', 'add', 'note', 'replace', 'stamp', 'tstamp', 'sig'];
+const TS = () => window.TechStamps;
 export const FIELDS = [
   { k: 'color', label: 'Couleur', kind: 'color', types: ALL },
   { k: 'fill', label: 'Remplissage', kind: 'colorOrNone', types: ['rect', 'ellipse', 'polygon', 'cloud'] },
   { k: 'fill', label: 'Fond du texte', kind: 'colorOrNone', types: ['add', 'note'] },
   { k: 'border', label: 'Bordure du texte', kind: 'colorOrNone', types: ['add', 'note'] },
   { k: 'width', label: 'Épaisseur', kind: 'number', min: 0.5, max: 40, step: 0.5, types: STROKE },
-  { k: 'opacity', label: 'Opacité', kind: 'range', types: [...STROKE, 'hlrect', 'highlight', 'underline', 'strike', 'stamp', 'sig', 'image'] },
+  { k: 'opacity', label: 'Opacité', kind: 'range', types: [...STROKE, 'hlrect', 'highlight', 'underline', 'strike', 'stamp', 'tstamp', 'sig', 'image'] },
   { k: 'shadow', label: 'Ombre légère', kind: 'bool', types: ['note'] },
   { k: 'label', label: 'Texte du tampon', kind: 'text', types: ['stamp'] },
   { k: 'frame', label: 'Cadre', kind: 'bool', types: ['stamp'] },
   { k: 'withDate', label: 'Date (jj/mm/aaaa)', kind: 'bool', types: ['stamp'] },
   { k: 'withUser', label: 'Nom de l\'utilisateur', kind: 'bool', types: ['stamp'] },
   { k: 'tilt', label: 'Incliné à la pose', kind: 'bool', types: ['stamp'] },
+  // tampons techniques : libellé (si le symbole en a un), plein / contour (si le symbole a un corps), épaisseur relative
+  { k: 'label', label: 'Libellé', kind: 'text', empty: true, types: ['tstamp'], when: (o) => TS().hasLabel(o), get: (o) => (o.label === undefined || o.label === null ? (TS().entry(o.sym) || {}).label : o.label) },
+  { k: 'style', label: 'Remplissage', kind: 'select', options: [['solid', 'Plein'], ['outline', 'Contour']], types: ['tstamp'], when: (o) => TS().hasBody(o) },
+  { k: 'weight', label: 'Épaisseur du trait', kind: 'select', options: [['fine', 'Fine'], ['normal', 'Normale'], ['bold', 'Épaisse'], ['xbold', 'Très épaisse']], types: ['tstamp'] },
   { k: 'dash', label: 'Style de trait', kind: 'select', options: [['solid', 'Plein'], ['dash', 'Tirets'], ['dot', 'Pointillés']], types: STROKE },
   { k: 'arrowStart', label: 'Pointe au début', kind: 'bool', types: ['line', 'arrow'] },
   { k: 'arrowEnd', label: 'Pointe à la fin', kind: 'bool', types: ['line', 'arrow'] },
@@ -89,7 +94,7 @@ export function setProp(doc, key, value, fieldTypes) {
   const applies = (type) => !fieldTypes || fieldTypes.includes(type);
   if (!ctx.virtual) {
     const ids = ctx.objs.filter((o) => applies(o.type)).map((o) => o.id);
-    if (ids.length) { DocModel.updateEdits(doc, ids, (e) => (e.type === 'stamp' && STAMP_KEYS.has(key) ? stampPatch(e, key, value) : { [key]: value })); changed(doc); }
+    if (ids.length) { DocModel.updateEdits(doc, ids, (e) => (e.type === 'stamp' && STAMP_KEYS.has(key) ? stampPatch(e, key, value) : e.type === 'tstamp' && key === 'label' ? TS().relabel(e, value, measure) : { [key]: value })); changed(doc); }
   }
   for (const t of ctx.types) if (applies(t)) defaultsOf(t)[key] = value; // la prochaine création reprend ce réglage
   bus.emit('doc-changed', doc);

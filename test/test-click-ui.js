@@ -80,6 +80,12 @@ function check(name, cond, detail) {
       await c.click('#favmenu [data-fav=remove]'); await sleep(300);
     }
 
+    console.log('3f. Menu « Tampons techniques » (onglet Annoter)');
+    await c.click('#rtab-annotate'); await sleep(200);
+    await c.click('#rpanel-annotate [data-cmd=tech-menu]'); await sleep(300);
+    await view('menu « Tampons techniques » (miniatures)', '#tech-menu-pop', 8);
+    await key('Escape', 'Escape', 27); await sleep(200);
+
     console.log('4. Boîtes de dialogue et panneaux');
     await c.click('#btn-settings'); await sleep(300);
     await view('réglages', '#settings', 3); await c.click('#btn-winint'); await sleep(200);

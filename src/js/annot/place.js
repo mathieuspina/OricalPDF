@@ -12,7 +12,7 @@ import { changed } from './select.js';
 
 // ----------------------------------------------------------------------------- pose : tampons, images, signatures
 // charge utile de l'outil de pose, partagée entre documents :
-//   { tool:'stamp', kind:'stamp', stamp:{ label, color, frame, … } } | { tool:'image'|'signature', kind:'image', imgId, withDate }
+//   { tool:'stamp', kind:'stamp', stamp:{ label, color, frame, … } } | { tool:'tstamp', kind:'tstamp', tstamp:{ sym, label, color } } | { tool:'image'|'signature', kind:'image', imgId, withDate }
 //   | { tool:'signature', kind:'sig', strokes, w, h, lw, color, withDate }
 let placing = null;
 export const getPlacing = () => placing;
@@ -21,6 +21,10 @@ export const clearPlacing = () => { placing = null; };
 export function startPlacing(doc, payload) {
   placing = payload;
   if (payload.kind === 'stamp') defaultsByType.stamp = Object.assign(Shapes.defaultsFor('stamp'), payload.stamp);
+  if (payload.kind === 'tstamp') { // symbole, libellé et couleur du catalogue ; plein / contour, épaisseur et opacité choisis gardés
+    const prev = defaultsOf('tstamp');
+    defaultsByType.tstamp = Object.assign(Shapes.defaultsFor('tstamp'), { style: prev.style, weight: prev.weight, opacity: prev.opacity }, payload.tstamp);
+  }
   if (payload.kind === 'sig') defaultsByType.sig = Object.assign(Shapes.defaultsFor('sig'), { color: payload.color || [0, 0, 0] });
   setTool(doc, payload.tool);
 }
@@ -75,6 +79,10 @@ export function placeAt(doc, rec, pt, payload) {
     const sz = Shapes.stampSize(o, measure, 1);
     o.w = sz.w; o.h = sz.h;
     list.push(o);
+  } else if (p.kind === 'tstamp') {
+    const d = defaultsOf('tstamp');
+    const o = window.TechStamps.create(d.sym, pt[0], pt[1], measure, { label: d.label, color: d.color, opacity: d.opacity, style: d.style, weight: d.weight, rot: vr });
+    list.push(Object.assign(o, { page: rec.index }));
   } else if (p.kind === 'image') {
     const a = doc.assets.images[p.imgId];
     if (!a) return;

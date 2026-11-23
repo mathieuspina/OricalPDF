@@ -18,7 +18,7 @@ function check(name, cond, detail) {
 
 // Outil → type d'objet affiché (le panneau montre les réglages de l'outil actif pour la prochaine création).
 const TOOLS = [
-  ['add', 'texte'], ['note', 'note'], ['replace', 'texte modifié'], ['stamp', 'tampon'], ['image', 'image'], ['signature', 'signature'],
+  ['add', 'texte'], ['note', 'note'], ['replace', 'texte modifié'], ['stamp', 'tampon'], ['tstamp', 'tampon technique'], ['image', 'image'], ['signature', 'signature'],
   ['line', 'ligne'], ['arrow', 'flèche'], ['rect', 'rectangle'], ['ellipse', 'ellipse'], ['polygon', 'polygone'], ['polyline', 'polyligne'],
   ['cloud', 'nuage'], ['pen', 'crayon'], ['hlrect', 'surlignage'], ['highlight', 'surlignage du texte'], ['underline', 'soulignement'],
   ['strike', 'texte barré'], ['m-dist', 'mesure distance'], ['m-poly', 'mesure polyligne'], ['m-area', 'mesure surface'],

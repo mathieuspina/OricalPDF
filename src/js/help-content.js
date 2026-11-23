@@ -26,11 +26,12 @@ ${steps('Choisir l\'outil Texte, cliquer à l\'endroit voulu, taper ; ' + K('Ent
 ${traps('« Modifier texte » n\'efface pas l\'ancien texte du fichier : il reste lisible par une extraction. Pour supprimer une information, utilisez le <a href="#aide-caviardage">caviardage</a>.',
     'Pas d\'édition de texte sur une page pivotée (un message s\'affiche) ; les polices d\'origine incorporées ne sont pas réutilisables (Helvetica, Times ou Courier à la place).')}` },
 
-  { id: 'annotations', title: 'Annotations : formes, flèches, légendes, notes, tampons, images, signatures', html: `
+  { id: 'annotations', title: 'Annotations : formes, flèches, légendes, notes, tampons, tampons techniques, images, signatures', html: `
 <p>Onglet <strong>Annoter</strong>. Les outils restent actifs jusqu'à ce que vous en choisissiez un autre (ou ${K('Échap')}).</p>
 ${steps('Formes : ligne, flèche, rectangle, ellipse, polygone, polyligne, nuage de révision, surlignage, crayon. ' + K('Maj') + ' : proportions libres / angle par pas de 15°.',
     'Légende fléchée : cliquer sur le point à désigner (aimanté sur les traits du plan, ' + K('Alt') + ' pour désactiver), glisser jusqu\'à la place du texte, taper. Exemple : « Poteau P12 – lamellé-collé GL24h ».',
     'Note : un post-it avec ombre légère. Tampons : bibliothèque (Approuvé, À revoir…), date et nom en option.',
+    'Tampons techniques : silhouettes de profilés (IPE, HEA, UPN, cornières, tubes, pannes Z / C / Sigma, bac acier, panneau sandwich…) et repères de plan (bulle, Nord, soudure, cote de niveau, coupe, pente, axe, perçage, tige d\'ancrage), sans cotes ni échelle : un clic pour poser, poignées pour la taille ; libellé, couleur, plein / contour et épaisseur dans le panneau Propriétés ; clic droit sur une miniature pour l\'ajouter aux favoris.',
     'Images et signatures : insérer un fichier, coller une image (' + K('Ctrl+V') + ') ou dessiner une signature (image figée, sans valeur juridique).',
     'Sélection : clic, ' + K('Maj') + '+clic pour plusieurs ; déplacer, redimensionner, tourner ; ' + K('Ctrl+D') + ' dupliquer, ' + K('Suppr') + ' supprimer, flèches = déplacement fin.')}
 ${traps('Une signature dessinée n\'est pas une signature électronique (aucun certificat).', 'Pas d\'aimantation sur un plan scanné (image).')}` },

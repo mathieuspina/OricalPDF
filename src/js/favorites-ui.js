@@ -45,6 +45,7 @@ export function render() {
     const ico = src.querySelector('.ico');
     b.innerHTML = `<span class="ico" data-icon="${ico ? ico.dataset.icon : 'pin'}"></span><span class="lbl"></span>`;
     b.querySelector('.lbl').textContent = labelOf(src);
+    if (ico && ico.style.cssText) b.querySelector('.ico').style.cssText = ico.style.cssText; // icône dessinée (masque en ligne, ex. tampons techniques)
     body.append(b);
   }
   g.hidden = !body.children.length;
@@ -116,6 +117,11 @@ function openFor(t, x, y, keyboard) {
   if (keyboard) { const first = m.querySelector('button:not(:disabled)') || m.querySelector('button'); if (first) { first.tabIndex = 0; first.focus(); } }
 }
 
+// Menu des favoris pour une commande du ruban désignée hors du ruban (ex. miniature du menu « Tampons techniques » → commande cachée tst-<id>).
+export function openForCommand(cmd, x, y) {
+  const src = sourceOf(cmd);
+  if (src) openFor({ el: src, cmd, fav: false }, x, y, false);
+}
 function openFromKeyboard(el) {
   const t = targetOf(el);
   if (!t) return false;

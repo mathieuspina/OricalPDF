@@ -11,7 +11,7 @@ export const measure = Shapes.makeMeasure(PDFLib);
 
 export const SHAPE_TOOLS = ['line', 'arrow', 'rect', 'ellipse', 'hlrect', 'polygon', 'polyline', 'cloud', 'pen'];
 export const MARKUP_TOOLS = ['highlight', 'underline', 'strike'];
-export const PLACE_TOOLS = ['stamp', 'image', 'signature']; // outils de pose (tampon, image, signature) : charge utile = placing
+export const PLACE_TOOLS = ['stamp', 'tstamp', 'image', 'signature']; // outils de pose (tampon, tampon technique, image, signature) : charge utile = placing
 export const TOOLS = ['select', 'add', 'note', 'edit', 'eraser', ...PLACE_TOOLS, ...SHAPE_TOOLS, ...MARKUP_TOOLS];
 export const POLY_TOOLS = new Set(['polygon', 'polyline', 'cloud']);
 // Outils ajoutés par d'autres modules (ex. mesures) : { down(doc, rec, ev), move?(doc, rec, ev), cancel?(doc) → true si quelque chose était en cours, finish?(doc) → true si traité }
@@ -19,7 +19,7 @@ export const extTools = {};
 export function registerTool(name, label, handlers) { extTools[name] = handlers; TOOLS.push(name); TOOL_LABELS[name] = label; }
 export const ROTATED_MSG = V.ROTATED_MSG;
 export const TOOL_LABELS = {
-  select: 'Sélection', note: 'Note', stamp: 'Tampon', image: 'Image', signature: 'Signature', add: 'Ajouter texte', edit: 'Modifier texte', eraser: 'Gomme', line: 'Ligne', arrow: 'Flèche', rect: 'Rectangle',
+  select: 'Sélection', note: 'Note', stamp: 'Tampon', tstamp: 'Tampon technique', image: 'Image', signature: 'Signature', add: 'Ajouter texte', edit: 'Modifier texte', eraser: 'Gomme', line: 'Ligne', arrow: 'Flèche', rect: 'Rectangle',
   ellipse: 'Ellipse', hlrect: 'Surlignage libre', polygon: 'Polygone', polyline: 'Polyligne', cloud: 'Nuage', pen: 'Crayon',
   highlight: 'Surligner', underline: 'Souligner', strike: 'Barrer',
 };

@@ -5,6 +5,7 @@ import * as Sidebar from './sidebar.js';
 import * as A from './annotate.js';
 import * as Props from './props.js';
 import * as Stamps from './stamps-ui.js';
+import * as TechUI from './tech-stamps-ui.js';
 import * as Measures from './measure-ui.js';
 import * as Pages from './pages-ui.js';
 import * as Merge from './merge-ui.js';
@@ -308,6 +309,8 @@ function refreshRibbon() {
       else if (c === 'mode-single') on = doc.view.mode === 'single';
       else if (c === 'spread') on = doc.view.spread === 2;
       else if (c === 'stamps-menu') on = doc.tool === 'stamp';
+      else if (c === 'tech-menu') on = doc.tool === 'tstamp';
+      else if (c.startsWith('tst-')) on = TechUI.isActive(doc, c);
       else if (c === 'sig-menu') on = doc.tool === 'signature';
       else if (c === 'image-insert') on = doc.tool === 'image';
     }
@@ -428,6 +431,7 @@ const commands = {
   redo: () => { const d = active(); if (d) A.redo(d); },
   'stamps-menu': (btn) => Stamps.openMenu('stamps', btn),
   'sig-menu': (btn) => Stamps.openMenu('sig', btn),
+  'tech-menu': (btn) => TechUI.openMenu(btn),
   'image-insert': () => Stamps.insertImage(),
   'obj-copy': () => { const d = active(); if (d && A.copySelection(d)) { Stamps.markInternalCopy(); refreshRibbon(); toast('Copié.', 1500); } },
   'obj-paste': () => { const d = active(); if (d) A.paste(d); },
@@ -681,6 +685,8 @@ document.addEventListener('keydown', async (e) => {
   RedactUI.initRedact();
   FieldsUI.initFields();
   Help.initHelp();
+  TechUI.initTechStamps(); // commandes tst-<id> : avant les favoris (qui peuvent les épingler)
+  Object.assign(commands, TechUI.commands);
   FavUI.initFavorites({ refresh: () => refreshRibbon() });
   EditUI.init({ save: (d, o) => saveDoc(d, o), refresh: () => refreshAll(), activate: (d) => activate(d), scanForm: (d) => FormsUI.scan(d).catch((e) => console.warn('Formulaire :', e)) });
   Merge.hooks.openResult = openMerged;

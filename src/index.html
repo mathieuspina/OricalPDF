@@ -103,6 +103,7 @@
           <button class="rbtn big" data-cmd="m-snap" data-pressable title="Aimantation de la pointe de la légende (et des mesures) aux extrémités et intersections des lignes du plan"><span class="ico" data-icon="magnet"></span><span class="lbl">Aimanter</span></button>
           <button class="rbtn big" data-cmd="tool-note" data-pressable title="Note : petit cartouche texte"><span class="ico" data-icon="sticky-note"></span><span class="lbl">Note</span></button>
           <button class="rbtn big" data-cmd="stamps-menu" data-pressable aria-haspopup="menu" aria-expanded="false" title="Tampons : prédéfinis et bibliothèque"><span class="ico" data-icon="stamp"></span><span class="lbl">Tampons</span></button>
+          <button class="rbtn big" data-cmd="tech-menu" data-pressable aria-haspopup="menu" aria-expanded="false" title="Tampons techniques : profilés (IPE, HEA, UPN, cornières, tubes…), bardage et couverture, repères de plan (bulle, Nord, soudure, niveau, coupe…)"><span class="ico" data-icon="stamp"></span><span class="lbl">Tampons techniques</span></button>
           <button class="rbtn big" data-cmd="image-insert" data-pressable title="Insérer une image PNG ou JPEG (glisser-déposer et Ctrl+V fonctionnent aussi)"><span class="ico" data-icon="image"></span><span class="lbl">Image</span></button>
           <button class="rbtn big" data-cmd="sig-menu" data-pressable aria-haspopup="menu" aria-expanded="false" title="Signatures : bibliothèque et création"><span class="ico" data-icon="signature"></span><span class="lbl">Signature</span></button>
         </div>
@@ -472,6 +473,7 @@
   <!-- Menu des fichiers récents (ruban) -->
   <div id="recents-menu" class="menu" role="menu" hidden></div>
   <div id="lib-menu" class="menu lib-menu" role="menu" hidden></div>
+  <div id="tech-menu-pop" class="menu lib-menu tech-menu" role="menu" aria-label="Tampons techniques" hidden></div>
 
   <!-- Indicateur de chargement : le logo qui tourne (le halo décalé rend la rotation visible) -->
   <div id="busy" hidden role="status" aria-live="polite">
@@ -964,6 +966,7 @@
   <script src="print-compose.js"></script>
   <script src="shapes.js"></script>
   <script src="callout.js"></script>
+  <script src="tech-stamps.js"></script>
   <script src="numbering.js"></script>
   <script src="ocr.js"></script>
   <script src="compare.js"></script>

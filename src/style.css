@@ -430,6 +430,13 @@ body[data-anim=reduced] #sidebar, body[data-anim=reduced] #props { animation: no
 .lib-opts { display: flex; gap: 14px; flex-wrap: wrap; padding: 8px; color: var(--text-2); }
 .lib-opts .chk { display: inline-flex; align-items: center; gap: 4px; }
 .lib-create { margin: 4px 8px 8px; }
+/* tampons techniques (1.4.0) : grille de miniatures par catégorie */
+.tech-menu { width: 420px; }
+.tech-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding: 4px 6px; }
+.tech-cell { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; padding: 6px 4px 5px; border: 1px solid var(--border); border-radius: var(--radius); background: #fff; color: #222; }
+.tech-cell:hover, .tech-cell:focus-visible { border-color: var(--red-1); }
+.tech-thumb { display: flex; align-items: center; justify-content: center; width: 68px; height: 44px; }
+.tech-name { width: 100%; font-size: 10.5px; line-height: 1.2; text-align: center; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .seg { display: inline-flex; gap: 4px; padding: 3px; border-radius: var(--radius); background: var(--bg); align-self: flex-start; }
 .seg [role=tab] { border: 0; background: transparent; color: var(--text-2); padding: 6px 14px; border-radius: 8px; }
 .seg [role=tab][aria-selected=true] { background: var(--surface-2); color: var(--text); box-shadow: inset 0 -2px 0 var(--red-1); }
