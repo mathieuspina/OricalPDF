@@ -16,6 +16,7 @@
 //   'add'      texte (x, y = ligne de base ; font, bold, italic, size, color, align, width, fill, border, rot)
 //   'note'     comme 'add' avec fond jaune, bordure et ombre optionnelle (cartouche)
 //   'stamp'    tampon vectoriel : label, color, frame, date, user, cx, cy, w, h, rot, opacity
+//   'tstamp'   tampon technique (src/tech-stamps.js) : sym, label, style, weight, color, cx, cy, w, h, rot, opacity
 //   'sig'      signature tracée (vectorielle) : strokes, lw, w0, cx, cy, w, h, rot, color, opacity
 //   'image'    image PNG/JPEG : imgId (+ assets.images passé à applyEdits), cx, cy, w, h, rot, opacity
 //   'replace'  texte qui recouvre un texte existant : comme 'add' (font, bold, italic, size, color, rot) +
@@ -103,7 +104,7 @@
     cover(ctx, e) { if (e.cover) drawPrimitives(ctx, [Shapes.coverPrimitive(e)]); },
     draw: drawShape,
   });
-  for (const t of ['m-dist', 'm-poly', 'm-area', 'm-angle', 'm-dim', 'm-circle', 'note', 'callout', 'stamp', 'image', 'sig', 'rect', 'ellipse', 'hlrect', 'line', 'arrow', 'polygon', 'polyline', 'cloud', 'pen', 'highlight', 'underline', 'strike']) {
+  for (const t of ['m-dist', 'm-poly', 'm-area', 'm-angle', 'm-dim', 'm-circle', 'note', 'callout', 'stamp', 'tstamp', 'image', 'sig', 'rect', 'ellipse', 'hlrect', 'line', 'arrow', 'polygon', 'polyline', 'cloud', 'pen', 'highlight', 'underline', 'strike']) {
     registerType(t, { draw: drawShape });
   }
   // Zones « à caviarder » : repères d'édition, JAMAIS écrits (seul « Appliquer le caviardage » détruit l'information, voir src/redact-apply.js).
