@@ -3,6 +3,18 @@
 Une ligne par fonction importante. Les dates sont celles du dépôt. Les versions 0.x sont des versions de travail.
 Pour la mise à jour d'un poste, voir [RELEASING.md](RELEASING.md#mettre-à-jour-un-poste).
 
+## 1.4.0 — en préparation
+Tampons techniques pour annoter les plans (charpente, bardage, couverture, bâtiment).
+- Onglet Annoter > Tampons techniques : 33 silhouettes schématiques, sans cotes ni échelle, posées d'un clic puis agrandies aux poignées
+  (proportions gardées, Maj = libres), tournées, copiées, annulables comme les autres tampons ; miniatures dessinées à partir de la même géométrie.
+- Profilés : IPE, IPN, HEA, HEB, HEM, UPN, UPE, cornières à ailes égales et inégales, T, tubes carré, rectangulaire et rond, plat, rond plein.
+- Bardage et couverture : pannes Z, C et Sigma, lisse oméga, bac acier (trapèze), panneau sandwich.
+- Repères : bulle numérotée, flèche Nord, soudures (angle, bout à bout, tout autour), cote de niveau, repère de coupe, flèche de pente, axe
+  (trait mixte), perçage / boulon, tige d'ancrage, voir détail (bulle double).
+- Panneau Propriétés : libellé modifiable (ex. « IPE 200 »), couleur (noir pour les profilés, rouge pour les repères par défaut),
+  plein ou contour, épaisseur du trait (proportionnelle à la taille du tampon), opacité.
+- Favoris : clic droit sur une miniature pour épingler un symbole dans l'onglet Accueil.
+
 ## 1.3.0 — 2026-11-22
 « Spin A Doc » devient « Orical PDF » (suite Orical).
 - Nouveau nom partout : fenêtre, accueil, À propos (« fait partie de la suite Orical », sous licence Orical), aide, installeur et raccourcis,
