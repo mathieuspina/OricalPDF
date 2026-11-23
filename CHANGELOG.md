@@ -3,6 +3,18 @@
 Une ligne par fonction importante. Les dates sont celles du dépôt. Les versions 0.x sont des versions de travail.
 Pour la mise à jour d'un poste, voir [RELEASING.md](RELEASING.md#mettre-à-jour-un-poste).
 
+## 1.3.1 — 2026-11-23
+Corrections.
+- Après une impression, fermer puis relancer Orical PDF fonctionne de nouveau : les fenêtres cachées d'impression ne gardent plus l'application
+  ouverte en arrière-plan (il fallait arrêter le processus à la main). Un nouveau lancement rouvre aussi la fenêtre d'une instance restée ouverte.
+- Impression en paysage : le format du papier est toujours annoncé à l'imprimante en portrait, avec l'orientation paysage indiquée à part ;
+  formats usuels reconnus (A5 à A0, Letter, Legal, Tabloid) et dimensions exactes du papier annoncé par l'imprimante. Documents mêlant
+  plusieurs formats : une tâche par format, chacune dans son orientation.
+- Option avancée de la boîte d'impression « Orientation envoyée à l'imprimante » (Automatique, Portrait, Paysage), mémorisée par imprimante :
+  pour un pilote qui tournerait mal la feuille ; ne change ni l'aperçu ni la mise en page.
+- Journal d'impression (200 dernières tâches, sans nom de fichier ni chemin) : « Copier le journal d'impression » dans À propos, à joindre à un
+  signalement.
+
 ## 1.3.0 — 2026-11-22
 « Spin A Doc » devient « Orical PDF » (suite Orical).
 - Nouveau nom partout : fenêtre, accueil, À propos (« fait partie de la suite Orical », sous licence Orical), aide, installeur et raccourcis,

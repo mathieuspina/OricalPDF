@@ -39,7 +39,38 @@ commits), puis ATTENDRE le « go » de l'utilisateur. Ne jamais prétendre avoir
 - Rapports courts : sans répéter ce qui n'a pas changé ; « Ce que je n'ai PAS pu tester » et la checklist manuelle restent complètes.
 
 ## État du projet
-Version : 1.3.0 PUBLIÉE (2026-11-22 : commit 2db7a90 sur main, tag annoté v1.3.0 « Orical PDF 1.3.0 » poussé, Release publique « Orical PDF 1.3.0 » (Latest) du dépôt
+Version : 1.3.1 PRÊTE, NON publiée, en attente du test d'impression réelle par l'utilisateur (branche `orical-pdf-1.3.1`, poussée, NON fusionnée
+dans main ; ni tag ni Release ; la branche `orical-pdf-1.4` (tampons techniques, 3 commits) est à part, ne pas y toucher).
+Lot 1.3.1 (corrections) : A FERMETURE APRÈS IMPRESSION (417d71a) : cause reproduite par test-quit AVANT correction = fenêtres cachées
+d'impression (fenêtre de travail gardée 15 s ; fenêtre d'envoi « sans rappel du pilote » gardée jusqu'à 10 min) → pas de 'window-all-closed',
+processus vivant avec le verrou d'instance unique, relancement fermé aussitôt (second-instance ne faisait rien avec win null). print-main :
+registre `windows` (track) + `tmpDirs` (spinadoc-print-*), `shutdown()` (file abandonnée, fenêtres détruites, dossiers supprimés, idempotent) ;
+main.js : 'closed' de la fenêtre principale → `quitAll` (shutdown + app.quit + garde-fou `app.exit(0)` après 3 s, minuteur unref), 'before-quit'
+→ shutdown si plus de fenêtre, second-instance d'une instance orpheline → createWindow + fichiers reçus. Confirmation « Impression en cours »
+inchangée (`active()` = file + tâche en cours ; une fenêtre d'envoi en attente de rappel N'EST PAS comptée). Variables de test :
+`SPINADOC_TEST_PRINT_PENDING` (avec SPINADOC_TEST_PRINT_DIR : fenêtre d'envoi cachée + dossier temporaire simulés), `SPINADOC_TEST_ORPHAN`
+(la fermeture ne quitte pas), IPC `test:close` / `spinadoc.testClose()` (SPIN_TEST_HEADLESS=1 seulement : fermeture par l'événement 'close' ;
+PIÈGE : un `window.close()` de la page ferme SANS passer par 'close', donc sans question). B ORIENTATION / FORMAT (1f40b50) :
+`PrintLayout.printOptions(job, opts, caps)` (pageSize TOUJOURS en portrait en micromètres + `landscape` ; Electron 33.4 : pageSize nom A0-A6 /
+Legal / Letter / Tabloid ou {width, height}, `landscape` booléen ; `standardFormat` ±1 mm, `announcedPaper` = papier de caps.papers ±1 mm quel
+que soit son nom → dimensions exactes, sinon format standard, sinon feuille ; `opts.orient` auto | portrait | landscape ne change QUE
+`landscape`) ; print-compose inchangé (MediaBox = feuille, aucun /Rotate, /Rotate source absorbé par drawPage : vérifié par la matrice) ;
+caps mises en cache par imprimante (`capsOf`) ; `src/print-log.js` (UMD : line, append, MAX 200, FILE print-log.txt) → userData/print-log.txt
+(via UserData.resolve), imprimante masquée par AppInfo.maskPrinter (aussi deviceName et messages), titre / nom du fichier remplacés par
+`<document>` ; en mode test (SPINADOC_TEST_PRINT_DIR) : `jobs.json` → `jobs[i].print` = options calculées + ligne « test : non imprimé ».
+Interface : `#pr-sendorient` (Papier et échelle, mémorisé par imprimante dans `printPrinters[nom].sendOrient`), `#about-printlog` (IPC
+`app:print-log`, `spinadoc.printLog()`). C : CHANGELOG 1.3.1, version 1.3.1, aide (rubrique impression) et README (limites) ; suite complète verte (npm test, test:ui,
+licences) ; `npm run dist` (1er essai : spawn UNKNOWN, 2e OK ; app.asar = version 1.3.1 et fichiers identiques à l'arbre de travail) ;
+SHA256SUMS : Setup 98cce90b…74e9, Portable 61c7a4d7…cc9d (dist/SHA256SUMS.txt). BLOCAGE SMART APP CONTROL (2026-11-23) : sur ce PC, SAC est en
+mode APPLICATION (HKLM\SYSTEM\CurrentControlSet\Control\CI\Policy VerifiedAndReputablePolicyState = 1) : tout exécutable NON SIGNÉ sans
+réputation est refusé au lancement (journal Microsoft-Windows-CodeIntegrity/Operational, événements 3033 / 3077 / 3118 ; Node : « spawn
+UNKNOWN », installeur : code null) : win-unpacked\Orical PDF.exe, Portable et Setup 1.3.1, ET l'installeur officiel 1.3.0 de la Release.
+test:packaged (7 séries) et test:update (1.3.0 → 1.3.1) n'ont donc RIEN vérifié (échecs au lancement ; registre, raccourcis et profil réel
+revenus à l'état initial ; garde de test:update non déclenchée). Ne JAMAIS désactiver SAC (irréversible sans réinstaller Windows) : à faire
+sur un poste sans SAC, ou signer le code. Les tests de développement (electron.exe signé de node_modules) ne sont pas touchés.
+PIÈGE d'outil : dans un heredoc passé par l'outil Bash, les barres obliques inverses d'un script Node peuvent être perdues (`\\'`, `\n`) :
+écrire les remplacements délicats avec l'outil Edit.
+Avant : 1.3.0 PUBLIÉE (2026-11-22 : commit 2db7a90 sur main, tag annoté v1.3.0 « Orical PDF 1.3.0 » poussé, Release publique « Orical PDF 1.3.0 » (Latest) du dépôt
 OricalPDF : OricalPDF-Setup-1.3.0.exe 89,8 Mo (SHA-256 a2cfe6919dd6483f2f6a795d62f42c4f99a36f9581ca80a305a91d115c670136) + OricalPDF-Portable-1.3.0.exe 89,5 Mo
 (fefa4a3ed5c0d87dd2fb716980cf26f3754900c2729ce12a455425b1e475400c) + SHA256SUMS.txt ; brouillon d'abord, empreintes vérifiées après téléchargement du brouillon
 puis des adresses publiques ; artefacts = commit (fichiers de app.asar comparés à HEAD) ; scan complet propre ; notes = section 1.3.0 du CHANGELOG SANS la ligne
@@ -219,4 +250,6 @@ Pièges : tests de pointeur dans la zone visible de la page (coordonnées en poi
 | ocr-ui, ocr-engine, viewer (calque, recherche), pages-ui (menu) | test-ocr-ui (39, tesseract réel), test-click-ui (25) | 3f (voir git log) |
 | compare-ui, compare-view, compare-render, compare-worker (3 modes + texte, navigation, décalage, annulation, export, A0) | test-compare-ui (55), test-click-ui (24, vue ajoutée) | 3e (voir git log) |
 | lot 1.3 : user-data, renommage (test-rename), logo et icônes (icon-geometry, pdf-icon-geometry, make-icon, pe-icons), installer.nsh (DefaultIcon, ancien nom, dossier voisin), test-update, test-editable § 8 | test-user-data (9), test-rename (10), test-icon (17), test-winint (20), test-editable (58), test-about-ui (6), test-public, suite complète, test:packaged, test:update 1.2.1 → 1.3.0 | A ddb9ac0, B 1f7787a, C 0261224, D 0b90cd1, E dd93d28, F e202e7a, 2db7a90 ; publiée (tag v1.3.0) |
+| 1.3.1 A : print-main (registre des fenêtres cachées, shutdown), main.js (quitAll, garde-fou 3 s, before-quit, second-instance orpheline, test:close), preload (testClose) | test-quit (9, dans npm test ; échouait sur 5 points avant correction), test-print-async-ui, test-print-ui, test-winint-ui, test-home-ui | 417d71a |
+| 1.3.1 B : print-layout.printOptions / standardFormat / announcedPaper, print-log, print-main (options, caps en cache, journal), print-ui (#pr-sendorient), À propos (#about-printlog) | test-print (matrice 72 cas, formats mélangés, journal), test-print-opts-ui (38), test-about-ui, test-help-ui, test-click-ui, test-props-layout-ui, test-redact-guard-ui | 1f40b50 |
 | publication 1.2.1 (tag, Release, SHA256SUMS) ; package-lock resynchronisé entre les deux copies, icônes lucide 1.77.0 | suite complète, test:packaged, scan complet (arbre, historique, installeur extrait) ; après resynchronisation : npm test, licences, test-help-ui, test-ribbon-layout-ui, test-ocr-ui | 6716621 ; resynchronisation (voir git log) |

@@ -111,4 +111,5 @@ Signaler une faille de sécurité : [SECURITY.md](SECURITY.md). Signalements et 
 - **Caviardage** : les pages caviardées sont transformées en images ; aucune garantie absolue : vérifiez toujours le fichier produit dans un
   autre lecteur PDF avant de le diffuser.
 - **Pages** : après une opération de pages, les liens internes et les champs du PDF d'origine ne sont pas conservés (signets et champs créés le sont).
-- **Impression** sur imprimante physique ou traceur : non vérifiée au papier par les tests automatiques.
+- **Impression** sur imprimante physique ou traceur : non vérifiée au papier par les tests automatiques. En cas de feuille tournée ou coupée :
+  option avancée « Orientation envoyée à l'imprimante » dans la boîte d'impression, et « Copier le journal d'impression » dans À propos.
