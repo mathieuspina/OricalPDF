@@ -48,5 +48,6 @@ contextBridge.exposeInMainWorld('spinadoc', {
   clipboardImage: () => ipcRenderer.invoke('clipboard:image'),
   onRequestClose: (cb) => ipcRenderer.on('app:request-close', () => cb()),
   confirmClose: () => ipcRenderer.send('app:close-confirmed'),
+  testClose: () => ipcRenderer.send('test:close'), // tests seulement (SPIN_TEST_HEADLESS=1) : comme le bouton Fermer de la fenêtre
   isFullscreen: () => ipcRenderer.invoke('win:is-fullscreen'),
 });

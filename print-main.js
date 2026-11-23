@@ -14,6 +14,8 @@
 //   SPINADOC_TEST_PRINT_DIR   : les tâches sont écrites dans ce dossier (job-1.pdf, jobs.json) au lieu d'être envoyées (aucune impression).
 //   SPINADOC_TEST_PRINTERS    : JSON [{ name, isDefault?, caps?: { color, duplex, hardMarginMm, maxCopies, papers } }] : imprimantes simulées (avec le dossier ci-dessus).
 //   SPINADOC_PRINT_ALLOW      : nom de l'unique imprimante autorisée ; toute autre est REFUSÉE (garde-fou des tests).
+//   SPINADOC_TEST_PRINT_PENDING : (avec SPINADOC_TEST_PRINT_DIR) chaque tâche laisse aussi une fenêtre d'envoi cachée « sans rappel du pilote »
+//                               et son dossier temporaire spinadoc-print-*, comme printOne après 8 s (test de la fermeture : test/test-quit.js).
 const { BrowserWindow, app } = require('electron');
 const { spawn } = require('child_process');
 const fs = require('fs');
@@ -21,6 +23,15 @@ const os = require('os');
 const path = require('path');
 
 const ALLOW = () => process.env.SPINADOC_PRINT_ALLOW || '';
+// Registre central des fenêtres cachées créées ici (fenêtre de travail, fenêtres d'envoi) et des dossiers temporaires spinadoc-print-* :
+// à la fermeture de l'application (shutdown), tout est détruit. Sans cela, une fenêtre cachée encore vivante (fenêtre de travail gardée 15 s,
+// fenêtre d'envoi « sans rappel du pilote » gardée jusqu'à 10 min) empêchait 'window-all-closed' : le processus restait vivant avec le verrou
+// d'instance unique, et un nouveau lancement se fermait aussitôt (1.3.1).
+const windows = new Set();
+const tmpDirs = new Set();
+let shuttingDown = false;
+function track(w) { windows.add(w); w.on('closed', () => windows.delete(w)); return w; }
+const rmTmp = (d) => { try { fs.rmSync(d, { recursive: true, force: true }); } catch { /* */ } tmpDirs.delete(d); };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const toBuffer = (b) => Buffer.from(b.buffer ? new Uint8Array(b.buffer, b.byteOffset, b.byteLength) : b);
 const testPrinters = () => {
@@ -67,7 +78,7 @@ function capabilities(name) {
 // Le nom du travail vu par le spouleur vient du titre du document : nom du fichier temporaire, /Title du PDF et titre de la fenêtre sont tous trois
 // le nom du document (voir print-layout.js jobTitle / jobFileName).
 async function printOne(file, job, opts, title) {
-  const win = new BrowserWindow({ show: false, title, webPreferences: { plugins: true, backgroundThrottling: false } });
+  const win = track(new BrowserWindow({ show: false, title, webPreferences: { plugins: true, backgroundThrottling: false } }));
   let keepAlive = false;
   try {
     win.on('page-title-updated', (e) => { e.preventDefault(); win.setTitle(title); });
@@ -114,9 +125,10 @@ const active = () => queue.length + (running ? 1 : 0);
 function ensureWorker() {
   clearTimeout(idleTimer);
   if (worker && !worker.isDestroyed()) return workerReady;
-  worker = new BrowserWindow({
+  if (shuttingDown) throw new Error('Application en cours de fermeture.');
+  worker = track(new BrowserWindow({
     show: false, webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true, backgroundThrottling: false },
-  });
+  }));
   workerReady = new Promise((res) => { worker._ready = res; });
   worker.webContents.on('will-navigate', (e) => e.preventDefault());
   worker.loadFile(path.join(__dirname, 'src', 'print-worker.html'));
@@ -157,11 +169,21 @@ function onJob(t, j) {
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, `job-${j.index + 1}.pdf`), toBuffer(j.bytes));
     t.jobs.push({ wMm: j.wMm, hMm: j.hMm, title: j.title, fileName: j.fileName });
-    fs.writeFileSync(path.join(dir, 'jobs.json'), JSON.stringify({ opts: t.opts, name: t.name, jobs: t.jobs }));
+    if (process.env.SPINADOC_TEST_PRINT_PENDING) { // simulation d'un pilote qui ne rappelle pas : fenêtre cachée gardée jusqu'à 10 min
+      const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-print-'));
+      tmpDirs.add(tmp);
+      fs.writeFileSync(path.join(tmp, j.fileName), toBuffer(j.bytes));
+      const w = track(new BrowserWindow({ show: false, webPreferences: { backgroundThrottling: false } }));
+      w.loadURL('about:blank');
+      setTimeout(() => { try { w.destroy(); } catch { /* */ } }, 600000);
+      t.pendingTmp = (t.pendingTmp || []).concat(tmp);
+    }
+    fs.writeFileSync(path.join(dir, 'jobs.json'), JSON.stringify({ opts: t.opts, name: t.name, jobs: t.jobs, pendingTmp: t.pendingTmp || [] }));
     return;
   }
   // dossier temporaire UNIQUE par travail (pas de collision entre files), fichier nommé d'après le document
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-print-'));
+  tmpDirs.add(tmp);
   const f = path.join(tmp, j.fileName);
   fs.writeFileSync(f, toBuffer(j.bytes));
   t.chain = t.chain.then(async () => {
@@ -170,7 +192,7 @@ function onJob(t, j) {
     if (ALLOW() && t.opts.device !== ALLOW()) { t.error = 'Imprimante refusée par le garde-fou de test.'; t.message = t.error; return; }
     const r = await printOne(f, j, t.opts, j.title);
     if (!r.ok) { t.error = r.message; t.message = r.message; }
-  }).finally(() => { setTimeout(() => { try { fs.rmSync(tmp, { recursive: true, force: true }); } catch { /* */ } }, 120000); });
+  }).finally(() => { setTimeout(() => rmTmp(tmp), 120000).unref(); });
 }
 
 function register(ipcMain, mainGetter) {
@@ -239,4 +261,17 @@ function register(ipcMain, mainGetter) {
   });
 }
 
-module.exports = { register, active };
+// Fermeture de l'application : file abandonnée, toutes les fenêtres cachées détruites (y compris une fenêtre d'envoi qui attend encore le
+// rappel du pilote), dossiers temporaires supprimés. Idempotent. Appelé par main.js à la fermeture de la fenêtre principale et sur 'before-quit'.
+function shutdown() {
+  shuttingDown = true;
+  clearTimeout(idleTimer);
+  for (const t of queue.splice(0)) { t.state = 'cancelled'; t.edBytes = null; }
+  if (running) { running.cancelled = true; if (running.finish) running.finish(); }
+  for (const w of [...windows]) { try { if (!w.isDestroyed()) w.destroy(); } catch { /* */ } }
+  windows.clear();
+  worker = null;
+  for (const d of [...tmpDirs]) rmTmp(d);
+}
+
+module.exports = { register, active, shutdown, _windows: () => windows.size };
