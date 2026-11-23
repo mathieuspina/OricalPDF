@@ -199,7 +199,7 @@ function savePrinterSettings() {
   const name = val('pr-printer');
   if (!name) return;
   const all = Object.assign({}, Settings.get('printPrinters'));
-  all[name] = { margin: L.normMargin(val('pr-margin'), st.margin), mode: val('pr-scale'), percent: Number(val('pr-percent')) || 100, orientation: val('pr-orient'), center: chk('pr-center') };
+  all[name] = { margin: L.normMargin(val('pr-margin'), st.margin), mode: val('pr-scale'), percent: Number(val('pr-percent')) || 100, orientation: val('pr-orient'), center: chk('pr-center'), sendOrient: val('pr-sendorient') };
   Settings.set('printPrinters', all);
 }
 function applyPrinterSettings(name) {
@@ -211,6 +211,7 @@ function applyPrinterSettings(name) {
   $('pr-percent').value = String(s.percent || 100);
   $('pr-orient').value = s.orientation || 'auto';
   $('pr-center').checked = s.center !== false;
+  $('pr-sendorient').value = ['portrait', 'landscape'].includes(s.sendOrient) ? s.sendOrient : 'auto'; // réglage avancé, par imprimante
 }
 
 const later = () => { clearTimeout(st.timer); st.timer = setTimeout(refresh, 120); };
@@ -229,7 +230,7 @@ async function print(dialog) {
     edBytes: p.ed.bytes,
     groups: p.groups.map((g) => ({ w: g.w, h: g.h, sheets: g.sheets.map(sheetOf) })),
     raster: needsRaster(o) ? { mode: o.color, dpi: o.dpi, thin: o.thin } : null,
-    opts: { device: o.device, copies: o.copies, collate: o.collate, duplex: o.duplex, color: o.color === 'color', dialog: !!dialog },
+    opts: { device: o.device, copies: o.copies, collate: o.collate, duplex: o.duplex, color: o.color === 'color', dialog: !!dialog, orient: val('pr-sendorient') },
   };
   let r;
   try { r = await api.printSubmit(task); } catch (e) { r = { ok: false, message: e && e.message || String(e) }; }

@@ -124,6 +124,45 @@ function check(name, cond, detail) {
     const t1 = (await PDFLib.PDFDocument.load(fs.readFileSync(path.join(out, 'job-1.pdf')))).getTitle();
     check('métadonnée /Title du PDF d\'impression = nom du document', t1 === 'a-huit-pages.pdf', t1);
     check('nom du travail transmis (document sans chemin)', j1.name === 'a-huit-pages.pdf', j1.name);
+
+    console.log('7. Orientation envoyée au pilote (1.3.1) et journal d\'impression');
+    const waitPrint = async () => { for (let i = 0; i < 60; i++) { await sleep(250); try { const x = jobs(); if (x.jobs.length && x.jobs.every((q) => q.print)) return x; } catch { /* en cours d'écriture */ } } return null; };
+    const printWith = async (paper, orient, send) => {
+      clearOut();
+      await c.ev(`document.body.click()`); await key('p', 'KeyP', 80, 2); await sleep(1500);
+      await pick('Autre imprimante');
+      await c.ev(`document.querySelector('input[name=pr-pages][value=current]').click()`);
+      await setv('pr-paper', paper); await setv('pr-orient', orient); if (send) await setv('pr-sendorient', send); await settle();
+      await c.click('#pr-ok');
+      return waitPrint();
+    };
+    check('réglage avancé « Orientation envoyée à l\'imprimante » : Automatique par défaut', await c.ev(`(()=>{const e=document.getElementById('pr-sendorient');return e.value==='auto' && [...e.options].map(o=>o.textContent).join('|')==='Automatique (défaut)|Portrait|Paysage'})()`) === true);
+    let pj = await printWith('297x420', 'landscape', 'auto');
+    let po = pj && pj.jobs[0].print;
+    check('A3 paysage, automatique : landscape true, pageSize A3 en portrait (dimensions du papier annoncé)', po && po.options.landscape === true && po.options.pageSize.width === 297000 && po.options.pageSize.height === 420000 && po.format === 'A3' && po.paper === 'A3', po);
+    pj = await printWith('210x297', 'portrait', 'auto');
+    po = pj && pj.jobs[0].print;
+    check('A4 portrait, automatique : landscape false, pageSize A4', po && po.options.landscape === false && po.options.pageSize.width === 210000 && po.options.pageSize.height === 297000, po);
+    const sheetBox = (await PDFLib.PDFDocument.load(fs.readFileSync(path.join(out, 'job-1.pdf')))).getPages()[0].getMediaBox();
+    check('PDF d\'impression A4 : MediaBox = feuille exacte', Math.abs(sheetBox.width - 595.28) < 0.05 && Math.abs(sheetBox.height - 841.89) < 0.05, sheetBox);
+    pj = await printWith('297x420', 'landscape', 'portrait');
+    po = pj && pj.jobs[0].print;
+    check('orientation envoyée imposée « Portrait » : landscape false, feuille et pageSize inchangées', po && po.options.landscape === false && po.forced === 'portrait' && po.sheet === 'paysage' && po.options.pageSize.width === 297000, po);
+    await c.ev(`document.body.click()`); await key('p', 'KeyP', 80, 2); await sleep(1500);
+    await pick('Autre imprimante');
+    check('réglage avancé mémorisé pour cette imprimante', (await val('pr-sendorient')) === 'portrait', await val('pr-sendorient'));
+    await pick('PDFCreator');
+    check('autre imprimante : Automatique', (await val('pr-sendorient')) === 'auto', await val('pr-sendorient'));
+    await pick('Autre imprimante'); await setv('pr-sendorient', 'auto');
+    await c.click('#pr-cancel'); await sleep(300);
+    const logFile = path.join(c.userData, 'print-log.txt');
+    const log = fs.existsSync(logFile) ? fs.readFileSync(logFile, 'utf8') : '';
+    const lines = log.trim().split('\n').filter(Boolean);
+    check('journal : une ligne par tâche dans le dossier des données', lines.length >= 5 && lines.every((l) => /^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d \| /.test(l)), lines.length);
+    check('journal : orientation, format, options exactes, résultat', /420 × 297 mm \| portrait \(imposée\), feuille paysage \| format A3 \(annoncé par l'imprimante : « A3 »\) \| options \{.*"landscape":false.*\} \| résultat : test/.test(log) && /"deviceName":"Autre imprimante"/.test(log), lines.slice(-1));
+    check('journal : jamais de nom de fichier ni de chemin', !/a-huit-pages|\.pdf|[A-Za-z]:\\|spinadoc-/i.test(log), log.slice(0, 300));
+    const copied = await c.ev(`(async()=>{document.getElementById('about-printlog').click(); await new Promise(r=>setTimeout(r,400)); return [document.getElementById('about-diag-msg').textContent, await window.spinadoc.printLog()];})()`);
+    check('À propos : « Copier le journal d\'impression » copie le journal', /Journal d'impression copié/.test(copied[0]) && copied[1] === log, copied[0]);
     check('aucune erreur JavaScript', c.logs.length === 0, c.logs);
   } catch (e) {
     check('exécution sans exception', false, String(e && e.stack || e));

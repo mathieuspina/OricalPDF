@@ -169,5 +169,44 @@
     return { cutMm: Math.max(0, Math.round(cut * 10) / 10) };
   }
 
-  return { PT_PER_MM, PAPERS, mm, toMm, parseRanges, sheetSize, placeInArea, nupCells, planSheet, groupBySize, isLandscape, cleanName, jobTitle, jobFileName, isPdfPrinter, normMargin, defaultMargin, DEFAULT_MARGIN, hardwareCut };
+  // ---- options passées à webContents.print (1.3.1) ----
+  // Une feuille plus large que haute était envoyée telle quelle (pageSize largeur > hauteur, sans « landscape ») : certains pilotes refusaient
+  // ou tournaient mal le paysage. Désormais : pageSize toujours en PORTRAIT (petit côté = largeur, en micromètres, comme l'attend Electron) et
+  // « landscape: true » pour une feuille paysage. Format standard reconnu à ±1 mm ; si l'imprimante annonce un papier de ces dimensions
+  // (caps.papers, ±1 mm, quel que soit son nom localisé), on prend SES dimensions exactes ; sinon taille personnalisée = feuille.
+  //   job : { wMm, hMm } (feuille composée) ; opts : { device, dialog, copies, collate, color, duplex, orient: 'auto' | 'portrait' | 'landscape' }
+  //   opts.orient ne change QUE l'orientation annoncée au pilote (ni l'aperçu, ni la mise en page, ni pageSize).
+  // → { options, landscape, sheet: 'portrait' | 'paysage' (feuille composée), forced, format (nom standard | null), paper (nom annoncé | null) }
+  const STD_FORMATS = ['A5', 'A4', 'A3', 'A2', 'A1', 'A0', 'Letter', 'Legal', 'Tabloid'];
+  const near = (a, b, tol) => Math.abs(a - b) <= tol;
+  function standardFormat(wMm, hMm, tol) {
+    const t = tol == null ? 1 : tol, a = Math.min(wMm, hMm), b = Math.max(wMm, hMm);
+    return STD_FORMATS.find((n) => near(a, PAPERS[n][0], t) && near(b, PAPERS[n][1], t)) || null;
+  }
+  function announcedPaper(caps, wMm, hMm, tol) {
+    const t = tol == null ? 1 : tol, a = Math.min(wMm, hMm), b = Math.max(wMm, hMm);
+    const list = caps && Array.isArray(caps.papers) ? caps.papers : [];
+    return list.find((p) => p && p.w > 0 && p.h > 0 && near(Math.min(p.w, p.h), a, t) && near(Math.max(p.w, p.h), b, t)) || null;
+  }
+  function printOptions(job, opts, caps) {
+    const o = opts || {};
+    const sheetLand = isLandscape(job.wMm, job.hMm);
+    const forced = o.orient === 'portrait' || o.orient === 'landscape' ? o.orient : 'auto';
+    const landscape = forced === 'auto' ? sheetLand : forced === 'landscape';
+    const format = standardFormat(job.wMm, job.hMm);
+    const paper = announcedPaper(caps, job.wMm, job.hMm);
+    let pw = Math.min(job.wMm, job.hMm), ph = Math.max(job.wMm, job.hMm);
+    if (paper) { pw = Math.min(paper.w, paper.h); ph = Math.max(paper.w, paper.h); }
+    else if (format) { pw = PAPERS[format][0]; ph = PAPERS[format][1]; }
+    const options = {
+      silent: !o.dialog, deviceName: o.device, printBackground: true, margins: { marginType: 'none' },
+      copies: Math.max(1, Math.min(999, o.copies || 1)), collate: !!o.collate,
+      color: o.color !== false, duplexMode: o.duplex || 'simplex',
+      landscape,
+      pageSize: { width: Math.round(pw * 1000), height: Math.round(ph * 1000) },
+    };
+    return { options, landscape, sheet: sheetLand ? 'paysage' : 'portrait', forced, format, paper: paper ? String(paper.name || '') : null };
+  }
+
+  return { printOptions, standardFormat, announcedPaper, STD_FORMATS, PT_PER_MM, PAPERS, mm, toMm, parseRanges, sheetSize, placeInArea, nupCells, planSheet, groupBySize, isLandscape, cleanName, jobTitle, jobFileName, isPdfPrinter, normMargin, defaultMargin, DEFAULT_MARGIN, hardwareCut };
 });

@@ -341,6 +341,12 @@ ipcMain.handle('app:diag', async () => {
   return text;
 });
 ipcMain.handle('app:net', () => AppInfo.netStats());
+// Journal d'impression (sans nom de fichier, chemin ni contenu ; imprimantes masquées) : copié dans le presse-papiers et renvoyé.
+ipcMain.handle('app:print-log', () => {
+  const text = PrintMain.readLog() || "Journal d'impression vide : aucune impression envoyée depuis la version 1.3.1.\n";
+  clipboard.writeText(text);
+  return text;
+});
 // Windows 11 : page « Applications par défaut » d'Orical PDF (nom inscrit dans RegisteredApplications par l'installeur).
 // SPINADOC_TEST_EXTERNAL : l'adresse est notée dans ce fichier au lieu d'ouvrir les Paramètres de Windows (tests).
 ipcMain.handle('app:default-apps', () => {

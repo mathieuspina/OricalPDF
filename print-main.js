@@ -21,6 +21,10 @@ const { spawn } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const PrintLayout = require('./src/print-layout.js');
+const PrintLog = require('./src/print-log.js');
+const UserData = require('./src/user-data.js');
+const AppInfo = require('./app-info.js');
 
 const ALLOW = () => process.env.SPINADOC_PRINT_ALLOW || '';
 // Registre central des fenêtres cachées créées ici (fenêtre de travail, fenêtres d'envoi) et des dossiers temporaires spinadoc-print-* :
@@ -77,7 +81,7 @@ function capabilities(name) {
 // Une tâche : fichier PDF dont toutes les pages ont la taille du papier. Résout { ok, message }.
 // Le nom du travail vu par le spouleur vient du titre du document : nom du fichier temporaire, /Title du PDF et titre de la fenêtre sont tous trois
 // le nom du document (voir print-layout.js jobTitle / jobFileName).
-async function printOne(file, job, opts, title) {
+async function printOne(file, o, title) {
   const win = track(new BrowserWindow({ show: false, title, webPreferences: { plugins: true, backgroundThrottling: false } }));
   let keepAlive = false;
   try {
@@ -85,25 +89,19 @@ async function printOne(file, job, opts, title) {
     await win.loadURL('file:///' + file.replace(/\\/g, '/'));
     win.setTitle(title);
     await sleep(2000); // le lecteur PDF a besoin d'un court instant pour charger le document
-    const o = {
-      silent: !opts.dialog, deviceName: opts.device, printBackground: true, margins: { marginType: 'none' },
-      copies: Math.max(1, Math.min(999, opts.copies || 1)), collate: !!opts.collate,
-      color: opts.color !== false, duplexMode: opts.duplex || 'simplex',
-      pageSize: { width: Math.round(job.wMm * 1000), height: Math.round(job.hMm * 1000) },
-    };
     if (ALLOW() && o.deviceName !== ALLOW()) throw new Error('Imprimante refusée par le garde-fou de test : ' + o.deviceName);
     let finished = false;
     const cb = new Promise((res) => win.webContents.print(o, (success, reason) => { finished = true; res({ success, reason }); }));
     // Certains pilotes (imprimantes virtuelles à port fichier) ne rappellent pas : après 8 s la tâche est considérée comme envoyée ; la fenêtre
     // reste vivante (jusqu'au rappel, ou 10 min) pour ne pas interrompre un gros travail en cours d'envoi.
-    const r = await Promise.race([cb, sleep(opts.dialog ? 600000 : 8000).then(() => ({ success: true, reason: '', pending: true }))]);
+    const r = await Promise.race([cb, sleep(!o.silent ? 600000 : 8000).then(() => ({ success: true, reason: '', pending: true }))]);
     if (r.pending && !finished) {
       keepAlive = true;
       const kill = () => { try { win.destroy(); } catch { /* */ } };
       cb.then(kill);
       setTimeout(kill, 600000);
     }
-    return r.success ? { ok: true } : { ok: false, message: r.reason || 'Échec de l\'impression' };
+    return r.success ? { ok: true, pending: !!(r.pending && !finished) } : { ok: false, message: r.reason || 'Échec de l\'impression' };
   } catch (e) { return { ok: false, message: String((e && e.message) || e) };
   } finally { if (!keepAlive) { try { win.destroy(); } catch { /* */ } } }
 }
@@ -163,12 +161,51 @@ async function pump() {
   if (queue.length) pump(); else releaseWorker();
 }
 
+// Capacités par imprimante (formats annoncés) : lues une fois, gardées pour calculer les options d'envoi.
+const capsCache = new Map();
+async function capsOf(name) {
+  const tp = testPrinters();
+  if (tp) { const p = tp.find((x) => x.name === name); return (p && p.caps) || null; }
+  if (!capsCache.has(name)) capsCache.set(name, capabilities(String(name)));
+  return capsCache.get(name);
+}
+
+// ---------------------------------------------------------------- journal d'impression (userData/print-log.txt)
+const logPath = () => path.join(UserData.resolve(process.env, app.getPath('appData'), path.join), PrintLog.FILE);
+let userName = '';
+try { userName = os.userInfo().username || ''; } catch { /* */ }
+const mask = (name) => AppInfo.maskPrinter(name, userName);
+// Rien d'identifiant : imprimante masquée (aussi dans deviceName et dans un message d'erreur), titre et nom du fichier remplacés par <document>.
+function logJob(t, j, plan, result) {
+  try {
+    const dev = String(t.opts.device || '');
+    let msg = String(result || '');
+    for (const s of [j.title, j.fileName, t.name]) if (s && String(s).length > 2) msg = msg.split(String(s)).join('<document>');
+    if (dev) msg = msg.split(dev).join(mask(dev));
+    const p = Object.assign({}, plan, { options: Object.assign({}, plan.options, { deviceName: mask(dev) }) });
+    const l = PrintLog.line({ date: new Date(), printer: mask(dev), wMm: j.wMm, hMm: j.hMm, plan: p, result: msg });
+    const f = logPath();
+    let prev = '';
+    try { prev = fs.readFileSync(f, 'utf8'); } catch { /* premier journal */ }
+    fs.mkdirSync(path.dirname(f), { recursive: true });
+    fs.writeFileSync(f, PrintLog.append(prev, l));
+  } catch { /* le journal ne doit jamais faire échouer une impression */ }
+}
+function readLog() { try { return fs.readFileSync(logPath(), 'utf8'); } catch { return ''; } }
+
 function onJob(t, j) {
   const dir = process.env.SPINADOC_TEST_PRINT_DIR;
   if (dir) { // test : aucune impression, le PDF d'impression est écrit dans le dossier
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, `job-${j.index + 1}.pdf`), toBuffer(j.bytes));
-    t.jobs.push({ wMm: j.wMm, hMm: j.hMm, title: j.title, fileName: j.fileName });
+    const job = { wMm: j.wMm, hMm: j.hMm, title: j.title, fileName: j.fileName };
+    t.jobs.push(job);
+    t.chain = t.chain.then(async () => { // options qui AURAIENT été passées à webContents.print (tests) + ligne de journal
+      const plan = PrintLayout.printOptions(j, t.opts, await capsOf(t.opts.device));
+      job.print = plan;
+      logJob(t, j, plan, 'test : non imprimé (dossier de test)');
+      fs.writeFileSync(path.join(dir, 'jobs.json'), JSON.stringify({ opts: t.opts, name: t.name, jobs: t.jobs, pendingTmp: t.pendingTmp || [] }));
+    });
     if (process.env.SPINADOC_TEST_PRINT_PENDING) { // simulation d'un pilote qui ne rappelle pas : fenêtre cachée gardée jusqu'à 10 min
       const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-print-'));
       tmpDirs.add(tmp);
@@ -190,7 +227,9 @@ function onJob(t, j) {
     if (t.cancelled || t.error) return;
     t.label = 'Envoi'; t.sheet = t.total; notify(t);
     if (ALLOW() && t.opts.device !== ALLOW()) { t.error = 'Imprimante refusée par le garde-fou de test.'; t.message = t.error; return; }
-    const r = await printOne(f, j, t.opts, j.title);
+    const plan = PrintLayout.printOptions(j, t.opts, await capsOf(t.opts.device));
+    const r = await printOne(f, plan.options, j.title);
+    logJob(t, j, plan, r.ok ? (r.pending ? "envoyé (le pilote n'a pas répondu en 8 s : considéré comme envoyé)" : 'envoyé') : 'échec : ' + r.message);
     if (!r.ok) { t.error = r.message; t.message = r.message; }
   }).finally(() => { setTimeout(() => rmTmp(tmp), 120000).unref(); });
 }
@@ -213,7 +252,9 @@ function register(ipcMain, mainGetter) {
   ipcMain.handle('print:caps', async (_e, name) => {
     const tp = testPrinters();
     if (tp) { const p = tp.find((x) => x.name === name); return (p && p.caps) || null; }
-    return capabilities(String(name));
+    const c = await capabilities(String(name));
+    if (c) capsCache.set(name, Promise.resolve(c));
+    return c;
   });
 
   // task : { name, edBytes, groups: [{ w, h, sheets }], raster: null | { mode, dpi, thin }, opts: { device, copies, collate, duplex, color, dialog } }
@@ -274,4 +315,4 @@ function shutdown() {
   for (const d of [...tmpDirs]) rmTmp(d);
 }
 
-module.exports = { register, active, shutdown, _windows: () => windows.size };
+module.exports = { register, active, shutdown, readLog, _windows: () => windows.size };

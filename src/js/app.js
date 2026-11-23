@@ -582,6 +582,9 @@ $('btn-about').addEventListener('click', async () => {
   openDialog('about');
 });
 $('about-close').addEventListener('click', () => closeDialog('about'));
+$('about-printlog').addEventListener('click', async () => {
+  try { await api.printLog(); $('about-diag-msg').textContent = "Journal d'impression copié dans le presse-papiers."; } catch (err) { $('about-diag-msg').textContent = 'Échec : ' + (err && err.message ? err.message : err); }
+});
 $('about-diag').addEventListener('click', async () => {
   try { await api.diagnostic(); $('about-diag-msg').textContent = 'Copié dans le presse-papiers.'; } catch (err) { $('about-diag-msg').textContent = 'Échec : ' + (err && err.message ? err.message : err); }
 });

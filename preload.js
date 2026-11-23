@@ -22,6 +22,7 @@ contextBridge.exposeInMainWorld('spinadoc', {
   getPathForFile: (file) => webUtils.getPathForFile(file),
   getAbout: () => ipcRenderer.invoke('app:about'),
   diagnostic: () => ipcRenderer.invoke('app:diag'),
+  printLog: () => ipcRenderer.invoke('app:print-log'),
   netStats: () => ipcRenderer.invoke('app:net'),
   defaultApps: () => ipcRenderer.invoke('app:default-apps'),
   setDirty: (v) => ipcRenderer.send('doc:dirty', v),

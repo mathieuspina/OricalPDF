@@ -215,3 +215,82 @@ async function check(label, srcBytes, o, expect) {
   assert.strictEqual(L.hardwareCut(pp.sheet, pp.items, null).cutMm, 0);
   console.log('  ok   nom du travail, marge par défaut / saisie, imprimantes PDF, coupe matérielle');
 })();
+
+// ------------------------------------------------------------ 1.3.1 : options passées au pilote (orientation, format) et journal d'impression
+// Matrice A4 / A3 / A2 × page portrait / paysage × /Rotate source 0 / 90 × orientation envoyée auto / portrait / paysage × 1 / 2 pages par
+// feuille : PDF composé (MediaBox = feuille exacte, aucun /Rotate) et options calculées (pageSize toujours en portrait, landscape selon la feuille
+// ou imposé, dimensions exactes du papier annoncé). Aucune impression.
+(async function printOptionsMatrix() {
+  const mm = L.mm;
+  const PL = require('../src/print-log.js');
+  const caps = { papers: [{ name: 'A4', w: 210, h: 297 }, { name: 'A3 (exact pilote)', w: 296.9, h: 420.1 }, { name: 'Letter', w: 215.9, h: 279.4 }] }; // pas d'A2 annoncé
+  const formats = { A4: [210, 297], A3: [297, 420], A2: [420, 594] };
+  let n = 0;
+  for (const [fname, [pw, ph]] of Object.entries(formats)) {
+    for (const srcLand of [false, true]) {
+      for (const rot of [0, 90]) {
+        // page source : w × h (mm) avant /Rotate ; affichée paysage si (srcLand XOR rotation 90)
+        const d = await PDFLib.PDFDocument.create();
+        for (let k = 0; k < 2; k++) {
+          const pg = d.addPage(srcLand ? [mm(ph), mm(pw)] : [mm(pw), mm(ph)]);
+          pg.drawLine({ start: { x: 20, y: 20 }, end: { x: 120, y: 20 }, thickness: 1 });
+          if (rot) pg.setRotation(PDFLib.degrees(rot));
+        }
+        const src = await d.save();
+        const infos = await C.pageInfos(PDFLib, src);
+        const shownLand = srcLand !== (rot === 90);
+        for (const nup of [1, 2]) {
+          const pl = L.planSheet(nup === 1 ? [infos[0]] : [infos[0], infos[1]], { paperW: pw, paperH: ph, orientation: 'auto', mode: 'fit', center: true, nup });
+          const sheetLand = pl.sheet.w > pl.sheet.h;
+          const label = `${fname} ${srcLand ? 'paysage' : 'portrait'} /Rotate ${rot} ${nup} p./feuille`;
+          assert.strictEqual(sheetLand, nup === 1 ? shownLand : !shownLand, label + ' : orientation de la feuille composée');
+          const out = await PDFLib.PDFDocument.load(await C.compose(PDFLib, src, [{ w: pl.sheet.w, h: pl.sheet.h, items: pl.items.map((it, i) => Object.assign({ page: i }, it)) }]));
+          const op = out.getPages()[0];
+          const mb = op.getMediaBox();
+          assert.ok(Math.abs(mb.x) < 1e-6 && Math.abs(mb.y) < 1e-6 && Math.abs(mb.width - pl.sheet.w) < 0.01 && Math.abs(mb.height - pl.sheet.h) < 0.01, label + ' : MediaBox = feuille exacte');
+          assert.ok(!op.node.get(PDFLib.PDFName.of('Rotate')) && op.getRotation().angle === 0, label + ' : aucun /Rotate sur la feuille composée');
+          const job = { wMm: L.toMm(pl.sheet.w), hMm: L.toMm(pl.sheet.h) };
+          for (const orient of ['auto', 'portrait', 'landscape']) {
+            const r = L.printOptions(job, { device: 'SpinADoc Test PDF', copies: 3, collate: true, color: false, duplex: 'longEdge', orient }, caps);
+            const o = r.options;
+            const want = orient === 'auto' ? sheetLand : orient === 'landscape';
+            assert.strictEqual(o.landscape, want, `${label}, envoi ${orient} : landscape`);
+            assert.ok(o.pageSize.width < o.pageSize.height, `${label}, envoi ${orient} : pageSize en portrait`);
+            const exp = fname === 'A2' ? [420000, 594000] : fname === 'A3' ? [296900, 420100] : [210000, 297000];
+            assert.deepStrictEqual([o.pageSize.width, o.pageSize.height], exp, `${label} : pageSize (papier annoncé exact, sinon format standard)`);
+            assert.strictEqual(r.format, fname, label + ' : format reconnu');
+            assert.strictEqual(r.paper, fname === 'A2' ? null : fname === 'A3' ? 'A3 (exact pilote)' : 'A4', label + ' : papier annoncé');
+            assert.strictEqual(r.sheet, sheetLand ? 'paysage' : 'portrait');
+            assert.strictEqual(r.forced, orient);
+            assert.deepStrictEqual([o.silent, o.deviceName, o.printBackground, o.margins.marginType, o.copies, o.collate, o.color, o.duplexMode], [true, 'SpinADoc Test PDF', true, 'none', 3, true, false, 'longEdge'], label + ' : options conservées');
+            n++;
+          }
+        }
+      }
+    }
+  }
+  // formats mélangés : une tâche par taille de feuille, chacune avec SA bonne orientation
+  const sheets = [[210, 297, false], [297, 420, true], [297, 420, true], [210, 297, false]].map(([w, h, land]) => ({ sheet: L.sheetSize(w, h, land) }));
+  const groups = L.groupBySize(sheets);
+  assert.deepStrictEqual(groups.map((g) => g.sheets.length), [1, 2, 1], 'formats mélangés : A4 / A3 paysage ×2 / A4');
+  const og = groups.map((g) => L.printOptions({ wMm: L.toMm(g.w), hMm: L.toMm(g.h) }, {}, null));
+  assert.deepStrictEqual(og.map((r) => [r.format, r.landscape, r.options.pageSize.width, r.options.pageSize.height]), [['A4', false, 210000, 297000], ['A3', true, 297000, 420000], ['A4', false, 210000, 297000]], 'formats mélangés : options par tâche');
+  // tolérance ±1 mm, format personnalisé, valeurs par défaut
+  assert.strictEqual(L.standardFormat(216, 279), 'Letter');
+  assert.strictEqual(L.standardFormat(211, 298), 'A4');
+  assert.strictEqual(L.standardFormat(212.5, 297), null, 'hors tolérance : personnalisé');
+  const cu = L.printOptions({ wMm: 900, hMm: 600 }, { device: 'x' }, caps);
+  assert.deepStrictEqual([cu.format, cu.paper, cu.landscape, cu.options.pageSize.width, cu.options.pageSize.height, cu.options.copies, cu.options.duplexMode, cu.options.color], [null, null, true, 600000, 900000, 1, 'simplex', true], 'taille personnalisée paysage');
+  const dlg = L.printOptions({ wMm: 210, hMm: 297 }, { dialog: true }, null);
+  assert.strictEqual(dlg.options.silent, false, 'boîte Windows : silent false');
+  // journal : une ligne, sans nom de fichier, rotation à 200 lignes
+  const line = PL.line({ date: new Date(2026, 10, 23, 9, 5, 7), printer: 'Traceur de test', wMm: 420, hMm: 297, plan: L.printOptions({ wMm: 420, hMm: 297 }, { device: 'Traceur de test', orient: 'auto' }, caps), result: 'envoyé' });
+  assert.ok(line.startsWith("2026-11-23 09:05:07 | Traceur de test | 420 × 297 mm | paysage (automatique), feuille paysage | format A3 (annoncé par l'imprimante : « A3 (exact pilote) ») | options {") && line.endsWith('} | résultat : envoyé') && line.includes('"landscape":true') && line.includes('"pageSize":{"width":296900,"height":420100}'), line);
+  let text = '';
+  for (let i = 0; i < 230; i++) text = PL.append(text, 'ligne ' + i);
+  const lines = text.trim().split('\n');
+  assert.strictEqual(lines.length, PL.MAX, 'journal limité à 200 lignes');
+  assert.strictEqual(lines[0], 'ligne 30'); assert.strictEqual(lines[199], 'ligne 229');
+  assert.ok(!/\n/.test(PL.append('', 'a\nb').trim()), 'une entrée = une ligne');
+  console.log(`  ok   options d'impression : matrice ${n} cas (A4/A3/A2 × portrait/paysage × /Rotate 90 × envoi auto/portrait/paysage × 1/2 p.), formats mélangés, ±1 mm, journal`);
+})().catch((e) => { console.error('ÉCHEC (options d\'impression) :', e); process.exit(1); });
