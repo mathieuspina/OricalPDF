@@ -31,6 +31,8 @@ Corrections d'impression et de fermeture (jamais publiées séparément : prévu
 - Journal d'impression (200 dernières tâches, sans nom de fichier ni chemin) : « Copier le journal d'impression » dans À propos, à joindre à un
   signalement. Il indique la méthode d'envoi demandée et appliquée, le format et l'orientation exacts envoyés, les papiers annoncés par
   l'imprimante (40 au plus) et si leur lecture a réussi ou dépassé le délai.
+- Boîte d'impression : le nombre de copies revient toujours à 1 à chaque ouverture (il était mémorisé : 6 copies d'un document
+  étaient reproposées pour le suivant, même après un redémarrage).
 
 ## 1.3.0 — 2026-11-22
 « Spin A Doc » devient « Orical PDF » (suite Orical).

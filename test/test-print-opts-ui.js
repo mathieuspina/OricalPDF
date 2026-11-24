@@ -27,6 +27,7 @@ function check(name, cond, detail) {
     { name: 'PDFCreator', caps: { duplex: false, color: false, maxCopies: 1, hardMarginMm: null, papers } },
     { name: 'Autre imprimante', caps: { duplex: true, color: true, maxCopies: 99, hardMarginMm: null, papers: papersK, defaultPaper: papersK[0] } },
   ];
+  let c2 = null;
   const c = await launchApp({ files: [f.a], env: { SPINADOC_TEST_PRINT_DIR: out, SPINADOC_TEST_PRINTERS: JSON.stringify(printers) } });
   const key = (k, code, vk, mods = 0) => c.key(k, { code, windowsVirtualKeyCode: vk, modifiers: mods });
   const setv = (id, v) => c.ev(`(()=>{const e=document.getElementById(${JSON.stringify(id)});e.value=${JSON.stringify(v)};e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));})()`);
@@ -205,11 +206,43 @@ function check(name, cond, detail) {
     check('journal : jamais de nom de fichier ni de chemin', !/a-huit-pages|\.pdf|[A-Za-z]:\\|spinadoc-/i.test(log), log.slice(0, 300));
     const copied = await c.ev(`(async()=>{document.getElementById('about-printlog').click(); await new Promise(r=>setTimeout(r,400)); return [document.getElementById('about-diag-msg').textContent, await window.spinadoc.printLog()];})()`);
     check('À propos : « Copier le journal d\'impression » copie le journal', /Journal d'impression copié/.test(copied[0]) && copied[1] === log, copied[0]);
+
+    console.log('9. Copies : toujours 1 à l\'ouverture (jamais mémorisées)');
+    const openDlg = async () => { await c.ev(`document.body.click()`); await key('p', 'KeyP', 80, 2); await sleep(1500); };
+    clearOut();
+    await openDlg();
+    await pick('Autre imprimante');
+    await c.ev(`document.querySelector('input[name=pr-pages][value=current]').click()`);
+    await setv('pr-copies', '6'); await settle();
+    await c.click('#pr-ok');
+    const j6 = await waitPrint();
+    check('tâche imprimée avec 6 copies', j6 && j6.opts && j6.opts.copies === 6, j6 && j6.opts);
+    const st6 = JSON.parse(fs.readFileSync(path.join(c.userData, 'settings.json'), 'utf8'));
+    check('settings.json : aucune valeur « copies » écrite', st6.print && !('copies' in st6.print), st6.print);
+    await openDlg();
+    check('même document, boîte rouverte : copies = 1', (await val('pr-copies')) === '1', await val('pr-copies'));
+    await c.click('#pr-cancel'); await sleep(300);
+    await c.openMore(f.b);
+    await c.waitFor(`document.querySelectorAll('.doctab').length===2`, 15000); await sleep(1200);
+    await openDlg();
+    check('autre document : copies = 1', (await val('pr-copies')) === '1' && (await c.ev(`!document.getElementById('printdlg').hidden`)), await val('pr-copies'));
+    await c.click('#pr-cancel'); await sleep(300);
     check('aucune erreur JavaScript', c.logs.length === 0, c.logs);
+    // Nouvelle session avec le même profil (settings.json recopié) ; on y ajoute une ANCIENNE valeur « copies: 6 », qui doit être ignorée.
+    const profile = JSON.parse(fs.readFileSync(path.join(c.userData, 'settings.json'), 'utf8'));
+    profile.print = Object.assign({}, profile.print, { copies: 6 });
+    c2 = await launchApp({ files: [f.a], userDataFiles: { 'settings.json': profile }, env: { SPINADOC_TEST_PRINT_DIR: out, SPINADOC_TEST_PRINTERS: JSON.stringify(printers) } });
+    await c2.waitFor(`document.querySelectorAll('.docview.active canvas').length>0`); await sleep(800);
+    await c2.ev(`document.body.click()`); await c2.key('p', { code: 'KeyP', windowsVirtualKeyCode: 80, modifiers: 2 }); await sleep(1800);
+    const v2 = await c2.ev(`document.getElementById('pr-copies').value`);
+    const p2 = await c2.ev(`document.getElementById('pr-printer').value`);
+    check('nouvelle session, même profil, ancienne valeur « copies: 6 » dans settings.json : copies = 1 (autres réglages relus : imprimante)', v2 === '1' && p2 === 'Autre imprimante', { v2, p2 });
+    check('nouvelle session : aucune erreur JavaScript', c2.logs.length === 0, c2.logs);
   } catch (e) {
     check('exécution sans exception', false, String(e && e.stack || e));
   } finally {
     await c.close();
+    if (c2) await c2.close();
     try { fs.rmSync(out, { recursive: true, force: true }); } catch { /* */ }
   }
   console.log(`\n${passed} vérifications réussies, ${failures.length} échec(s).`);

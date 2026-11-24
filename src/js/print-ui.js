@@ -229,7 +229,8 @@ async function print(dialog) {
   if (!p || p.error || !p.sheets.length) return;
   const o = p.o;
   savePrinterSettings();
-  Settings.set('print', { printer: o.device, copies: o.copies, collate: o.collate, duplex: o.duplex, nup: o.nup, paper: o.paper, orientation: o.orientation, mode: o.mode, percent: o.percent, margin: o.margin, center: o.center, color: o.color, thin: o.thin, dpi: o.dpi, annots: o.annots, meas: o.meas });
+  // Le nombre de copies n'est JAMAIS mémorisé (risque de gaspillage : 6 copies d'un document reproposées pour le suivant).
+  Settings.set('print', { printer: o.device, collate: o.collate, duplex: o.duplex, nup: o.nup, paper: o.paper, orientation: o.orientation, mode: o.mode, percent: o.percent, margin: o.margin, center: o.center, color: o.color, thin: o.thin, dpi: o.dpi, annots: o.annots, meas: o.meas });
   const task = {
     name: st.doc.name,
     edBytes: p.ed.bytes,
@@ -283,7 +284,8 @@ function onPrintProgress(d) {
 function restore(saved) {
   const s = saved || {};
   const set = (id, v) => { if (v !== undefined && v !== null) $(id).value = String(v); };
-  set('pr-copies', s.copies); set('pr-duplex', s.duplex); set('pr-nup', s.nup);
+  $('pr-copies').value = '1'; // toujours 1 à l'ouverture ; une ancienne valeur « copies » de settings.json est ignorée
+  set('pr-duplex', s.duplex); set('pr-nup', s.nup);
   set('pr-color', s.color); set('pr-thin', s.thin); set('pr-dpi', s.dpi);
   if (s.collate !== undefined) $('pr-collate').checked = !!s.collate;
   if (s.annots !== undefined) $('pr-annots').checked = !!s.annots;
