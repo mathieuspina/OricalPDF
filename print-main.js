@@ -283,6 +283,9 @@ function register(ipcMain, mainGetter) {
     return list.map((p) => ({ name: p.name, displayName: p.displayName || p.name, isDefault: !!p.isDefault, status: p.status }));
   });
 
+  // appel interne d'Electron disponible (code de papier transmissible) : affiché dans la ligne « Envoi » de la boîte d'impression
+  ipcMain.handle('print:api', async () => { const w = getMain(); return { internal: hasInternalPrint(w && !w.isDestroyed() ? w.webContents : null) }; });
+
   ipcMain.handle('print:caps', async (_e, name) => {
     const tp = testPrinters();
     if (tp) { const p = tp.find((x) => x.name === name); return (p && p.caps) || null; }

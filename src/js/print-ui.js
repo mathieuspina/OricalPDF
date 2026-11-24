@@ -9,7 +9,7 @@ import { guardOutput } from './redact-guard.js';
 
 const { PDFLib, PdfEdit, PrintLayout: L, PrintCompose: C, PageOps } = window;
 
-const st = { margin: L.DEFAULT_MARGIN, hard: null, doc: null, printers: [], caps: {}, cache: null, previewIdx: 0, token: 0, plan: null, timer: 0 };
+const st = { internal: true, margin: L.DEFAULT_MARGIN, hard: null, doc: null, printers: [], caps: {}, cache: null, previewIdx: 0, token: 0, plan: null, timer: 0 };
 const val = (id) => $(id).value;
 const chk = (id) => $(id).checked;
 
@@ -127,7 +127,7 @@ async function refresh() {
     $('pr-cnote').textContent = notes.join(' ');
   }
   $('pr-rnote').textContent = needsRaster(p.o) ? `Ce réglage rasterise l'impression à ${p.o.dpi} dpi : les traits vectoriels deviennent des pixels (plus lourd et plus lent, surtout en A1/A0).` : 'Impression vectorielle : les traits restent nets à toute échelle.';
-  if (p.error) { $('pr-warn').textContent = p.error; $('pr-info').textContent = ''; $('pr-sheet').textContent = '–'; return; }
+  if (p.error) { $('pr-warn').textContent = p.error; $('pr-info').textContent = ''; $('pr-send').textContent = ''; $('pr-sheet').textContent = '–'; return; }
   st.previewIdx = Math.min(st.previewIdx, p.sheets.length - 1);
   const s = p.sheets[st.previewIdx];
   const it = s.plan.items[0];
@@ -136,6 +136,10 @@ async function refresh() {
   $('pr-sheet').textContent = `Feuille ${st.previewIdx + 1} / ${p.sheets.length}`;
   $('pr-info').textContent = `Papier : ${sz(s.sheet.w)} × ${sz(s.sheet.h)} mm · Page ${s.pages[0] + 1} : ${sz(first.w)} × ${sz(first.h)} mm · Échelle : ${it ? (it.scale * 100).toFixed(1).replace('.', ',') + ' %' : '–'}`
     + (p.groups.length > 1 ? ` · ${p.groups.length} tâches (formats de feuille différents)` : '');
+  { // ce qui partira vers le pilote pour cette feuille (même calcul que print-main.js)
+    const plan = L.printOptions({ wMm: L.toMm(s.sheet.w), hMm: L.toMm(s.sheet.h) }, { orient: val('pr-sendorient'), paperMethod: val('pr-sendpaper') }, st.caps[val('pr-printer')]);
+    $('pr-send').textContent = L.sendText(plan, L.sendArgs(plan, st.internal).applied);
+  }
   const warns = [...new Set(p.sheets.flatMap((x) => x.plan.warnings))];
   const hardMsg = hardwareMessage(p);
   if (hardMsg) warns.push(hardMsg);
@@ -302,6 +306,7 @@ export async function openPrint(doc) {
   $('pr-warn').textContent = 'Recherche des imprimantes…';
   const list = await api.printPrinters().catch(() => []);
   st.printers = list;
+  st.internal = ((await (api.printApi ? api.printApi() : Promise.resolve(null)).catch(() => null)) || { internal: true }).internal !== false;
   const sel = $('pr-printer');
   sel.replaceChildren();
   for (const pr of list) { const o = document.createElement('option'); o.value = pr.name; o.textContent = pr.displayName + (pr.isDefault ? ' (par défaut)' : ''); sel.append(o); }

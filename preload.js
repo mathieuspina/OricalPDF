@@ -42,6 +42,7 @@ contextBridge.exposeInMainWorld('spinadoc', {
   measureSave: (p, data) => ipcRenderer.invoke('measure:save', { path: p, data }),
   printPrinters: () => ipcRenderer.invoke('print:printers'),
   printCaps: (name) => ipcRenderer.invoke('print:caps', name),
+  printApi: () => ipcRenderer.invoke('print:api'),
   printSend: (jobs, opts) => ipcRenderer.invoke('print:send', { jobs, opts }),
   printProps: (name) => ipcRenderer.invoke('print:props', name),
   openImages: () => ipcRenderer.invoke('file:open-images'),

@@ -372,5 +372,17 @@ async function check(label, srcBytes, o, expect) {
   assert.strictEqual(L.printOptions({ wMm: 300, hMm: 500 }, { paperMethod: 'xyz' }, copier).method, 'auto');
   assert.strictEqual(L.printOptions({ wMm: 300, hMm: 500 }, {}, null).applied, 'custom');
   assert.deepStrictEqual([0, 256, -3, 8.5, '8', 255].map(L.paperCode), [null, null, null, null, null, 255]);
-  console.log(`  ok   méthode d'envoi du format : matrice ${n} cas (9 formats × portrait/paysage × copieur/inconnues/traceur × auto/custom/driver × envoi auto/portrait/paysage), API interne / publique, texte « Envoi »`);
+  // journal : méthode demandée et appliquée, envoi exact, capacités (état, durée, papiers tronqués à 40), aucun nom de fichier
+  const many = Array.from({ length: 45 }, (_, i) => ({ name: 'P' + i, w: 100 + i, h: 200 + i, kind: 300 + i }));
+  const capsL = { papers: copier.papers.concat(many), defaultPaper: copier.defaultPaper };
+  const plan = L.printOptions({ wMm: 420, hMm: 297 }, { device: 'Copieur de test' }, capsL);
+  const sent = L.sendArgs(plan, true);
+  const line = PL.line({ date: new Date(2026, 10, 24, 8, 21, 8), printer: 'Copieur de test', wMm: 420, hMm: 297, plan, sent, send: L.sendText(plan, sent.applied), caps: { status: 'ok', ms: 117, papers: capsL.papers }, result: 'envoyé' });
+  for (const s of ['| méthode automatique, appliquée : code de papier (API interne) |', "| Envoi : A3 (papier de l'imprimante, code 8), paysage |", '"vendor_id":"8"', '"landscape":true', '"width_microns":296900,"height_microns":420100',
+    '| capacités : lues en 117 ms |', 'papiers annoncés (52) : Lettre 215,9 × 279,4 mm #1 ;', 'A3 296,9 × 420,1 mm #8', ' ; … (+12) |', '| résultat : envoyé']) assert.ok(line.includes(s), 'journal : ' + s + '\n' + line);
+  assert.ok(!line.includes('"pageSize"') && !line.includes('P33 '), 'journal : arguments réellement envoyés, 40 papiers au plus');
+  const lineP = PL.line({ date: new Date(), printer: 'x', wMm: 420, hMm: 297, plan, sent: L.sendArgs(plan, false), send: 'Envoi : …', caps: { status: 'expiré', ms: 15000, papers: [] }, result: 'envoyé' });
+  assert.ok(lineP.includes('appliquée : taille personnalisée (API publique)') && lineP.includes('"pageSize":{"width":296900') && lineP.includes('capacités : délai dépassé en 15 s (aucun papier connu) | papiers annoncés (0) : aucun'), lineP);
+  assert.ok(PL.capsText({ status: 'échec', ms: 40 }) === 'capacités : échec de la lecture en 40 ms' && PL.capsText(null) === 'capacités : non lues' && PL.capsText({ status: 'test' }) === 'capacités : imprimante de test');
+  console.log(`  ok   méthode d'envoi du format : matrice ${n} cas (9 formats × portrait/paysage × copieur/inconnues/traceur × auto/custom/driver × envoi auto/portrait/paysage), API interne / publique, texte « Envoi », journal`);
 })();
