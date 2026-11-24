@@ -4,7 +4,7 @@
 import { rasterize } from './print-raster.js';
 
 const { PDFLib, PrintCompose: C, PrintLayout: L } = window;
-const api = window.spinadoc;
+const api = window.oricalpdf;
 const cancelled = new Set();
 
 api.onWorkerCancel((id) => cancelled.add(id));

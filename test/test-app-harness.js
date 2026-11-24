@@ -16,8 +16,8 @@ const alive = (pid) => { try { process.kill(pid, 0); return true; } catch { retu
 const fake = (mode) => ({ exe: process.execPath, exeArgs: [FAKE], env: { FAKE_CDP_MODE: mode } });
 
 (async () => {
-  process.env.SPIN_TEST_CONNECT_MS = '1500';
-  process.env.SPIN_TEST_CDP_MS = '1500';
+  process.env.ORICALPDF_TEST_CONNECT_MS = '1500';
+  process.env.ORICALPDF_TEST_CDP_MS = '1500';
   const { launchApp, internal } = require('./lib/app');
 
   // 1. Port occupé par un programme qui accepte la connexion sans jamais répondre (situation réelle reproduite).
@@ -38,16 +38,16 @@ const fake = (mode) => ({ exe: process.execPath, exeArgs: [FAKE], env: { FAKE_CD
   t = Date.now();
   const e2 = await launchApp(fake('silent')).then(() => null, (e) => e);
   const pid2 = e2 && Number((e2.message.match(/PID (\d+)/) || [])[1]);
-  check('connexion : échec après SPIN_TEST_CONNECT_MS', e2 && /non connectée en 1500 ms/.test(e2.message) && Date.now() - t < 6000, e2 && e2.message);
+  check('connexion : échec après ORICALPDF_TEST_CONNECT_MS', e2 && /non connectée en 1500 ms/.test(e2.message) && Date.now() - t < 6000, e2 && e2.message);
   check('connexion : message avec suite, étape et instantané', e2 && /test-app-harness\.js/.test(e2.message) && /étape : recherche de la page CDP/.test(e2.message) && /processus : PID \d+/.test(e2.message) && /dernière ligne du journal/.test(e2.message), e2 && e2.message);
   await new Promise((res) => setTimeout(res, 500));
   check('connexion : application tuée', pid2 > 0 && !alive(pid2), pid2);
 
-  // 3. Commande CDP sans réponse : rejet après SPIN_TEST_CDP_MS, application tuée.
+  // 3. Commande CDP sans réponse : rejet après ORICALPDF_TEST_CDP_MS, application tuée.
   t = Date.now();
   const e3 = await launchApp(fake('mute')).then(() => null, (e) => e);
   const pid3 = e3 && Number((e3.message.match(/PID (\d+)/) || [])[1]);
-  check('CDP muette : échec après SPIN_TEST_CDP_MS sur la 1re commande (Runtime.enable)', e3 && /aucune réponse CDP en 1500 ms/.test(e3.message) && /étape : Runtime\.enable/.test(e3.message) && Date.now() - t < 6000, e3 && e3.message);
+  check('CDP muette : échec après ORICALPDF_TEST_CDP_MS sur la 1re commande (Runtime.enable)', e3 && /aucune réponse CDP en 1500 ms/.test(e3.message) && /étape : Runtime\.enable/.test(e3.message) && Date.now() - t < 6000, e3 && e3.message);
   check('CDP muette : état (WebSocket ouvert, page, commandes en attente)', e3 && /WebSocket : (ouvert|fermeture|fermé)/.test(e3.message) && /file:\/\/\/faux\/index\.html/.test(e3.message), e3 && e3.message);
   await new Promise((res) => setTimeout(res, 500));
   check('CDP muette : application tuée', pid3 > 0 && !alive(pid3), pid3);
@@ -61,12 +61,12 @@ const fake = (mode) => ({ exe: process.execPath, exeArgs: [FAKE], env: { FAKE_CD
   check('évaluation sans réponse : application tuée', !alive(app.proc.pid));
   await app.close();
 
-  // 5. Délai global de la suite (SPIN_TEST_SUITE_MS) : processus de test arrêté avec un message, application tuée.
+  // 5. Délai global de la suite (ORICALPDF_TEST_SUITE_MS) : processus de test arrêté avec un message, application tuée.
   const child = spawnSync(process.execPath, ['-e', `
     const { launchApp } = require(${JSON.stringify(path.join(__dirname, 'lib', 'app.js'))});
     launchApp({ exe: process.execPath, exeArgs: [${JSON.stringify(FAKE)}], env: { FAKE_CDP_MODE: 'stall-eval' } })
       .then((a) => { console.log('PID ' + a.proc.pid); return a.ev('1'); });`],
-  { encoding: 'utf8', timeout: 20000, env: Object.assign({}, process.env, { SPIN_TEST_SUITE_MS: '2000', SPIN_TEST_CDP_MS: '60000', SPIN_TEST_CONNECT_MS: '5000' }) });
+  { encoding: 'utf8', timeout: 20000, env: Object.assign({}, process.env, { ORICALPDF_TEST_SUITE_MS: '2000', ORICALPDF_TEST_CDP_MS: '60000', ORICALPDF_TEST_CONNECT_MS: '5000' }) });
   const pid5 = Number((child.stdout.match(/PID (\d+)/) || [])[1]);
   check('délai global : code 1 et message « délai global de la suite dépassé » avec l\'état', child.status === 1 && /délai global de la suite dépassé/.test(child.stderr) && /étape|processus : PID/.test(child.stderr), { status: child.status, err: child.stderr.slice(0, 400) });
   await new Promise((res) => setTimeout(res, 500));

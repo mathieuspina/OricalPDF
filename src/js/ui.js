@@ -1,6 +1,6 @@
 // Utilitaires d'interface partagés : accès DOM, bus d'événements, notifications, indicateur de chargement.
 export const $ = (id) => document.getElementById(id);
-export const api = window.spinadoc;
+export const api = window.oricalpdf;
 export const store = window.DocModel.createStore();
 
 // Bus d'événements minimal. Événements : 'doc-changed', 'page', 'zoom', 'view', 'tool', 'tabs'.

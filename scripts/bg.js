@@ -9,6 +9,6 @@ const dir = path.join(__dirname, '..', 'test-logs');
 fs.mkdirSync(dir, { recursive: true });
 const log = path.join(dir, path.basename(script, '.js') + '.log');
 const out = fs.openSync(log, 'w');
-const child = spawn(process.execPath, [script, ...process.argv.slice(3)], { cwd: path.join(__dirname, '..'), detached: true, stdio: ['ignore', out, out], env: Object.assign({ SPIN_TEST_HEADLESS: '1' }, process.env) });
+const child = spawn(process.execPath, [script, ...process.argv.slice(3)], { cwd: path.join(__dirname, '..'), detached: true, stdio: ['ignore', out, out], env: Object.assign({ ORICALPDF_TEST_HEADLESS: '1' }, process.env) });
 child.unref();
 console.log('Lancé en arrière-plan (pid ' + child.pid + ') → ' + log);

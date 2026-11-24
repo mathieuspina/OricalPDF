@@ -12,7 +12,7 @@ function check(name, cond, detail) {
 }
 
 (async () => {
-  const f = await makeAll(path.join(os.tmpdir(), 'spinadoc-ui-pdfs'));
+  const f = await makeAll(path.join(os.tmpdir(), 'oricalpdf-ui-pdfs'));
   const c = await launchApp({ files: [f.a] });
   const J = async (e) => JSON.parse(await c.ev(e));
   try {

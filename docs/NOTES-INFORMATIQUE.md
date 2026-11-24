@@ -1,6 +1,6 @@
 # Orical PDF — notes pour le service informatique
 
-Version de référence : 1.2.1. Tout ce qui suit est vérifié dans la configuration de construction (`package.json`, section `build`, et
+Version de référence : 1.4.0. Tout ce qui suit est vérifié dans la configuration de construction (`package.json`, section `build`, et
 `build/installer.nsh`) et par le test `npm run test:packaged` (installation et désinstallation silencieuses dans un dossier temporaire).
 
 ## Ce que fait l'installeur
@@ -10,12 +10,10 @@ Version de référence : 1.2.1. Tout ce qui suit est vérifié dans la configura
 - Raccourcis : menu Démarrer et bureau ; entrée « Orical PDF » dans Paramètres > Applications (clé de désinstallation dans `HKCU`).
 - Association `.pdf` (mesuré par `test:packaged`) : inscription dans **« Ouvrir avec » seulement**. La valeur par défaut de
   `HKCU\Software\Classes\.pdf` n'est **jamais** écrite : le lecteur PDF de l'utilisateur reste le sien. Clés écrites (dans `HKCU` pour une
-  installation par utilisateur) : `Software\Classes\.pdf\OpenWithProgids` (valeur `SpinADoc.pdf`), classe `Software\Classes\SpinADoc.pdf`
+  installation par utilisateur) : `Software\Classes\.pdf\OpenWithProgids` (valeur `OricalPDF.pdf`), classe `Software\Classes\OricalPDF.pdf`
   (icône des fichiers PDF `…\resources\pdf-file.ico`, commande `"…\Orical PDF.exe" "%1"`), `Software\Classes\Applications\Orical PDF.exe` (type `.pdf`),
-  `Software\SpinADoc\Capabilities` et la valeur « Orical PDF » de `Software\RegisteredApplications` (page « Applications par défaut » de Windows).
-  Toutes retirées à la désinstallation. Les noms techniques `SpinADoc.pdf` et `Software\SpinADoc` datent de l'ancien nom (Spin A Doc) et sont
-  gardés : un choix « application par défaut » déjà fait survit à la mise à jour. La 1.3.0 retire `Applications\Spin A Doc.exe` et la valeur
-  « Spin A Doc » de `RegisteredApplications` laissées par la 1.2.1.
+  `Software\Orical\OricalPDF\Capabilities` et la valeur « Orical PDF » de `Software\RegisteredApplications` (page « Applications par défaut »
+  de Windows). Toutes retirées à la désinstallation. Identifiant d'application (appId) : `com.orical.pdf`.
 - Icône des fichiers PDF : elle n'apparaît que pour les PDF dont l'application par défaut est Orical PDF (choix de l'utilisateur ; la version
   portable n'écrit rien). Windows garde les icônes en cache : après une installation ou une mise à jour, si l'ancienne icône reste affichée,
   `ie4uinit.exe -show` (sans droits administrateur) ou une réouverture de session la rafraîchit.
@@ -27,14 +25,14 @@ Version de référence : 1.2.1. Tout ce qui suit est vérifié dans la configura
 | Quoi | Où |
 |---|---|
 | Programme | `%LOCALAPPDATA%\Programs\Orical PDF` (ou le dossier choisi) |
-| Données de l'utilisateur : réglages, documents récents, bibliothèque de tampons et de signatures, échelles de mesure | `%APPDATA%\Spin A Doc` (nom historique, gardé depuis la 1.3.0) |
-| Version portable | aucun fichier hors de l'exécutable, sauf les mêmes données dans `%APPDATA%\Spin A Doc` |
+| Données de l'utilisateur : réglages, documents récents, bibliothèque de tampons et de signatures, échelles de mesure | `%APPDATA%\Orical PDF` |
+| Version portable | aucun fichier hors de l'exécutable, sauf les mêmes données dans `%APPDATA%\Orical PDF` |
 
 ## Installation et désinstallation silencieuses
 
 ```bat
-OricalPDF-Setup-1.2.1.exe /S
-OricalPDF-Setup-1.2.1.exe /S /D=C:\Programmes\OricalPDF
+OricalPDF-Setup-1.4.0.exe /S
+OricalPDF-Setup-1.4.0.exe /S /D=C:\Programmes\OricalPDF
 ```
 
 `/D=` doit être le **dernier** argument, sans guillemets, même si le chemin contient des espaces.
@@ -44,7 +42,7 @@ OricalPDF-Setup-1.2.1.exe /S /D=C:\Programmes\OricalPDF
 "%LOCALAPPDATA%\Programs\Orical PDF\Uninstall Orical PDF.exe" /S /DELETEDATA=1
 ```
 
-Par défaut la désinstallation **conserve** `%APPDATA%\Spin A Doc` (retrouvé à la réinstallation). Dans l'assistant, la case « Supprimer aussi mes
+Par défaut la désinstallation **conserve** `%APPDATA%\Orical PDF` (retrouvé à la réinstallation). Dans l'assistant, la case « Supprimer aussi mes
 réglages et ma bibliothèque » (décochée par défaut) le supprime ; en silencieux : `/DELETEDATA=1`. Une mise à jour (nouvel installeur par-dessus
 l'ancien) ne supprime jamais les données.
 
@@ -59,7 +57,7 @@ l'ancien) ne supprime jamais les données.
 - **AppLocker / listes blanches** : autoriser par chemin (`%LOCALAPPDATA%\Programs\Orical PDF\*`) ou par empreinte du fichier :
 
 ```powershell
-Get-FileHash .\OricalPDF-Setup-1.2.1.exe -Algorithm SHA256
+Get-FileHash .\OricalPDF-Setup-1.4.0.exe -Algorithm SHA256
 Get-FileHash "$env:LOCALAPPDATA\Programs\Orical PDF\Orical PDF.exe" -Algorithm SHA256
 ```
 
@@ -69,18 +67,15 @@ Get-FileHash "$env:LOCALAPPDATA\Programs\Orical PDF\Orical PDF.exe" -Algorithm S
 ## Mises à jour
 
 Aucune mise à jour automatique (l'application ne se connecte jamais à Internet). Pour mettre à jour : lancer le nouvel installeur
-par-dessus l'ancien, sans désinstaller (`OricalPDF-Setup-x.y.z.exe /S` en silencieux). Le programme est remplacé ; `%APPDATA%\Spin A Doc`
-(réglages, récents, bibliothèque) est conservé — scénario vérifié par `npm run test:update` (profil comparé à l'octet près).
-Depuis la 1.2.1 (ancien nom Spin A Doc) : même identité d'installation (une seule entrée de désinstallation, mise à jour par-dessus).
-Si l'ancien dossier s'appelle « …\Spin A Doc », la 1.3.0 s'installe dans le dossier voisin « …\Orical PDF » et l'ancien dossier est supprimé ;
-les raccourcis « Spin A Doc » sont remplacés par « Orical PDF » ; le dossier des données garde son nom historique (`%APPDATA%\Spin A Doc`).
+par-dessus l'ancien, sans désinstaller (`OricalPDF-Setup-x.y.z.exe /S` en silencieux). Le programme est remplacé ; `%APPDATA%\Orical PDF`
+(réglages, récents, bibliothèque) est conservé.
 
 ## Licences
 
 Orical PDF © Orical, tous droits réservés ; utilisation gratuite, personnelle ou professionnelle, selon le contrat de licence
 (EULA.fr.md, affiché par l'installeur et copié dans le dossier resources de l'application). Confidentialité : POLITIQUE-CONFIDENTIALITE.md
 (aucune donnée collectée ni envoyée). PDF « modifiables » (1.2.0) : PDF standard ; les annotations sont un flux de contenu ajouté
-à chaque page (lisible par tout lecteur), l'état de modification est un flux référencé par la clé privée `/SpinADoc` du catalogue (il ne contient que
+à chaque page (lisible par tout lecteur), l'état de modification est un flux référencé par la clé privée `/OricalPDF` du catalogue (il ne contient que
 la description des annotations : textes, positions, réglages ; aucun JavaScript, aucune pièce jointe). Composants tiers embarqués (Electron, pdf.js, pdf-lib, tesseract.js, police Inter, icônes Lucide…) : licences
 permissives uniquement (MIT, Apache-2.0, BSD-2-Clause, 0BSD, ISC, OFL-1.1), vérifiées à chaque construction ; aucune licence copyleft (GPL, AGPL,
 LGPL). Texte complet : fichier `THIRD_PARTY_LICENSES` et Réglages > À propos.

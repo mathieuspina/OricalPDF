@@ -1,6 +1,6 @@
 // Mémorisation de la fenêtre (src/window-state.js, logique pure) + branchement dans main.js (lecture du source).
 // Cas : agrandie, plein écran, taille normale, écran disparu, écran secondaire, résolution réduite, fichier absent ou corrompu, valeurs absurdes,
-// fenêtre réduite à la fermeture ; main.js : rien lu ni écrit en mode test (SPIN_TEST_HEADLESS=1) ni par une seconde instance.
+// fenêtre réduite à la fermeture ; main.js : rien lu ni écrit en mode test (ORICALPDF_TEST_HEADLESS=1) ni par une seconde instance.
 // Usage : node test/test-window-state.js
 const fs = require('fs');
 const path = require('path');
@@ -68,7 +68,7 @@ check('défaut plus grand qu\'un petit écran (1280 × 720) → ramené à sa zo
 const main = fs.readFileSync(path.join(__dirname, '..', 'main.js'), 'utf8');
 check('main.js : état lu dans settings.json (clé window) et restauré à la création de la fenêtre', /WindowState\.restore\(/.test(main) && /WindowState\.fromJsonText\(/.test(main) && /settings\.json/.test(main));
 check('main.js : enregistré à la fermeture (bornes normales, agrandie, plein écran)', /getNormalBounds\(\)/.test(main) && /isFullScreen\(\)/.test(main) && /WindowState\.capture\(/.test(main));
-check('main.js : ni lu ni écrit en mode test (SPIN_TEST_HEADLESS=1) ni par une seconde instance', /const rememberWindow = !headlessEnv && gotLock/.test(main) || /rememberWindow\s*=\s*[^;]*SPIN_TEST_HEADLESS[^;]*gotLock|rememberWindow\s*=\s*[^;]*gotLock[^;]*SPIN_TEST_HEADLESS/.test(main), 'rememberWindow');
+check('main.js : ni lu ni écrit en mode test (ORICALPDF_TEST_HEADLESS=1) ni par une seconde instance', /const rememberWindow = !headlessEnv && gotLock/.test(main) || /rememberWindow\s*=\s*[^;]*ORICALPDF_TEST_HEADLESS[^;]*gotLock|rememberWindow\s*=\s*[^;]*gotLock[^;]*ORICALPDF_TEST_HEADLESS/.test(main), 'rememberWindow');
 check('main.js : les autres réglages sont conservés (lecture puis fusion de settings.json)', /Object\.assign\(readJson\('settings\.json', \{\}\), \{ window:/.test(main));
 
 console.log(failures.length ? `\n${failures.length} échec(s) / ${passed + failures.length}` : `\nOK : ${passed} vérifications.`);

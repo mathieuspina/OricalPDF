@@ -15,9 +15,9 @@ function check(name, cond, detail) {
 }
 
 (async () => {
-  const f = await makeAll(path.join(os.tmpdir(), 'spinadoc-ui-pdfs'));
-  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-num-'));
-  const c = await launchApp({ files: [f.a], env: { SPINADOC_TEST_PRINT_DIR: out } });
+  const f = await makeAll(path.join(os.tmpdir(), 'oricalpdf-ui-pdfs'));
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-num-'));
+  const c = await launchApp({ files: [f.a], env: { ORICALPDF_TEST_PRINT_DIR: out } });
   const key = (k, code, vk, mods = 0) => c.key(k, { code, windowsVirtualKeyCode: vk, modifiers: mods });
   const setv = (id, v) => c.ev(`(()=>{const e=document.getElementById(${JSON.stringify(id)});e.value=${JSON.stringify(v)};e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));})()`);
   const setc = (id, v) => c.ev(`(()=>{const e=document.getElementById(${JSON.stringify(id)});e.checked=${v};e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));})()`);

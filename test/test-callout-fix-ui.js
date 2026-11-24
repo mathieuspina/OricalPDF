@@ -17,9 +17,9 @@ function check(name, cond, detail) {
 }
 
 (async () => {
-  const f = await makeAll(path.join(os.tmpdir(), 'spinadoc-ui-pdfs'));
-  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-callout-wait-'));
-  const c = await launchApp({ files: [f.a], env: { SPINADOC_TEST_SAVE_DIR: out } });
+  const f = await makeAll(path.join(os.tmpdir(), 'oricalpdf-ui-pdfs'));
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-callout-wait-'));
+  const c = await launchApp({ files: [f.a], env: { ORICALPDF_TEST_SAVE_DIR: out } });
   const doc = (expr) => c.ev(`import('./js/ui.js').then((m)=>{const d=m.store.active; return JSON.stringify(${expr})})`).then((x) => (x === undefined ? undefined : JSON.parse(x)));
   const SC = 4 / 3;
   const P = async (x, y) => { const [l, t] = await c.rect('.docview.active .page'); return [l + x * SC, t + y * SC]; };

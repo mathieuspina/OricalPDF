@@ -58,11 +58,11 @@ async function makeSet(dir) {
 const electronMemMo = () => { try { return Number(execSync('powershell -NoProfile -Command "(Get-Process electron -ErrorAction SilentlyContinue | Measure-Object WorkingSet64 -Sum).Sum"', { encoding: 'utf8' }).trim() || 0) / 1048576; } catch { return NaN; } };
 
 (async () => {
-  const dir = path.join(os.tmpdir(), 'spinadoc-compare-pdfs');
+  const dir = path.join(os.tmpdir(), 'oricalpdf-compare-pdfs');
   fs.mkdirSync(dir, { recursive: true });
   const f = await makeSet(dir);
-  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-compare-out-'));
-  const c = await launchApp({ files: [f.old, f.nu, f.bigOld, f.bigNew], env: { SPINADOC_TEST_SAVE_DIR: out } });
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-compare-out-'));
+  const c = await launchApp({ files: [f.old, f.nu, f.bigOld, f.bigNew], env: { ORICALPDF_TEST_SAVE_DIR: out } });
   const S = (expr) => c.ev(`import('./js/compare-ui.js').then((m)=>{const S=m.getState(); return JSON.stringify(${expr})})`).then((x) => (x === undefined ? undefined : JSON.parse(x)));
   const ready = () => c.waitFor(`import('./js/compare-ui.js').then((m)=>{const S=m.getState(); return !!S.sess && !S.job && document.getElementById('cmp-progress').hidden})`, 60000);
   const selectDoc = (side, name) => c.ev(`(()=>{const s=document.getElementById('cmp-doc-${side}'); const o=[...s.options].find((o)=>o.textContent.startsWith(${JSON.stringify(name)})); s.value=o.value; s.dispatchEvent(new Event('change',{bubbles:true})); return o.value})()`);

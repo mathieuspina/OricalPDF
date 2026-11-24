@@ -16,7 +16,7 @@ function check(name, cond, detail) {
 }
 
 (async () => {
-  const dir = path.join(os.tmpdir(), 'spinadoc-ui-pdfs');
+  const dir = path.join(os.tmpdir(), 'oricalpdf-ui-pdfs');
   const f = await makeAll(dir);
   const enc = path.join(dir, 'chiffre.pdf');
   {
@@ -35,7 +35,7 @@ function check(name, cond, detail) {
   const J = (c) => async (e) => JSON.parse(await c.ev(e));
 
   // ---------------------------------------------------------------- 1. fusion de plusieurs fichiers
-  await run({ files: [f.a], env: { SPINADOC_TEST_OPEN: JSON.stringify([f.b, f.d]) } }, async (c) => {
+  await run({ files: [f.a], env: { ORICALPDF_TEST_OPEN: JSON.stringify([f.b, f.d]) } }, async (c) => {
     const j = J(c);
     const cards = () => j(`JSON.stringify([...document.querySelectorAll('#mw-cards .mw-card')].map(e=>({name:e.querySelector('.mw-name').textContent,info:e.querySelector('.mw-info').textContent,rot:e.querySelector('.mw-thumb-in').style.transform})))`);
     const summary = () => c.ev(`document.getElementById('mw-summary').textContent`);
@@ -126,7 +126,7 @@ function check(name, cond, detail) {
   });
 
   // ---------------------------------------------------------------- 2. fichier chiffré
-  await run({ files: [f.d], env: { SPINADOC_TEST_OPEN: JSON.stringify([enc]) } }, async (c) => {
+  await run({ files: [f.d], env: { ORICALPDF_TEST_OPEN: JSON.stringify([enc]) } }, async (c) => {
     console.log('5. Fichier chiffré');
     const cardsN = () => c.ev(`document.querySelectorAll('#mw-cards .mw-card').length`);
     await c.click('#rpanel-home [data-cmd=merge-open]'); await sleep(300);

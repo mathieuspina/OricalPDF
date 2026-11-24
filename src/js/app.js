@@ -384,12 +384,12 @@ function renderTabs() {
 
     tab.addEventListener('click', () => activate(doc));
     tab.addEventListener('auxclick', (e) => { if (e.button === 1) closeTab(doc.id); });
-    tab.addEventListener('dragstart', (e) => { e.dataTransfer.setData('application/x-spinadoc-tab', String(i)); e.dataTransfer.effectAllowed = 'move'; tab.classList.add('dragging'); });
+    tab.addEventListener('dragstart', (e) => { e.dataTransfer.setData('application/x-oricalpdf-tab', String(i)); e.dataTransfer.effectAllowed = 'move'; tab.classList.add('dragging'); });
     tab.addEventListener('dragend', () => tab.classList.remove('dragging'));
-    tab.addEventListener('dragover', (e) => { if (e.dataTransfer.types.includes('application/x-spinadoc-tab')) { e.preventDefault(); tab.classList.add('dragover'); } });
+    tab.addEventListener('dragover', (e) => { if (e.dataTransfer.types.includes('application/x-oricalpdf-tab')) { e.preventDefault(); tab.classList.add('dragover'); } });
     tab.addEventListener('dragleave', () => tab.classList.remove('dragover'));
     tab.addEventListener('drop', (e) => {
-      const from = Number(e.dataTransfer.getData('application/x-spinadoc-tab'));
+      const from = Number(e.dataTransfer.getData('application/x-oricalpdf-tab'));
       if (Number.isNaN(from)) return;
       e.preventDefault();
       store.move(from, i);

@@ -1,7 +1,7 @@
 // Favoris du ruban (1.1.0), interface (CDP, hors écran) : clic droit sur une commande de 3 onglets (souris et clavier Maj+F10 / touche Menu)
 // → « Ajouter aux favoris » → favori visible dans Accueil (groupe « Favoris », absent s'il n'y a aucun favori) ; un favori déclenche la MÊME
 // commande et reflète l'état du bouton d'origine (outil persistant, bascule, infobulle) ; déplacement, retrait ; contrôles complexes (listes)
-// non épinglables ; persistance après redémarrage (settings.json, SPINADOC_USER_DATA) ; identifiant inconnu ignoré ; plafond de 12 ;
+// non épinglables ; persistance après redémarrage (settings.json, ORICALPDF_USER_DATA) ; identifiant inconnu ignoré ; plafond de 12 ;
 // clic droit sur un bouton désactivé (aucun document ouvert) ; ruban inchangé (aucune commande retirée de son onglet).
 // Usage : node test/test-favorites-ui.js
 const fs = require('fs');
@@ -16,7 +16,7 @@ const check = (name, cond, detail) => { if (cond) { passed++; console.log('  ok 
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
 (async () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-fav-ui-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-fav-ui-'));
   const d = await PDFLib.PDFDocument.create();
   d.addPage([595, 842]); d.addPage([595, 842]);
   const pdf = path.join(dir, 'plan-favoris.pdf');

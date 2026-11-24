@@ -21,9 +21,9 @@ const getJson = (u, ms = 2000) => new Promise((res, rej) => {
 // Délais maximaux (ms), lus à chaque lancement : connexion à l'application (page CDP trouvée + WebSocket ouvert), réponse à UNE commande CDP,
 // durée totale de la suite (fichier de test). Au-delà : message clair (suite, étape, état), application tuée, échec.
 const limits = () => ({
-  connect: Number(process.env.SPIN_TEST_CONNECT_MS) || 30000,
-  cdp: Number(process.env.SPIN_TEST_CDP_MS) || 60000,
-  suite: Number(process.env.SPIN_TEST_SUITE_MS) || 20 * 60000,
+  connect: Number(process.env.ORICALPDF_TEST_CONNECT_MS) || 30000,
+  cdp: Number(process.env.ORICALPDF_TEST_CDP_MS) || 60000,
+  suite: Number(process.env.ORICALPDF_TEST_SUITE_MS) || 20 * 60000,
 });
 const suiteName = () => path.basename(process.argv[1] || 'suite');
 
@@ -61,7 +61,7 @@ function armSuiteTimer() {
   const ms = limits().suite;
   suiteTimer = setTimeout(() => {
     const states = [...live].map((a) => a.state()).join('\n') || '  (aucune application en cours)';
-    process.stderr.write(`\nÉCHEC : délai global de la suite dépassé (${suiteName()}, ${ms} ms, SPIN_TEST_SUITE_MS)\n${states}\n  dernière ligne du journal : ${lastLine || '(aucune)'}\n`);
+    process.stderr.write(`\nÉCHEC : délai global de la suite dépassé (${suiteName()}, ${ms} ms, ORICALPDF_TEST_SUITE_MS)\n${states}\n  dernière ligne du journal : ${lastLine || '(aucune)'}\n`);
     for (const a of live) a.kill();
     process.exit(1);
   }, ms);
@@ -75,12 +75,12 @@ function armSuiteTimer() {
 // dans userDataFiles['settings.json'] l'emporte.
 // port : port de débogage (par défaut : tiré au hasard parmi les ports LIBRES) ; exeArgs : arguments placés avant les autres (test du
 // harnais : exe = node, exeArgs = [script d'une fausse application]).
-async function launchApp({ files = [], port = null, env = {}, exe = process.env.SPINADOC_EXE || null, exeArgs = [], userDataFiles = {}, saveMode = 'flat' } = {}) {
+async function launchApp({ files = [], port = null, env = {}, exe = process.env.ORICALPDF_EXE || null, exeArgs = [], userDataFiles = {}, saveMode = 'flat' } = {}) {
   armSuiteTimer();
   const lim = limits();
   if (port === null) port = await pickPort();
   else if (!(await portFree(port))) throw new Error(`${suiteName()} : port de débogage ${port} déjà utilisé par un autre programme (choisir un port libre)`);
-  const userData = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-test-'));
+  const userData = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-test-'));
   userDataFiles = Object.assign({}, userDataFiles);
   const st = userDataFiles['settings.json'];
   if (saveMode !== null && (st === undefined || (st && typeof st === 'object' && !Buffer.isBuffer(st) && st.saveMode === undefined))) userDataFiles['settings.json'] = Object.assign({ saveMode }, st || {});
@@ -89,16 +89,16 @@ async function launchApp({ files = [], port = null, env = {}, exe = process.env.
     fs.writeFileSync(path.join(userData, name), typeof content === 'string' || Buffer.isBuffer(content) ? content : JSON.stringify(content));
   }
   const electron = exe || require(path.join(root, 'node_modules', 'electron'));
-  // Par défaut les tests tournent hors écran (SPIN_TEST_HEADLESS=1) : aucune fenêtre visible, aucun focus volé. SPIN_TEST_HEADLESS=0 pour voir.
-  // Garde-fou DUR : aucun test ne peut imprimer ailleurs que sur « SpinADoc Test PDF » (ou écrire les tâches dans un dossier, sans impression).
-  const allow = (env && env.SPINADOC_PRINT_ALLOW) || process.env.SPINADOC_PRINT_ALLOW;
-  if (allow && allow !== 'SpinADoc Test PDF') throw new Error('Test refusé : SPINADOC_PRINT_ALLOW doit valoir « SpinADoc Test PDF » (reçu : ' + allow + ')');
-  if (!(env && env.SPINADOC_TEST_PRINT_DIR) && !allow) env = Object.assign({}, env, { SPINADOC_PRINT_ALLOW: 'SpinADoc Test PDF' });
-  const headlessEnv = { SPIN_TEST_HEADLESS: process.env.SPIN_TEST_HEADLESS === '0' ? '0' : '1' };
+  // Par défaut les tests tournent hors écran (ORICALPDF_TEST_HEADLESS=1) : aucune fenêtre visible, aucun focus volé. ORICALPDF_TEST_HEADLESS=0 pour voir.
+  // Garde-fou DUR : aucun test ne peut imprimer ailleurs que sur « OricalPDF Test PDF » (ou écrire les tâches dans un dossier, sans impression).
+  const allow = (env && env.ORICALPDF_PRINT_ALLOW) || process.env.ORICALPDF_PRINT_ALLOW;
+  if (allow && allow !== 'OricalPDF Test PDF') throw new Error('Test refusé : ORICALPDF_PRINT_ALLOW doit valoir « OricalPDF Test PDF » (reçu : ' + allow + ')');
+  if (!(env && env.ORICALPDF_TEST_PRINT_DIR) && !allow) env = Object.assign({}, env, { ORICALPDF_PRINT_ALLOW: 'OricalPDF Test PDF' });
+  const headlessEnv = { ORICALPDF_TEST_HEADLESS: process.env.ORICALPDF_TEST_HEADLESS === '0' ? '0' : '1' };
   const proc = spawn(electron, [
     ...(exe ? exeArgs : [root]), `--remote-debugging-port=${port}`, '--disable-features=CalculateNativeWinOcclusion',
     '--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding', ...files,
-  ], { stdio: 'ignore', env: Object.assign({}, process.env, headlessEnv, { SPINADOC_USER_DATA: userData }, env) });
+  ], { stdio: 'ignore', env: Object.assign({}, process.env, headlessEnv, { ORICALPDF_USER_DATA: userData }, env) });
 
   // Instantané d'état et arrêt propre, utilisés par chaque délai dépassé.
   let step = 'démarrage', page = null, ws = null, killed = false;
@@ -119,7 +119,7 @@ async function launchApp({ files = [], port = null, env = {}, exe = process.env.
   const t0 = Date.now();
   step = 'recherche de la page CDP';
   while (!page) {
-    if (Date.now() - t0 > lim.connect) throw fail(`application non connectée en ${lim.connect} ms (SPIN_TEST_CONNECT_MS) : port ${port} sans réponse CDP`);
+    if (Date.now() - t0 > lim.connect) throw fail(`application non connectée en ${lim.connect} ms (ORICALPDF_TEST_CONNECT_MS) : port ${port} sans réponse CDP`);
     if (proc.exitCode !== null) throw fail('application terminée avant la connexion');
     await sleep(250);
     try { page = (await getJson(`http://127.0.0.1:${port}/json`)).find((p) => p.type === 'page'); } catch { /* pas encore prêt */ }
@@ -132,7 +132,7 @@ async function launchApp({ files = [], port = null, env = {}, exe = process.env.
     ws.onopen = () => { clearTimeout(t); r(true); };
     ws.onerror = () => { clearTimeout(t); r(false); };
   });
-  if (!opened) throw fail(`WebSocket CDP non ouvert en ${lim.connect} ms (SPIN_TEST_CONNECT_MS)`);
+  if (!opened) throw fail(`WebSocket CDP non ouvert en ${lim.connect} ms (ORICALPDF_TEST_CONNECT_MS)`);
   let id = 0;
   ws.onmessage = (m) => {
     const d = JSON.parse(m.data);
@@ -140,19 +140,19 @@ async function launchApp({ files = [], port = null, env = {}, exe = process.env.
     else if (d.method === 'Runtime.exceptionThrown') logs.push('EXC ' + (d.params.exceptionDetails.exception?.description || d.params.exceptionDetails.text));
     else if (d.method === 'Runtime.consoleAPICalled' && d.params.type === 'error') logs.push('console.error ' + d.params.args.map((a) => a.value ?? a.description).join(' '));
   };
-  // Chaque commande CDP attend au plus lim.cdp ms (SPIN_TEST_CDP_MS) ; au-delà : application tuée, promesse rejetée avec l'état.
+  // Chaque commande CDP attend au plus lim.cdp ms (ORICALPDF_TEST_CDP_MS) ; au-delà : application tuée, promesse rejetée avec l'état.
   const send = (method, params = {}) => new Promise((resolve, reject) => {
     if (killed) return reject(new Error(`${suiteName()} : application déjà arrêtée (commande ${method})`));
     const i = ++id;
     const what = method + (params.expression ? ' ' + String(params.expression).replace(/\s+/g, ' ').slice(0, 120) : '');
     step = what;
-    const t = setTimeout(() => { pending.delete(i); reject(fail(`aucune réponse CDP en ${lim.cdp} ms (SPIN_TEST_CDP_MS)`)); }, lim.cdp);
+    const t = setTimeout(() => { pending.delete(i); reject(fail(`aucune réponse CDP en ${lim.cdp} ms (ORICALPDF_TEST_CDP_MS)`)); }, lim.cdp);
     pending.set(i, { what, resolve: (d) => { clearTimeout(t); resolve(d); }, reject: (e) => { clearTimeout(t); reject(e); } });
     ws.send(JSON.stringify({ id: i, method, params }));
   });
   await send('Runtime.enable');
   await send('Page.enable');
-  if (headlessEnv.SPIN_TEST_HEADLESS === '0') await send('Page.bringToFront');
+  if (headlessEnv.ORICALPDF_TEST_HEADLESS === '0') await send('Page.bringToFront');
 
   const ev = async (expr) => {
     const r = await send('Runtime.evaluate', { expression: expr, awaitPromise: true, returnByValue: true });
@@ -179,10 +179,10 @@ async function launchApp({ files = [], port = null, env = {}, exe = process.env.
   };
   // Deuxième lancement : le fichier doit s'ouvrir dans un nouvel onglet de la fenêtre existante.
   const openMore = async (file) => {
-    const p = spawn(electron, [...(exe ? [] : [root]), file], { stdio: 'ignore', env: Object.assign({}, process.env, { SPIN_TEST_HEADLESS: process.env.SPIN_TEST_HEADLESS === '0' ? '0' : '1', SPINADOC_USER_DATA: userData }) });
+    const p = spawn(electron, [...(exe ? [] : [root]), file], { stdio: 'ignore', env: Object.assign({}, process.env, { ORICALPDF_TEST_HEADLESS: process.env.ORICALPDF_TEST_HEADLESS === '0' ? '0' : '1', ORICALPDF_USER_DATA: userData }) });
     step = 'deuxième lancement (' + path.basename(file) + ')';
     const done = await new Promise((r) => { const t = setTimeout(() => r(false), lim.connect); p.on('exit', () => { clearTimeout(t); r(true); }); });
-    if (!done) { killTree(p); throw fail(`deuxième lancement non terminé en ${lim.connect} ms (SPIN_TEST_CONNECT_MS)`); }
+    if (!done) { killTree(p); throw fail(`deuxième lancement non terminé en ${lim.connect} ms (ORICALPDF_TEST_CONNECT_MS)`); }
   };
   // Arbre de processus complet (la version portable lance l'application dans un processus fils).
   const close = async () => { kill(); live.delete(handle); await sleep(300); try { fs.rmSync(userData, { recursive: true, force: true }); } catch { /* */ } };

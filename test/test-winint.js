@@ -18,38 +18,29 @@ const main = read('main.js');
 // 1. Association « Ouvrir avec » (installeur NSIS)
 check('package.json : pas de fileAssociations (qui écrirait la valeur par défaut de .pdf)', !pkg.build.fileAssociations);
 check('installer.nsh : jamais d\'écriture de la valeur par défaut de Software\\Classes\\.pdf', !/WriteRegStr\s+\S+\s+"Software\\Classes\\\.pdf"\s+""/.test(ins) && !/APP_ASSOCIATE/.test(ins));
-check('installer.nsh : OpenWithProgids SpinADoc.pdf écrit puis retiré', /WriteRegStr SHCTX "Software\\Classes\\\.pdf\\OpenWithProgids" "\$\{SPIN_PROGID\}" ""/.test(ins) && /DeleteRegValue SHCTX "Software\\Classes\\\.pdf\\OpenWithProgids" "\$\{SPIN_PROGID\}"/.test(ins));
+check('installer.nsh : OpenWithProgids OricalPDF.pdf écrit puis retiré', /WriteRegStr SHCTX "Software\\Classes\\\.pdf\\OpenWithProgids" "\$\{ORICAL_PROGID\}" ""/.test(ins) && /DeleteRegValue SHCTX "Software\\Classes\\\.pdf\\OpenWithProgids" "\$\{ORICAL_PROGID\}"/.test(ins));
 check('installer.nsh : Applications\\…exe et RegisteredApplications écrits', /Software\\Classes\\Applications\\\$\{APP_EXECUTABLE_FILENAME\}\\SupportedTypes" "\.pdf"/.test(ins) && /WriteRegStr SHCTX "Software\\RegisteredApplications" "Orical PDF"/.test(ins));
-const caps = /!define SPIN_CAPS "([^"]+)"/.exec(ins)[1];
-const expand = (k) => k.split('${SPIN_CAPS}').join(caps);
+const caps = /!define ORICAL_CAPS "([^"]+)"/.exec(ins)[1];
+const expand = (k) => k.split('${ORICAL_CAPS}').join(caps);
 const written = [...ins.matchAll(/WriteRegStr SHCTX "([^"]+)"/g)].map((m) => m[1]);
 const removed = [...ins.matchAll(/DeleteReg(?:Key|Value) SHCTX "([^"]+)"/g)].map((m) => m[1]);
 const orphan = written.map(expand).filter((k) => k !== 'Software\\Classes\\.pdf\\OpenWithProgids' && !removed.some((r) => k === r || k.startsWith(r + '\\')));
 check(`installer.nsh : chaque clé écrite (${written.length}) est retirée à la désinstallation`, written.length >= 8 && orphan.length === 0, orphan);
 check('installer.nsh : case « Supprimer aussi mes réglages » et /DELETEDATA conservées', /Supprimer aussi mes réglages et ma bibliothèque/.test(ins) && /"\/DELETEDATA="/.test(ins));
 
-// 1 bis. Orical PDF (1.3.0) : icône des fichiers PDF, noms affichés, traces de l'ancien nom retirées, identifiants techniques gardés
+// 1 bis. Icône des fichiers PDF, noms affichés, identifiants, aucune migration
 const customInstall = /!macro customInstall([\s\S]*?)!macroend/.exec(ins)[1];
 check('icône des fichiers PDF : DefaultIcon de la classe = resources\\pdf-file.ico livré par extraResources (fichier présent)',
-  /WriteRegStr SHCTX "Software\\Classes\\\$\{SPIN_PROGID\}\\DefaultIcon" "" "\$INSTDIR\\resources\\pdf-file\.ico,0"/.test(ins) &&
+  /WriteRegStr SHCTX "Software\\Classes\\\$\{ORICAL_PROGID\}\\DefaultIcon" "" "\$INSTDIR\\resources\\pdf-file\.ico,0"/.test(ins) &&
   pkg.build.extraResources.some((r) => r.from === 'build/pdf-file.ico' && r.to === 'pdf-file.ico') && fs.existsSync(path.join(root, 'build', 'pdf-file.ico')));
-check('noms affichés = « Orical PDF » (classe, FriendlyAppName, ApplicationName, RegisteredApplications), aucun « Spin A Doc » écrit',
-  /"Software\\Classes\\\$\{SPIN_PROGID\}" "" "Document PDF \(Orical PDF\)"/.test(ins) && /"FriendlyAppName" "Orical PDF"/.test(ins) && /"ApplicationName" "Orical PDF"/.test(ins) &&
-  /"Software\\RegisteredApplications" "Orical PDF" "\$\{SPIN_CAPS\}"/.test(ins) && ![...ins.matchAll(/WriteRegStr[^\n]*/g)].some((m) => /Spin A Doc|SPIN_LEGACY/.test(m[0])));
-check('installation : clé Applications\\Spin A Doc.exe et valeur « Spin A Doc » de RegisteredApplications (1.2.1) supprimées',
-  /!define SPIN_LEGACY_EXE "Spin A Doc\.exe"/.test(ins) && /!define SPIN_LEGACY_NAME "Spin A Doc"/.test(ins) &&
-  /DeleteRegKey SHCTX "Software\\Classes\\Applications\\\$\{SPIN_LEGACY_EXE\}"/.test(customInstall) && /DeleteRegValue SHCTX "Software\\RegisteredApplications" "\$\{SPIN_LEGACY_NAME\}"/.test(customInstall));
-check('identifiants gardés : ProgId SpinADoc.pdf, Software\\SpinADoc\\Capabilities, appId', /!define SPIN_PROGID "SpinADoc\.pdf"/.test(ins) && caps === 'Software\\SpinADoc\\Capabilities' && pkg.build.appId === 'com.spinadoc.app');
-check('exécutable « Orical PDF.exe » (productName) : la clé Applications\\<exe> suit le nouveau nom', pkg.build.productName === 'Orical PDF' && !pkg.build.win.executableName);
-
-// 1 ter. Mise à jour depuis la 1.2.1 : dossier « …\Spin A Doc » remplacé par le dossier voisin « …\Orical PDF » (silencieux et assistant)
-const fixFn = (/Function spinFixInstDir([\s\S]*?)FunctionEnd/.exec(ins) || [])[1] || '';
-check('dossier d\'installation : « Spin A Doc » (nom exact) → dossier voisin ${APP_FILENAME}, ancien dossier noté',
-  /\$\{GetFileName\} "\$INSTDIR" \$R8/.test(fixFn) && /\$R8 == "\$\{SPIN_LEGACY_NAME\}"/.test(fixFn) && /\$\{GetParent\} "\$INSTDIR" \$R9/.test(fixFn) && /StrCpy \$INSTDIR "\$R9\\\$\{APP_FILENAME\}"/.test(fixFn) && /StrCpy \$SpinOldDir "\$INSTDIR"/.test(fixFn));
-check('redirection appliquée à l\'initialisation (silencieux) ET après la page du dossier (assistant, avant instFilesPre)',
-  /!macro customInit\s+Call spinFixInstDir\s+!macroend/.test(ins) && /!macro customPageAfterChangeDir\s+Page custom spinFixDirPage\s+!macroend/.test(ins) && /Function spinFixDirPage\s+Call spinFixInstDir\s+Abort/.test(ins));
-check('ancien dossier : seulement RMDir non récursif (s\'il est vide) ; tout le code d\'installation hors du désinstalleur', /RMDir "\$SpinOldDir"/.test(customInstall) && !/RMDir \/r "\$SpinOldDir"/.test(ins) &&
-  ins.indexOf('Var SpinOldDir') > ins.indexOf('!ifndef BUILD_UNINSTALLER') && ins.indexOf('Var SpinOldDir') < ins.indexOf('!ifdef BUILD_UNINSTALLER'));
+check('noms affichés = « Orical PDF » (classe, FriendlyAppName, ApplicationName, RegisteredApplications)',
+  /"Software\\Classes\\\$\{ORICAL_PROGID\}" "" "Document PDF \(Orical PDF\)"/.test(ins) && /"FriendlyAppName" "Orical PDF"/.test(ins) && /"ApplicationName" "Orical PDF"/.test(ins) &&
+  /"Software\\RegisteredApplications" "Orical PDF" "\$\{ORICAL_CAPS\}"/.test(ins));
+check('identifiants : ProgId OricalPDF.pdf, Software\\Orical\\OricalPDF\\Capabilities, appId com.orical.pdf', /!define ORICAL_PROGID "OricalPDF\.pdf"/.test(ins) && caps === 'Software\\Orical\\OricalPDF\\Capabilities' && pkg.build.appId === 'com.orical.pdf');
+check('désinstallation : Software\\Orical\\OricalPDF retirée, puis Software\\Orical seulement si vide', /DeleteRegKey SHCTX "Software\\Orical\\OricalPDF"/.test(ins) && /DeleteRegKey \/ifempty SHCTX "Software\\Orical"/.test(ins));
+check('exécutable « Orical PDF.exe » (productName) : la clé Applications\\<exe> suit le nom', pkg.build.productName === 'Orical PDF' && !pkg.build.win.executableName);
+check('aucun code de migration d\'une installation antérieure (customInit, page après le dossier, RMDir d\'un ancien dossier, suppression d\'anciennes clés)',
+  !/customInit|customPageAfterChangeDir|OldDir|LEGACY|FixInstDir/i.test(ins) && !/RMDir "\$/.test(customInstall) && !/DeleteReg/.test(customInstall));
 
 // 2. Imprimante virtuelle retirée (0.12.2)
 check('installer.nsh : plus d\'imprimante (case, /REMOVEPRINTER, PowerShell, vprinter.nsh)', !/imprimante|printer|powershell|vprinter/i.test(ins));

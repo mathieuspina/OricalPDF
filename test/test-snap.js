@@ -37,7 +37,7 @@ const near = (p, x, y, tol = 1e-6) => p && Math.hypot(p.x - x, p.y - y) < tol;
   console.log('  ok   extraction (cm, rectangles, chemins) et accrochage');
 
   // Plan réel (lecture seule) : taille, durée d'extraction, durée d'une requête
-  const real = process.argv[2] || process.env.SPINADOC_SNAP_PLAN || 'C:/Projets/SpinADoc/exemples/plan-exemple.pdf';
+  const real = process.argv[2] || process.env.ORICALPDF_SNAP_PLAN || 'C:/Projets/OricalPDF/exemples/plan-exemple.pdf';
   if (fs.existsSync(real)) {
     const { pdfjs: pj, doc: rd } = await pdfjsLoad(fs.readFileSync(real));
     const rp = await rd.getPage(1);

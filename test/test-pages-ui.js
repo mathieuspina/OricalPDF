@@ -1,6 +1,6 @@
 // Onglet Pages (interface, hors écran) : miniatures (sélection multiple, glisser-déposer), rotation, suppression, duplication, insertion,
 // recadrage, extraction, division, annuler / rétablir, enregistrement, case « Pages sélectionnées » de l'impression. Pilotage CDP.
-// Usage : node test/test-pages-ui.js   (SPIN_TEST_HEADLESS=1 par défaut : aucune fenêtre visible)
+// Usage : node test/test-pages-ui.js   (ORICALPDF_TEST_HEADLESS=1 par défaut : aucune fenêtre visible)
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
@@ -16,9 +16,9 @@ function check(name, cond, detail) {
 }
 
 (async () => {
-  const f = await makeAll(path.join(os.tmpdir(), 'spinadoc-ui-pdfs'));
-  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-pages-out-'));
-  const c = await launchApp({ files: [f.a], env: { SPINADOC_TEST_SAVE_DIR: out, SPINADOC_TEST_OPEN: JSON.stringify([f.b]) } });
+  const f = await makeAll(path.join(os.tmpdir(), 'oricalpdf-ui-pdfs'));
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-pages-out-'));
+  const c = await launchApp({ files: [f.a], env: { ORICALPDF_TEST_SAVE_DIR: out, ORICALPDF_TEST_OPEN: JSON.stringify([f.b]) } });
   const J = async (e) => JSON.parse(await c.ev(e));
   const doc = (expr) => J(`import('./js/ui.js').then(m=>{const d=m.store.active; return JSON.stringify(${expr})})`);
   const order = () => doc('d.pages.map(p=>p.src+":"+p.i+(p.rot?"r"+p.rot:"")+(p.crop?"c":""))');
@@ -171,7 +171,7 @@ function check(name, cond, detail) {
     const o6 = await order();
     check('2 pages de « Doc B » insérées au début', o6.length === 11 && o6[0] === 's1:1' && o6[1] === 's1:2', o6);
     check('la page insérée affiche le contenu de l\'autre PDF', /Doc B - page 2/.test(await pageText(0)), await pageText(0));
-    check('ouverture interne : « Doc B » n\'est pas ajouté aux fichiers récents', !(await c.ev(`(async()=>JSON.stringify(await window.spinadoc.listRecents()))()`)).includes('b-letter'));
+    check('ouverture interne : « Doc B » n\'est pas ajouté aux fichiers récents', !(await c.ev(`(async()=>JSON.stringify(await window.oricalpdf.listRecents()))()`)).includes('b-letter'));
     await undo(); await undo();
     check('annuler ×2 : 8 pages d\'origine', (await order()).length === 8 && (await thumbs()) === 8, await order());
 

@@ -12,7 +12,7 @@ function check(name, cond, detail) {
 }
 
 (async () => {
-  const f = await makeAll(path.join(os.tmpdir(), 'spinadoc-ui-pdfs'));
+  const f = await makeAll(path.join(os.tmpdir(), 'oricalpdf-ui-pdfs'));
   const c = await launchApp({ files: [f.a] });
   const J = async (e) => JSON.parse(await c.ev(e));
   try {
@@ -293,7 +293,7 @@ function check(name, cond, detail) {
     await tool('rect'); await drag(...(await P(500, 300)), ...(await P(550, 330)));
     check('réglage désactivé : retour à « Sélection » avec l\'objet sélectionné', (await state()).tool.includes('tool-select') && (await handles()).length === 9);
     await c.click('#btn-settings'); await c.click('#opt-keeptool'); await c.click('#settings-close'); await sleep(200);
-    check('réglage mémorisé (réactivé)', (await c.ev(`window.spinadoc.getSettings().then(s=>s.keepTool)`)) === true);
+    check('réglage mémorisé (réactivé)', (await c.ev(`window.oricalpdf.getSettings().then(s=>s.keepTool)`)) === true);
 
     // ------------------------------------------------------------ 10. enregistrement : identique à l'aperçu
     console.log('10. Enregistrement figé');

@@ -11,7 +11,7 @@ import * as EditUI from './editable-ui.js';
 
 const { PrintLayout: L } = window;
 const THUMB_W = 132;
-const DND = 'application/x-spinadoc-merge';
+const DND = 'application/x-oricalpdf-merge';
 
 // Branché par app.js : ouvre les octets fusionnés dans un nouvel onglet.
 export const hooks = { openResult: async () => {} };

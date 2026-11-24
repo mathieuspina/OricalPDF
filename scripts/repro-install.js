@@ -1,7 +1,7 @@
 // Reproduction : N installations silencieuses (comme test:packaged) dans un dossier temporaire, désinstallation entre chaque.
 // Usage : node scripts/repro-install.js <setup.exe> <N> <A|B|C|D> <journal>   (D = désinstallation puis réinstallation immédiate, voir seriesD)
 //   A = même fichier à chaque fois ; B = copie à empreinte unique (octets ajoutés en fin de fichier) => analyse antivirus « première vue » ;
-//   C = dossier fixe %TEMP%/spinadoc-installed (comme test:packaged). Relevé des processus en parallèle : scripts/watch-procs.ps1.
+//   C = dossier fixe %TEMP%/oricalpdf-installed (comme test:packaged). Relevé des processus en parallèle : scripts/watch-procs.ps1.
 const { spawnSync, spawn } = require('child_process');
 const Names = require('./install-names.js');
 const fs = require('fs');
@@ -29,17 +29,17 @@ function watchApp() {
   w.stdout.on('data', (d) => (buf += d));
   return { stop: () => new Promise((r) => { w.on('exit', () => r(+buf || 0)); w.stdin.write('x'); }) };
 }
-// Série D (motif vu en 0.12.2) : désinstallation puis RÉINSTALLATION IMMÉDIATE, N fois, dans le dossier fixe %TEMP%/spinadoc-installed, exactement
+// Série D (motif vu en 0.12.2) : désinstallation puis RÉINSTALLATION IMMÉDIATE, N fois, dans le dossier fixe %TEMP%/oricalpdf-installed, exactement
 // comme test:packaged (stdio hérité, dossier vidé juste avant, attente que « Orical PDF.exe » ne tourne plus, /DATADIR= d'un dossier témoin).
 // Aucune relance : un code non nul est noté, puis une installation de RATTRAPAGE (comptée à part) remet l'application pour l'essai suivant.
 // Refus si Orical PDF est déjà installé sur le compte (même identité que l'installeur de test).
 function seriesD() {
   const BS = String.fromCharCode(92);
   const found = Names.existingInstall();
-  if (found.length) { out('REFUS : Orical PDF ou Spin A Doc est installé sur ce compte (' + found.join(', ') + ') : série D non lancée.'); return; }
-  const dir = path.join(os.tmpdir(), 'spinadoc-installed');
-  const keep = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-uninst-repro-'));
-  fs.writeFileSync(path.join(keep, '.spinadoc-test'), '');
+  if (found.length) { out('REFUS : Orical PDF est installé sur ce compte (' + found.join(', ') + ') : série D non lancée.'); return; }
+  const dir = path.join(os.tmpdir(), 'oricalpdf-installed');
+  const keep = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-uninst-repro-'));
+  fs.writeFileSync(path.join(keep, '.oricalpdf-test'), '');
   const hexOf = (c) => (c == null ? 'null' : '0x' + (c >>> 0).toString(16).toUpperCase());
   const install = (label) => {
     fs.rmSync(dir, { recursive: true, force: true });
@@ -82,11 +82,11 @@ function seriesD() {
   out(`=== Série ${mode} : ${N} installations silencieuses — ${new Date().toISOString()} — ${path.basename(setupSrc)}`);
   let crashes = 0;
   for (let i = 1; i <= N; i++) {
-    const dir = mode === 'C' ? path.join(os.tmpdir(), 'spinadoc-installed') : fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-repro-'));
+    const dir = mode === 'C' ? path.join(os.tmpdir(), 'oricalpdf-installed') : fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-repro-'));
     if (mode === 'C') fs.rmSync(dir, { recursive: true, force: true });
     let setup = setupSrc;
     if (mode === 'B') {
-      setup = path.join(os.tmpdir(), 'spinadoc-repro-setup-' + process.pid + '-' + i + '.exe');
+      setup = path.join(os.tmpdir(), 'oricalpdf-repro-setup-' + process.pid + '-' + i + '.exe');
       fs.copyFileSync(setupSrc, setup);
       fs.appendFileSync(setup, Buffer.from('SPINREPRO' + Date.now() + Math.random()));
     }

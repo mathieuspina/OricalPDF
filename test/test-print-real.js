@@ -1,6 +1,6 @@
-// Impression RÉELLE vers l'imprimante virtuelle « SpinADoc Test PDF » (port fichier C:\Temp\SpinADocPrintTest\sortie.pdf), puis mesure du
+// Impression RÉELLE vers l'imprimante virtuelle « OricalPDF Test PDF » (port fichier C:\Temp\OricalPDFPrintTest\sortie.pdf), puis mesure du
 // résultat avec pdf.js (taille de feuille, trait de 100 mm, position). Envoie UNIQUEMENT à cette imprimante : le garde-fou
-// SPINADOC_PRINT_ALLOW la rend la seule imprimante visible ET refuse toute autre en main.js. Fenêtre cachée.
+// ORICALPDF_PRINT_ALLOW la rend la seule imprimante visible ET refuse toute autre en main.js. Fenêtre cachée.
 // Mesure aussi le temps et la mémoire (processus Electron) sur un A1. Usage : node test/test-print-real.js [--sans-a1]
 const fs = require('fs');
 const os = require('os');
@@ -9,8 +9,8 @@ const { spawnSync } = require('child_process');
 const PDFLib = require('@cantoo/pdf-lib');
 const { launchApp, sleep } = require('./lib/app.js');
 
-const PRINTER = 'SpinADoc Test PDF';
-const SORTIE = 'C:\\Temp\\SpinADocPrintTest\\sortie.pdf';
+const PRINTER = 'OricalPDF Test PDF';
+const SORTIE = 'C:\\Temp\\OricalPDFPrintTest\\sortie.pdf';
 const MM = 72 / 25.4;
 const failures = [];
 let passed = 0;
@@ -65,13 +65,20 @@ async function waitSortie(t0, timeoutMs) {
 
 (async () => {
   const printers = spawnSync('powershell.exe', ['-NoProfile', '-Command', "(Get-Printer -Name '" + PRINTER + "' -ErrorAction SilentlyContinue).Name"], { encoding: 'utf8' }).stdout.trim();
-  if (printers !== PRINTER) { console.log('SKIP : imprimante virtuelle « ' + PRINTER + ' » absente.'); process.exit(0); }
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-real-'));
+  if (printers !== PRINTER) {
+    // Non lancé (et NON réussi) : code 2. « Microsoft Print to PDF » ne convient pas (port PORTPROMPT : boîte « Enregistrer sous »).
+    console.log('NON LANCÉ : imprimante virtuelle « ' + PRINTER + ' » absente. La créer (PowerShell administrateur) :\n' +
+      "  New-Item -ItemType Directory -Force 'C:\\Temp\\OricalPDFPrintTest'\n" +
+      "  Add-PrinterPort -Name '" + SORTIE + "'\n" +
+      "  Add-Printer -Name '" + PRINTER + "' -DriverName 'Microsoft Print To PDF' -PortName '" + SORTIE + "'");
+    process.exit(2);
+  }
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-real-'));
   const skipA1 = process.argv.includes('--sans-a1');
   const src = { A4: [210, 297], A3: [297, 420], A3L: [420, 297], A1: [594, 841] };
   for (const [n, [w, h]] of Object.entries(src)) await mkSource(path.join(dir, n + '.pdf'), w, h);
 
-  const c = await launchApp({ files: [path.join(dir, 'A4.pdf')], env: { SPINADOC_PRINT_ALLOW: PRINTER } });
+  const c = await launchApp({ files: [path.join(dir, 'A4.pdf')], env: { ORICALPDF_PRINT_ALLOW: PRINTER } });
   try {
     await c.waitFor(`document.querySelectorAll('.docview.active canvas').length>0`);
     await sleep(800);

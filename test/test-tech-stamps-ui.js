@@ -1,7 +1,7 @@
 // Interface des tampons techniques (1.4.0) : bouton à menu de l'onglet Annoter (catégories, miniatures vectorielles), pose par clic (outil
 // persistant), poignées (proportions verrouillées, Maj = libre), libellé / plein-contour / épaisseur au panneau Propriétés (champs utiles
 // seulement), annuler / rétablir, dupliquer / supprimer, favori d'un symbole (clic droit sur sa miniature), enregistrement relu avec pdf.js.
-// Headless (SPIN_TEST_HEADLESS=1 par défaut). Usage : node test/test-tech-stamps-ui.js
+// Headless (ORICALPDF_TEST_HEADLESS=1 par défaut). Usage : node test/test-tech-stamps-ui.js
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -14,13 +14,13 @@ const check = (name, cond, detail) => { if (cond) { passed++; console.log('  ok 
 const FONTS = path.join(__dirname, '..', 'node_modules', 'pdfjs-dist', 'standard_fonts').split('\\').join('/') + '/';
 
 (async () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-tech-ui-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-tech-ui-'));
   const d = await PDFLib.PDFDocument.create();
   d.addPage([842, 595]); // plan paysage
   const pdf = path.join(dir, 'plan-technique.pdf');
   fs.writeFileSync(pdf, await d.save());
-  const saveDir = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-tech-save-'));
-  const c = await launchApp({ files: [pdf], env: { SPINADOC_TEST_SAVE_DIR: saveDir } });
+  const saveDir = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-tech-save-'));
+  const c = await launchApp({ files: [pdf], env: { ORICALPDF_TEST_SAVE_DIR: saveDir } });
   const J = async (e) => JSON.parse(await c.ev(e));
   try {
     await c.waitFor(`document.querySelectorAll('.docview.active canvas').length>0`);

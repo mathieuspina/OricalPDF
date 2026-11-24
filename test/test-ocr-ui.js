@@ -2,7 +2,7 @@
 // page de texte français / anglais, page de texte natif (ignorée), plan (cotes, petits textes, texte pivoté), page couchée à 90°.
 // Vérifie : reconnaissance (taux de mots justes), page ignorée car déjà du texte, progression, annulation, recherche, sélection / copie, mots douteux,
 // Annuler / Rétablir, enregistrement (couche invisible, aspect inchangé), réouverture (texte natif détecté), page sans OCR forcée, durée et mémoire.
-// Usage : node test/test-ocr-ui.js   (SPINADOC_EXE pour tester l'application empaquetée)
+// Usage : node test/test-ocr-ui.js   (ORICALPDF_EXE pour tester l'application empaquetée)
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -22,10 +22,10 @@ const memTree = (pid) => { try { return Number(execSync('powershell -NoProfile -
 const { GEN, GEN_A0 } = require('./lib/ocr-scans.js');
 
 (async () => {
-  const dir = path.join(os.tmpdir(), 'spinadoc-ocr-pdfs');
+  const dir = path.join(os.tmpdir(), 'oricalpdf-ocr-pdfs');
   const f = await makeAll(dir);
-  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-ocr-out-'));
-  const c = await launchApp({ files: [f.d], env: { SPINADOC_TEST_SAVE_DIR: out } });
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-ocr-out-'));
+  const c = await launchApp({ files: [f.d], env: { ORICALPDF_TEST_SAVE_DIR: out } });
   const OCR = (expr) => c.ev(`import('./js/ocr-ui.js').then((m)=>{const S=m.state; return JSON.stringify(${expr})})`).then((x) => (x === undefined ? undefined : JSON.parse(x)));
   const doc = (expr) => c.ev(`import('./js/ui.js').then((m)=>{const d=m.store.active; return JSON.stringify(${expr})})`).then((x) => (x === undefined ? undefined : JSON.parse(x)));
   const setv = (id, v) => c.ev(`(()=>{const e=document.getElementById(${JSON.stringify(id)});e.value=${JSON.stringify(v)};e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));})()`);

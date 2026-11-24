@@ -1,6 +1,6 @@
 // Impression non bloquante : pendant l'impression d'un A1 dense en noir et blanc 600 dpi (composition + rasterisation + envoi, dans la fenêtre
 // de travail cachée), l'interface reste réactive (retard de la boucle d'événements < 100 ms), on peut ouvrir un document, ajouter une annotation et
-// défiler. File d'impression, progression, annulation. Aucune impression réelle (SPINADOC_TEST_PRINT_DIR). Usage : node test/test-print-async-ui.js
+// défiler. File d'impression, progression, annulation. Aucune impression réelle (ORICALPDF_TEST_PRINT_DIR). Usage : node test/test-print-async-ui.js
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -17,7 +17,7 @@ function check(name, cond, detail) {
 const MM = 72 / 25.4;
 
 (async () => {
-  const dir = path.join(os.tmpdir(), 'spinadoc-ui-pdfs');
+  const dir = path.join(os.tmpdir(), 'oricalpdf-ui-pdfs');
   const f = await makeAll(dir);
   // A1 dense : 6 000 traits fins + du texte (un plan)
   const a1 = path.join(dir, 'plan-A1-dense.pdf');
@@ -29,8 +29,8 @@ const MM = 72 / 25.4;
     for (let i = 0; i < 80; i++) p.drawText('COTE ' + i, { x: 100 + (i % 8) * 190, y: 200 + Math.floor(i / 8) * 200, size: 18, font });
     fs.writeFileSync(a1, await d.save());
   }
-  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-print-async-'));
-  const c = await launchApp({ files: [a1], env: { SPINADOC_TEST_PRINT_DIR: out, SPINADOC_TEST_OPEN: JSON.stringify([f.b]) } });
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-print-async-'));
+  const c = await launchApp({ files: [a1], env: { ORICALPDF_TEST_PRINT_DIR: out, ORICALPDF_TEST_OPEN: JSON.stringify([f.b]) } });
   const key = (k, code, vk, mods = 0) => c.key(k, { code, windowsVirtualKeyCode: vk, modifiers: mods });
   const setv = (id, v) => c.ev(`(()=>{const e=document.getElementById(${JSON.stringify(id)});e.value=${JSON.stringify(v)};e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));})()`);
   const txt = (id) => c.ev(`document.getElementById(${JSON.stringify(id)}).textContent`);

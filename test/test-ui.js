@@ -21,7 +21,7 @@ const VISIBLE_INK = `(()=>{const v=document.querySelector('.docview.active .view
   return JSON.stringify({vis,ink,h:v.clientHeight});})()`;
 
 (async () => {
-  const dir = path.join(os.tmpdir(), 'spinadoc-ui-pdfs');
+  const dir = path.join(os.tmpdir(), 'oricalpdf-ui-pdfs');
   const f = await makeAll(dir);
   const c = await launchApp({ files: [f.a] });
   const J = async (e) => JSON.parse(await c.ev(e));

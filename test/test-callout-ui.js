@@ -15,9 +15,9 @@ function check(name, cond, detail) {
 }
 
 (async () => {
-  const f = await makeAll(path.join(os.tmpdir(), 'spinadoc-ui-pdfs'));
-  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-callout-out-'));
-  const c = await launchApp({ files: [f.a], env: { SPINADOC_TEST_SAVE_DIR: out } });
+  const f = await makeAll(path.join(os.tmpdir(), 'oricalpdf-ui-pdfs'));
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-callout-out-'));
+  const c = await launchApp({ files: [f.a], env: { ORICALPDF_TEST_SAVE_DIR: out } });
   const doc = (expr) => c.ev(`import('./js/ui.js').then((m)=>{const d=m.store.active; return JSON.stringify(${expr})})`).then((x) => (x === undefined ? undefined : JSON.parse(x)));
   const edits = () => doc(`d.edits.filter((e)=>e.type==='callout')`);
   const key = (k, code, vk, mods = 0) => c.key(k, { code, windowsVirtualKeyCode: vk, modifiers: mods });

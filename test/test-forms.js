@@ -12,7 +12,7 @@ const { applyEdits } = require('../src/pdf-edit.js');
 const { makeForm } = require('./lib/make-form.js');
 
 (async () => {
-  const file = await makeForm(path.join(os.tmpdir(), 'spinadoc-form-test.pdf'));
+  const file = await makeForm(path.join(os.tmpdir(), 'oricalpdf-form-test.pdf'));
   const bytes = fs.readFileSync(file);
   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
   const open = (b) => pdfjs.getDocument({ data: new Uint8Array(b), verbosity: 0 }).promise;

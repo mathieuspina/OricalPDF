@@ -1,7 +1,7 @@
 // Cotes et distances lisibles dans l'interface (1.0.2) : une Cote tracée de droite à gauche puis de haut en bas a sa valeur lisible et AU-DESSUS
 // de sa ligne de cote ; la page est ensuite pivotée de 180° par l'application (Accueil, « Pivoter à droite » × 2) : les cotes restent lisibles, une
 // Distance horizontale tracée à l'écran aussi ; le PDF enregistré, relu avec pdf.js sur sa page affichée (/Rotate 180), a tous ses textes lisibles.
-// Fenêtre hors écran (SPIN_TEST_HEADLESS=1 par défaut). Usage : node test/test-measure-rotate-ui.js
+// Fenêtre hors écran (ORICALPDF_TEST_HEADLESS=1 par défaut). Usage : node test/test-measure-rotate-ui.js
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -14,15 +14,15 @@ const check = (name, cond, detail) => { if (cond) { passed++; console.log('  ok 
 const readable = (deg) => deg > -90 + 1e-3 && deg <= 90 + 1e-3;
 
 (async () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-mrot-ui-'));
-  const saveDir = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-mrot-save-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-mrot-ui-'));
+  const saveDir = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-mrot-save-'));
   const d = await PDFLib.PDFDocument.create();
   const pg = d.addPage([595, 842]);
   pg.drawRectangle({ x: 100, y: 450, width: 300, height: 250, borderWidth: 1, borderColor: PDFLib.rgb(0, 0, 0) });
   const planPath = path.join(dir, 'plan-cotes.pdf');
   fs.writeFileSync(planPath, await d.save());
 
-  const c = await launchApp({ files: [planPath], env: { SPINADOC_TEST_SAVE_DIR: saveDir } });
+  const c = await launchApp({ files: [planPath], env: { ORICALPDF_TEST_SAVE_DIR: saveDir } });
   const J = async (e) => JSON.parse(await c.ev(e));
   try {
     await c.waitFor(`document.querySelectorAll('.docview.active canvas').length>0`);

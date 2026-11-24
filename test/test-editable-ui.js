@@ -17,7 +17,7 @@ const EP = require('../src/editable-pdf.js');
 const failures = [];
 let passed = 0;
 const check = (name, cond, detail) => { if (cond) { passed++; console.log('  ok   ', name); } else { failures.push(name); console.log('  ECHEC', name, detail !== undefined ? '→ ' + JSON.stringify(detail).slice(0, 400) : ''); } };
-const tmp = (p) => fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-edit-' + p + '-'));
+const tmp = (p) => fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-edit-' + p + '-'));
 const dir = tmp('in');
 const pdfIn = (name) => path.join(dir, name);
 const D = (t, o) => Object.assign(Shapes.defaultsFor(t), { type: t, page: 0 }, o);
@@ -60,7 +60,7 @@ async function heavy() {
   console.log('1. Enregistrer : boîte « Modifiable / Aplati », avertissement, indicateur');
   const S1 = tmp('s1');
   const E1 = pdfIn('copie-modifiable.pdf');
-  let c = await launchApp({ files: [A4], env: { SPINADOC_TEST_SAVE_DIR: S1 }, saveMode: null }); // vrai défaut : demander
+  let c = await launchApp({ files: [A4], env: { ORICALPDF_TEST_SAVE_DIR: S1 }, saveMode: null }); // vrai défaut : demander
   try {
     await c.waitFor(`document.querySelectorAll('.docview.active canvas').length>0`); await sleep(600);
     check('3 objets ajoutés (rectangle, tampon, note)', (await addObjs(c)) === 3);
@@ -101,7 +101,7 @@ async function heavy() {
   // ------------------------------------------------------------------ 2. rouvrir une copie, déplacer, réenregistrer
   console.log('2. Rouvrir la copie modifiable : objets restaurés, déplacer, réenregistrer sans question');
   const S2 = tmp('s2');
-  c = await launchApp({ files: [E1], env: { SPINADOC_TEST_SAVE_DIR: S2, SPINADOC_TEST_OPEN: JSON.stringify([E1]) } });
+  c = await launchApp({ files: [E1], env: { ORICALPDF_TEST_SAVE_DIR: S2, ORICALPDF_TEST_OPEN: JSON.stringify([E1]) } });
   try {
     await c.waitFor(`document.querySelectorAll('.docview.active canvas').length>0`); await waitRestored(c); await sleep(800);
     const st = JSON.parse(await c.ev(docJs(`JSON.stringify({n:d.edits.length, dirty:d.dirty, undo:d.undo.length, types:d.edits.map(e=>e.type)})`)));
@@ -137,7 +137,7 @@ async function heavy() {
   // ------------------------------------------------------------------ 3. réglage « Modifiables » : aucune question
   console.log('3. Réglage « Modifiables » mémorisé : document ordinaire enregistré sans question');
   const S3 = tmp('s3');
-  c = await launchApp({ files: [A4], env: { SPINADOC_TEST_SAVE_DIR: S3 }, userDataFiles: { 'settings.json': { saveMode: 'editable' } } });
+  c = await launchApp({ files: [A4], env: { ORICALPDF_TEST_SAVE_DIR: S3 }, userDataFiles: { 'settings.json': { saveMode: 'editable' } } });
   try {
     await c.waitFor(`document.querySelectorAll('.docview.active canvas').length>0`); await sleep(600);
     await addObjs(c); await save(c); await sleep(1800);

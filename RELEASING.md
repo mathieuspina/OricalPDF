@@ -59,8 +59,11 @@ Application dépaquetée, portable et installée (installation et désinstallati
 npm run test:update
 ```
 
-Installe la version précédente (installeur de version inférieure présent dans `dist/`), crée un profil de test (réglages, récents,
-bibliothèque), lance le nouvel installeur par-dessus et vérifie que le profil est conservé et relu.
+Depuis la 1.4.0 (identité d'installation `com.orical.pdf`, aucune version de cette identité n'était publiée avant) : installation propre
+dans `%TEMP%` avec un profil de test, association `.pdf` posée, application lancée, puis désinstallation propre (registre, raccourcis,
+entrée de désinstallation, dossier d'installation : aucune trace), données de l'utilisateur conservées par défaut. Le test de mise à jour
+**par-dessus** (installeur de la version précédente puis nouvel installeur, profil conservé) reprendra à la version suivante : il faudra
+alors garder `dist/OricalPDF-Setup-1.4.0.exe`.
 
 Vérification manuelle (une fois) : installer sur un compte de test, ouvrir un PDF, imprimer vers « Microsoft Print to PDF », désinstaller.
 
@@ -111,9 +114,8 @@ Vérifier avant le commit que `git status` ne liste aucun `.exe`, `.pdf` ni secr
 
 ## 7. Release GitHub (brouillon, puis publication)
 
-Dépôt GitHub : nom **OricalPDF** depuis la 1.3.0 (ancien nom : SpinADoc ; GitHub redirige l'ancienne adresse). Aucune adresse du dépôt
-n'est écrite dans les fichiers du projet ; après le renommage, seul le remote local change : `git remote set-url origin` suivi de la
-nouvelle adresse du dépôt, puis `gh repo view --json nameWithOwner` pour vérifier.
+Dépôt GitHub : **OricalPDF**. Aucune adresse du dépôt n'est écrite dans les fichiers du projet (`gh repo view --json nameWithOwner`
+pour vérifier le remote local).
 
 Créer un **brouillon** (rien n'est visible tant qu'il n'est pas publié) :
 
@@ -173,12 +175,9 @@ nouvelle version :
 1. Fermer Orical PDF.
 2. Télécharger `OricalPDF-Setup-x.y.z.exe` (et, si le service informatique le demande, vérifier son empreinte avec `SHA256SUMS.txt`).
 3. Lancer le nouvel installeur **par-dessus l'ancien**, sans désinstaller : le programme est remplacé, les réglages, documents récents,
-   tampons, signatures et échelles de mesure (`%APPDATA%\Spin A Doc`) sont conservés. Les raccourcis et l'entrée « Ouvrir avec » restent.
-4. Version portable : remplacer simplement l'ancien fichier `.exe` ; les données sont les mêmes (`%APPDATA%\Spin A Doc`).
+   tampons, signatures et échelles de mesure (`%APPDATA%\Orical PDF`) sont conservés. Les raccourcis et l'entrée « Ouvrir avec » restent.
+4. Version portable : remplacer simplement l'ancien fichier `.exe` ; les données sont les mêmes (`%APPDATA%\Orical PDF`).
 
-En silencieux (déploiement par le service informatique) : `OricalPDF-Setup-x.y.z.exe /S`. Ce scénario est vérifié par `npm run test:update`.
-Depuis la 1.2.1 (ancien nom Spin A Doc) : même identité d'installation (une seule entrée de désinstallation, mise à jour par-dessus).
-Si l'ancien dossier s'appelle « …\Spin A Doc », la 1.3.0 s'installe dans le dossier voisin « …\Orical PDF » et l'ancien dossier est supprimé ;
-les raccourcis « Spin A Doc » sont remplacés par « Orical PDF » ; le dossier des données garde son nom historique (`%APPDATA%\Spin A Doc`).
-`npm run test:update` prend par défaut l'installeur de version inférieure le plus récent de dist/ (`OricalPDF-Setup-…` ou `SpinADoc-Setup-…`) :
-pour la 1.3.0, garder `dist/SpinADoc-Setup-1.2.1.exe` (celui de la Release 1.2.1).
+En silencieux (déploiement par le service informatique) : `OricalPDF-Setup-x.y.z.exe /S`. La 1.4.0 est la première version de son
+identité d'installation (`com.orical.pdf`) : elle s'installe à côté d'une version plus ancienne, qu'il faut désinstaller à la main ; elle
+ne reprend ni ses réglages ni ses fichiers. Le scénario « par-dessus » sera vérifié par `npm run test:update` à partir de la version suivante.

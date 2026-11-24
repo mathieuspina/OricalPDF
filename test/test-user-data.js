@@ -1,10 +1,11 @@
-// Dossier des données de l'utilisateur (src/user-data.js + main.js) : identique à celui de la 1.2.1 (%APPDATA%\Spin A Doc) quel que soit le
-// nom du produit (« Orical PDF » depuis 1.3.0), imposé avant « ready », SPINADOC_USER_DATA respecté (tests).
-// Comparaison avec la 1.2.1 : lue dans git (tag v1.2.1) si disponible, sinon avec la valeur connue.
+// Dossier des données de l'utilisateur (src/user-data.js + main.js) : « %APPDATA%\Orical PDF », imposé avant « ready », indépendant de
+// productName ; ORICALPDF_USER_DATA respecté (tests) ; dossier créé au démarrage ; isolation des tests : un lancement de test n'écrit
+// jamais dans le vrai dossier de l'utilisateur (ni dans un autre dossier de %APPDATA%).
 // Usage : node test/test-user-data.js
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
-const { spawnSync } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 const UD = require('../src/user-data.js');
 
 const failures = [];
@@ -12,13 +13,12 @@ let passed = 0;
 const check = (name, cond, detail) => { if (cond) { passed++; console.log('  ok   ', name); } else { failures.push(name); console.log('  ECHEC', name, detail !== undefined ? '→ ' + JSON.stringify(detail) : ''); } };
 const root = path.join(__dirname, '..');
 const main = fs.readFileSync(path.join(root, 'main.js'), 'utf8');
-const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 const appData = 'C:\\Users\\exemple\\AppData\\Roaming';
 
-check('nom historique du dossier = « Spin A Doc »', UD.LEGACY_DIR === 'Spin A Doc');
-check('résolu sans variable : %APPDATA%\\Spin A Doc', UD.resolve({}, appData, path.win32.join) === 'C:\\Users\\exemple\\AppData\\Roaming\\Spin A Doc');
-check('SPINADOC_USER_DATA respecté (tests)', UD.resolve({ SPINADOC_USER_DATA: 'C:\\Tests\\profil-test' }, appData, path.win32.join) === 'C:\\Tests\\profil-test');
-check('SPINADOC_USER_DATA vide : dossier historique', UD.resolve({ SPINADOC_USER_DATA: '' }, appData, path.win32.join).endsWith('\\Spin A Doc'));
+check('nom du dossier = « Orical PDF »', UD.DIR === 'Orical PDF');
+check('résolu sans variable : %APPDATA%\\Orical PDF', UD.resolve({}, appData, path.win32.join) === 'C:\\Users\\exemple\\AppData\\Roaming\\Orical PDF');
+check('ORICALPDF_USER_DATA respecté (tests)', UD.resolve({ ORICALPDF_USER_DATA: 'C:\\Tests\\profil-test' }, appData, path.win32.join) === 'C:\\Tests\\profil-test');
+check('ORICALPDF_USER_DATA vide : dossier normal', UD.resolve({ ORICALPDF_USER_DATA: '' }, appData, path.win32.join).endsWith('\\Orical PDF'));
 check('indépendant du nom du produit : user-data.js ne lit ni productName ni app.getName', !/\.productName|getName\(/.test(fs.readFileSync(path.join(root, 'src', 'user-data.js'), 'utf8')));
 
 // main.js : setPath('userData', UserData.resolve(…)) au chargement, avant tout « ready », verrou d'instance unique et lecture de réglages.
@@ -27,16 +27,30 @@ const firstOf = (re) => { const m = re.exec(main); return m ? m.index : Infinity
 check('main.js : chemin imposé par UserData.resolve', iSet > 0);
 check('main.js : imposé avant whenReady / ready / requestSingleInstanceLock / userFile', iSet > 0 && iSet < firstOf(/app\.whenReady\(|app\.on\('ready'|requestSingleInstanceLock\(|userFile\('/));
 check('main.js : aucun autre setPath(\'userData\')', (main.match(/setPath\('userData'/g) || []).length === 1);
+check('harnais de test : chaque lancement reçoit son propre ORICALPDF_USER_DATA (dossier temporaire)', /ORICALPDF_USER_DATA: userData/.test(fs.readFileSync(path.join(root, 'test', 'lib', 'app.js'), 'utf8')));
 
-// Comparaison avec la 1.2.1 (même dossier) : expression de main.js au tag v1.2.1.
-const old = spawnSync('git', ['show', 'v1.2.1:main.js'], { cwd: root, encoding: 'utf8' });
-if (old.status === 0) {
-  const m = /setPath\('userData', process\.env\.SPINADOC_USER_DATA \|\| path\.join\(app\.getPath\('appData'\), '([^']+)'\)\)/.exec(old.stdout);
-  check('1.2.1 (git v1.2.1:main.js) : même dossier', m && m[1] === UD.LEGACY_DIR, m && m[1]);
-} else {
-  console.log('  (tag v1.2.1 absent : comparaison avec la valeur connue de la 1.2.1)');
-  check('1.2.1 (valeur connue) : même dossier', UD.LEGACY_DIR === 'Spin A Doc');
-}
-
-console.log(`\n${passed} ok, ${failures.length} échec(s)`);
-if (failures.length) process.exit(1);
+// Lancement réel (Electron de développement, hors écran) : dossier de test INEXISTANT → créé au démarrage ; %APPDATA% inchangé.
+(async () => {
+  const realAppData = process.env.APPDATA;
+  const listAppData = () => { try { return fs.readdirSync(realAppData).sort(); } catch { return []; } };
+  const real = path.join(realAppData, UD.DIR);
+  const stamp = (p) => { try { return fs.statSync(p).mtimeMs; } catch { return null; } };
+  const before = { list: listAppData(), real: stamp(real) };
+  const base = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-userdata-'));
+  const dir = path.join(base, 'profil', 'Orical PDF');
+  const electron = process.env.ORICALPDF_EXE || require(path.join(root, 'node_modules', 'electron'));
+  const env = Object.assign({}, process.env, { ORICALPDF_TEST_HEADLESS: '1', ORICALPDF_USER_DATA: dir });
+  const p = spawn(electron, process.env.ORICALPDF_EXE ? [] : [root], { stdio: 'ignore', env });
+  let created = false;
+  for (let i = 0; i < 150 && !created; i++) { await new Promise((r) => setTimeout(r, 200)); created = fs.existsSync(dir) && fs.readdirSync(dir).length > 0; }
+  await new Promise((r) => setTimeout(r, 1500));
+  spawnSync('taskkill', ['/PID', String(p.pid), '/T', '/F'], { stdio: 'ignore' });
+  await new Promise((r) => setTimeout(r, 800));
+  check('démarrage avec un dossier inexistant : dossier créé (profil Chromium écrit dedans)', created, fs.existsSync(dir) ? fs.readdirSync(dir) : 'absent');
+  const after = { list: listAppData(), real: stamp(real) };
+  check('isolation : aucun dossier créé ni supprimé dans %APPDATA% par un lancement de test', JSON.stringify(after.list) === JSON.stringify(before.list), after.list.filter((x) => !before.list.includes(x)));
+  check('isolation : le vrai dossier « %APPDATA%\\Orical PDF » n\'est pas touché', after.real === before.real, { before: before.real, after: after.real });
+  try { fs.rmSync(base, { recursive: true, force: true }); } catch { /* */ }
+  console.log(`\n${passed} ok, ${failures.length} échec(s)`);
+  if (failures.length) process.exit(1);
+})();

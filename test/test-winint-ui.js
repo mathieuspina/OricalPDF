@@ -1,4 +1,4 @@
-// Intégration à Windows (interface, hors écran ; aucune fenêtre des Paramètres de Windows ouverte : SPINADOC_TEST_EXTERNAL) :
+// Intégration à Windows (interface, hors écran ; aucune fenêtre des Paramètres de Windows ouverte : ORICALPDF_TEST_EXTERNAL) :
 // Réglages → boîte « Intégration à Windows » (lecteur PDF seulement, plus d'imprimante), page « Applications par défaut », Échap,
 // cliquabilité et débordement ; deuxième lancement avec un PDF en argument → onglet ouvert dans la fenêtre existante.
 // Usage : node test/test-winint-ui.js
@@ -19,10 +19,10 @@ function check(name, cond, detail) {
 }
 
 (async () => {
-  const f = await makeAll(path.join(os.tmpdir(), 'spinadoc-ui-pdfs'));
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-winint-'));
+  const f = await makeAll(path.join(os.tmpdir(), 'oricalpdf-ui-pdfs'));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-winint-'));
   const ext = path.join(tmp, 'external.log');
-  const c = await launchApp({ files: [f.a], env: { SPINADOC_TEST_EXTERNAL: ext } });
+  const c = await launchApp({ files: [f.a], env: { ORICALPDF_TEST_EXTERNAL: ext } });
   const vis = (id) => c.ev(`!document.getElementById('${id}').hidden`);
   try {
     await c.waitFor(`document.querySelectorAll('.docview.active canvas').length>0`, 15000);
@@ -43,7 +43,7 @@ function check(name, cond, detail) {
     console.log('2. Deuxième lancement avec un PDF en argument');
     const n0 = await c.ev(`document.querySelectorAll('.doctab').length`);
     const electron = require(path.join(__dirname, '..', 'node_modules', 'electron'));
-    const second = spawn(electron, [path.join(__dirname, '..'), f.b], { stdio: 'ignore', env: Object.assign({}, process.env, { SPIN_TEST_HEADLESS: '1', SPINADOC_USER_DATA: c.userData }) });
+    const second = spawn(electron, [path.join(__dirname, '..'), f.b], { stdio: 'ignore', env: Object.assign({}, process.env, { ORICALPDF_TEST_HEADLESS: '1', ORICALPDF_USER_DATA: c.userData }) });
     const code = await new Promise((r) => { const t = setTimeout(() => { second.kill(); r('délai'); }, 20000); second.on('exit', (x) => { clearTimeout(t); r(x); }); });
     check('le deuxième processus se termine aussitôt (instance unique)', code === 0, code);
     await c.waitFor(`document.querySelectorAll('.doctab').length>${n0}`, 8000);

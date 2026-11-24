@@ -48,14 +48,13 @@ check('EULA en texte brut : titres, gras, code et liens simplifiés, fins de lig
   };
   const hit = Object.entries(visible).filter(([, s]) => DRAFT.test(s)).map(([k, s]) => k + ' : ' + s.match(DRAFT)[0]);
   check('aucune mention de brouillon / relecture juridique dans le texte visible (EULA, installeur, politique, README, aide, notes, LICENSE, À propos)', hit.length === 0, hit);
-  // 1.3.0 : seuls le nom du produit (Spin A Doc → Orical PDF) et celui de l'éditeur (SpinASoft → Orical) ont changé. En remettant les
-  // anciens noms, on retrouve EXACTEMENT le texte de la 1.2.1 (empreinte d'origine) ; l'empreinte actuelle fige le texte renommé.
-  const unrename = (t) => t.split('Orical PDF').join('Spin A Doc').split('Orical').join('SpinASoft');
-  check('EULA.fr.md : reste du contrat inchangé (empreinte 1.2.1 en remettant les anciens noms), en-tête conservé (titre, version du 12 novembre 2026, Éditeur, Logiciel)',
-    sha(unrename(eula)) === '1ee696864b9132f0f639ab162e75f3b88581b6eef2fc158133bd868a52ac2d66' && sha(eula) === '88f0615400a45095a99961d1806fe7adc6a4e229b639a9d84e27c99b8f4790a7' &&
+  // Empreintes du texte juridique : toute modification doit être VOLONTAIRE (mise à jour de l'empreinte ici, avec la raison).
+  // 1.4.0 : seul le nom du dossier de données a changé dans la politique (« %APPDATA%\Orical PDF ») ; le contrat est inchangé.
+  check('EULA.fr.md : texte figé (empreinte), en-tête conservé (titre, version du 12 novembre 2026, Éditeur, Logiciel)',
+    sha(eula) === '88f0615400a45095a99961d1806fe7adc6a4e229b639a9d84e27c99b8f4790a7' &&
     /^# Contrat de licence utilisateur final — Orical PDF\n\nVersion du 12 novembre 2026\. Éditeur : Orical \(« l'Éditeur »\)\. Logiciel : Orical PDF,/.test(eula), sha(eula));
-  check('POLITIQUE-CONFIDENTIALITE.md : reste inchangé (empreinte 1.2.1 en remettant les anciens noms) ; seuls les noms changent en 1.3.0',
-    sha(unrename(read('POLITIQUE-CONFIDENTIALITE.md'))) === 'a9e184eddf1ff126e98001515470aff7eb4b45fb9e07fd49f3315574bdf40585' && sha(read('POLITIQUE-CONFIDENTIALITE.md')) === 'b5878f62ccd3ff69a1cd1a9543ad3655333158ee14d351054f6393a9ed53eac3');
+  check('POLITIQUE-CONFIDENTIALITE.md : texte figé (empreinte ; 1.4.0 : seul le nom du dossier de données a changé)',
+    sha(read('POLITIQUE-CONFIDENTIALITE.md')) === 'e76803bb8ae58dd649a36287058c897fa28fb0774970a73f9d96d5a1e82d3bbf', sha(read('POLITIQUE-CONFIDENTIALITE.md')));
   check('EULA : pas de double ligne vide laissée par le retrait', !/\n\n\n/.test(eula) && !/\n\n\n/.test(read('POLITIQUE-CONFIDENTIALITE.md')));
   const rel = read('RELEASING.md');
   check('rappel interne dans RELEASING.md : « Contrat de licence (EULA) rédigé sans conseil juridique : à faire relire par un juriste avant une diffusion large »',
@@ -66,7 +65,7 @@ check('EULA en texte brut : titres, gras, code et liens simplifiés, fins de lig
 
 // 4. Confidentialité
 const pol = read('POLITIQUE-CONFIDENTIALITE.md');
-check('POLITIQUE-CONFIDENTIALITE.md : aucune donnée collectée, garde réseau, données locales', /ne collecte, ne transmet et ne vend aucune donnée/.test(pol) && /bloquée/.test(pol) && /%APPDATA%\\Spin A Doc/.test(pol));
+check('POLITIQUE-CONFIDENTIALITE.md : aucune donnée collectée, garde réseau, données locales', /ne collecte, ne transmet et ne vend aucune donnée/.test(pol) && /bloquée/.test(pol) && /%APPDATA%\\Orical PDF/.test(pol));
 check('garde réseau toujours installée au démarrage (main.js)', /AppInfo\.installNetGuard\(/.test(read('main.js')));
 const extra = (pkg.build.extraResources || []).map((e) => e.from);
 check('EULA, politique et licences tierces livrées avec l\'application (resources)', ['EULA.fr.md', 'POLITIQUE-CONFIDENTIALITE.md', 'THIRD_PARTY_LICENSES'].every((f) => extra.includes(f)), extra);
@@ -85,7 +84,7 @@ check('scanner de données personnelles présent, motifs privés HORS du dépôt
 {
   const os = require('os');
   const { spawnSync } = require('child_process');
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-scan-'));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-scan-'));
   fs.mkdirSync(path.join(tmp, 'd'));
   fs.writeFileSync(path.join(tmp, 'd', 'a.txt'), 'glyphes : Edieresis edieresis Edieresissmall\nnom : EDIER et Edier, Edier-Dupont\n');
   const B = String.fromCharCode(92);

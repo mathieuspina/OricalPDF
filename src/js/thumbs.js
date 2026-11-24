@@ -6,7 +6,7 @@ import * as V from './viewer.js';
 import * as P from './pages-ui.js';
 
 const THUMB_W = 120;
-const DND = 'application/x-spinadoc-pages';
+const DND = 'application/x-oricalpdf-pages';
 let observer = null;
 
 const TOOLS = [

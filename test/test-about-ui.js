@@ -1,6 +1,6 @@
 // À propos dans l'application réelle : les licences tierces sont lues (pas « introuvable »). Court, fait pour test:packaged : la version
 // empaquetée lit resources/THIRD_PARTY_LICENSES.txt (le fichier sans extension n'est pas embarqué dans app.asar).
-// Usage : node test/test-about-ui.js   |   SPINADOC_EXE="chemin\Orical PDF.exe" node test/test-about-ui.js
+// Usage : node test/test-about-ui.js   |   ORICALPDF_EXE="chemin\Orical PDF.exe" node test/test-about-ui.js
 const path = require('path');
 const { launchApp } = require('./lib/app.js');
 const G = require('../scripts/icon-geometry.js');
@@ -11,10 +11,10 @@ let passed = 0;
 const check = (name, cond, detail) => { if (cond) { passed++; console.log('  ok   ', name); } else { failures.push(name); console.log('  ECHEC', name, detail !== undefined ? '→ ' + JSON.stringify(detail) : ''); } };
 
 (async () => {
-  console.log('À propos — variante : ' + (process.env.SPINADOC_EXE ? path.basename(process.env.SPINADOC_EXE) : 'développement'));
+  console.log('À propos — variante : ' + (process.env.ORICALPDF_EXE ? path.basename(process.env.ORICALPDF_EXE) : 'développement'));
   const c = await launchApp({ files: [] });
   try {
-    const a = JSON.parse(await c.ev(`window.spinadoc.getAbout().then((i) => JSON.stringify({ v: i.version, n: i.licenses.length, head: i.licenses.slice(0, 80), name: i.name, suite: i.suite, license: i.license, copyright: i.copyright }))`));
+    const a = JSON.parse(await c.ev(`window.oricalpdf.getAbout().then((i) => JSON.stringify({ v: i.version, n: i.licenses.length, head: i.licenses.slice(0, 80), name: i.name, suite: i.suite, license: i.license, copyright: i.copyright }))`));
     check('À propos : version de package.json', a.v === require('../package.json').version, a.v);
     check('À propos : nom « Orical PDF », suite Orical, sous licence Orical, © Orical', a.name === 'Orical PDF' && a.suite === 'Orical PDF — fait partie de la suite Orical' && /^Sous licence Orical/.test(a.license) && /^© \d{4} Orical\. Tous droits réservés\.$/.test(a.copyright), a);
     await c.click('#btn-settings'); await new Promise((r) => setTimeout(r, 250)); await c.click('#btn-about');

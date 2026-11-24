@@ -12,8 +12,8 @@ if (process.argv.includes('--run')) { // ---------------------------------------
     try {
       const PM = require(path.join(root, 'print-main.js'));
       const { spawnSync } = require('child_process');
-      const has = spawnSync('powershell.exe', ['-NoProfile', '-Command', "(Get-Printer -Name 'SpinADoc Test PDF' -ErrorAction SilentlyContinue).Name"], { encoding: 'utf8' }).stdout.trim() === 'SpinADoc Test PDF';
-      if (has) out.test = await PM.capabilitiesEx('SpinADoc Test PDF');
+      const has = spawnSync('powershell.exe', ['-NoProfile', '-Command', "(Get-Printer -Name 'OricalPDF Test PDF' -ErrorAction SilentlyContinue).Name"], { encoding: 'utf8' }).stdout.trim() === 'OricalPDF Test PDF';
+      if (has) out.test = await PM.capabilitiesEx('OricalPDF Test PDF');
       out.unreachable = await PM.capabilitiesEx('\\\\192.0.2.1\\imprimante-absente'); // adresse réservée à la documentation (RFC 5737)
     } catch (e) { out.error = String(e && e.stack || e); }
     process.stdout.write('RESULT ' + JSON.stringify(out) + '\n');
@@ -25,7 +25,7 @@ if (process.argv.includes('--run')) { // ---------------------------------------
   const electron = require(path.join(root, 'node_modules', 'electron'));
   const TIMEOUT = 3000;
   const t0 = Date.now();
-  const env = Object.assign({}, process.env, { SPINADOC_CAPS_TIMEOUT_MS: String(TIMEOUT) });
+  const env = Object.assign({}, process.env, { ORICALPDF_CAPS_TIMEOUT_MS: String(TIMEOUT) });
   delete env.ELECTRON_RUN_AS_NODE;
   const r = spawnSync(electron, [__filename, '--run'], { encoding: 'utf8', timeout: 120000, env });
   const m = /RESULT (.*)/.exec(r.stdout || '');
@@ -43,7 +43,7 @@ if (process.argv.includes('--run')) { // ---------------------------------------
     assert.ok(out.test.ms >= 0 && out.test.ms < 15000, 'durée mesurée');
     n += 4;
     console.log(`  ok   imprimante de test : ${c.papers.length} papiers avec code, défaut ${c.defaultPaper.name} #${c.defaultPaper.kind}, lue en ${out.test.ms} ms`);
-  } else console.log('  --   imprimante « SpinADoc Test PDF » absente : partie sautée');
+  } else console.log('  --   imprimante « OricalPDF Test PDF » absente : partie sautée');
   const u = out.unreachable;
   assert.ok(u && u.caps === null && ['expiré', 'invalide', 'échec'].includes(u.status), 'imprimante injoignable : pas de capacités, état ' + JSON.stringify(u));
   assert.ok(u.ms <= TIMEOUT + 2000, `imprimante injoignable : réponse dans le délai (${u.ms} ms)`);

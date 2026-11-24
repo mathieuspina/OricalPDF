@@ -28,7 +28,7 @@ const TOOLS = [
 ];
 
 (async () => {
-  const f = await makeAll(path.join(os.tmpdir(), 'spinadoc-ui-pdfs'));
+  const f = await makeAll(path.join(os.tmpdir(), 'oricalpdf-ui-pdfs'));
   const c = await launchApp({ files: [f.a] });
   const overflow = async (label, scope) => {
     const r = JSON.parse(await c.ev(SCRIPT(scope)));

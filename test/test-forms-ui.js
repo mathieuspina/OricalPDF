@@ -16,9 +16,9 @@ function check(name, cond, detail) {
 }
 
 (async () => {
-  const file = await makeForm(path.join(os.tmpdir(), 'spinadoc-form-ui.pdf'));
-  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-forms-out-'));
-  const c = await launchApp({ files: [file], env: { SPINADOC_TEST_SAVE_DIR: out } });
+  const file = await makeForm(path.join(os.tmpdir(), 'oricalpdf-form-ui.pdf'));
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-forms-out-'));
+  const c = await launchApp({ files: [file], env: { ORICALPDF_TEST_SAVE_DIR: out } });
   const key = (k, code, vk, mods = 0) => c.key(k, { code, windowsVirtualKeyCode: vk, modifiers: mods });
   const doc = (expr) => c.ev(`import('./js/ui.js').then((m)=>{const d=m.store.active; return JSON.stringify(${expr})})`).then((x) => (x === undefined ? undefined : JSON.parse(x)));
   const sel = (n, extra) => `.docview.active .form-layer .ff[data-field="${n}"]${extra || ''}`;
@@ -83,7 +83,7 @@ function check(name, cond, detail) {
 
     console.log('4. Enregistrement : valeurs conservées');
     await c.ev(`document.body.click()`); await key('s', 'KeyS', 83, 2); await sleep(1800);
-    const saved = path.join(out, 'spinadoc-form-ui.pdf');
+    const saved = path.join(out, 'oricalpdf-form-ui.pdf');
     check('fichier enregistré', fs.existsSync(saved));
     const f1 = (await PDFLib.PDFDocument.load(fs.readFileSync(saved))).getForm();
     check('valeurs relues : nom (« ? » à la place du caractère non pris en charge), case, radio, liste, liste multiple, nombre', f1.getTextField('nom').getText() === 'Léa ? Dupont' && f1.getCheckBox('accepte').isChecked() && f1.getRadioGroup('civilite').getSelected() === 'M' && f1.getDropdown('pays').getSelected()[0] === 'Suisse' && f1.getOptionList('materiaux').getSelected().sort().join() === 'Acier,Bois' && f1.getTextField('montant').getText() === '1 234,50', [f1.getTextField('nom').getText()]);

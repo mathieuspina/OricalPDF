@@ -18,11 +18,11 @@ function check(name, cond, detail) {
 }
 
 (async () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-guard-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-guard-'));
   const file = path.join(dir, 'piege2.pdf');
   fs.writeFileSync(file, await makeRedactExtrasPdf());
-  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-guard-out-'));
-  const c = await launchApp({ files: [file], env: { SPINADOC_TEST_SAVE_DIR: out } });
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-guard-out-'));
+  const c = await launchApp({ files: [file], env: { ORICALPDF_TEST_SAVE_DIR: out } });
   const run = (mod, fn) => c.ev(`(()=>{ import('./js/ui.js').then((u)=>import('./js/${mod}').then((m)=>{ window.__r = m.${fn}(u.store.active); })); return 1 })()`);
   const choice = () => c.ev(`(()=>{const d=document.getElementById('choice'); return d.hidden ? null : JSON.stringify({ title: document.getElementById('choice-title').textContent, msg: document.getElementById('choice-msg').textContent, buttons: [...document.querySelectorAll('#choice-actions button')].map(b=>b.textContent) })})()`).then((x) => (x ? JSON.parse(x) : null));
   const answer = async (label) => { await c.ev(`(()=>{const b=[...document.querySelectorAll('#choice-actions button')].find(b=>b.textContent===${JSON.stringify(label)}); b.click(); return 1})()`); await sleep(300); };

@@ -1,4 +1,4 @@
-// Icône des FICHIERS PDF associés à Orical PDF (build/pdf-file.ico, DefaultIcon de la classe SpinADoc.pdf) : proposition C validée.
+// Icône des FICHIERS PDF associés à Orical PDF (build/pdf-file.ico, DefaultIcon de la classe OricalPDF.pdf) : proposition C validée.
 // Repère 100 × 100 : page rouge #F23A3A à coin plié rose #FFB9B9, disque sombre #121214 (centre 46, 62, r 23) portant le pictogramme du
 // logo (page + plus) en trait rose, lettrage « PDF » #121214 en haut à gauche de la page, DESSINÉ EN TRACÉS (aucune police : rendu
 // identique partout). Chaque taille est dessinée à sa taille, fond transparent :

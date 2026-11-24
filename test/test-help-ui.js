@@ -18,7 +18,7 @@ function check(name, cond, detail) {
 }
 
 (async () => {
-  const f = await makeAll(path.join(os.tmpdir(), 'spinadoc-ui-pdfs'));
+  const f = await makeAll(path.join(os.tmpdir(), 'oricalpdf-ui-pdfs'));
   const c = await launchApp({ files: [f.a] });
   const requests = [];
   try {
@@ -84,20 +84,20 @@ function check(name, cond, detail) {
     check(`À propos : cliquable (${ck2.n}) et sans débordement`, ck2.bad.length === 0 && ov2.bad.length === 0, [ck2.bad, ov2.bad].map((x) => x.slice(0, 3)));
     await c.click('#about-diag'); await sleep(800);
     check('« Copier les informations de diagnostic » : confirmation', /Copié/.test(await c.ev(`document.getElementById('about-diag-msg').textContent`)));
-    const diag = await c.ev(`window.spinadoc.diagnostic()`);
+    const diag = await c.ev(`window.oricalpdf.diagnostic()`);
     check('diagnostic : version, système, mémoire, écrans, imprimantes', /Version :/.test(diag) && /Système :/.test(diag) && /Mémoire :/.test(diag) && /écran 1 : \d+ × \d+ px, mise à l'échelle \d+ %/.test(diag) && /Imprimantes \(\d+\)/.test(diag), diag);
     const user = os.userInfo().username;
-    const leaks = [[/[A-Za-z]:\\/, 'chemin Windows'], [/\\\\(?!<serveur>\\)/, 'chemin réseau'], [/\/(Users|home|tmp)\//i, 'chemin'], [/\.pdf\b/i, 'nom de fichier PDF'], [new RegExp(user.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'), 'nom d\'utilisateur'], [/a-huit-pages|spinadoc-ui-pdfs/i, 'nom du fichier ouvert']].filter(([re]) => re.test(diag)).map(([, w]) => w);
+    const leaks = [[/[A-Za-z]:\\/, 'chemin Windows'], [/\\\\(?!<serveur>\\)/, 'chemin réseau'], [/\/(Users|home|tmp)\//i, 'chemin'], [/\.pdf\b/i, 'nom de fichier PDF'], [new RegExp(user.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'), 'nom d\'utilisateur'], [/a-huit-pages|oricalpdf-ui-pdfs/i, 'nom du fichier ouvert']].filter(([re]) => re.test(diag)).map(([, w]) => w);
     check('diagnostic : aucun chemin, nom de fichier ni nom d\'utilisateur', leaks.length === 0, leaks);
     await c.click('#about-close'); await sleep(150);
 
     console.log('3. Hors-ligne');
-    const net = await c.ev(`window.spinadoc.netStats()`);
+    const net = await c.ev(`window.oricalpdf.netStats()`);
     check('garde réseau du processus principal : 0 requête réseau tentée', net.blocked === 0, net);
     const res = await c.ev(`JSON.stringify(performance.getEntriesByType('resource').map(e=>e.name).filter(u=>!/^(file|data|blob|devtools):/.test(u)))`).then(JSON.parse);
     check('renderer : aucune ressource chargée hors fichiers locaux', res.length === 0, res);
     const blocked = await c.ev(`fetch('https://example.com/').then(()=>'passé', (e)=>'bloqué')`);
-    const net2 = await c.ev(`window.spinadoc.netStats()`);
+    const net2 = await c.ev(`window.oricalpdf.netStats()`);
     check('une requête volontaire vers Internet est bloquée (CSP et garde), et la garde reste à 0 si la CSP l\'arrête avant', blocked === 'bloqué' && net2.blocked <= 1, [blocked, net2]);
     check('aucune erreur JavaScript', c.logs.filter((l) => !/example\.com|Content Security Policy|Failed to fetch/i.test(l)).length === 0, c.logs.slice(0, 3));
   } catch (e) {

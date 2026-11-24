@@ -16,7 +16,7 @@ let failed = 0;
 function run(label, exe, tests) {
   for (const t of tests) {
     console.log(`\n===== ${label} — ${t} =====`);
-    const r = spawnSync(node, [path.join(root, 'test', t)], { stdio: 'inherit', env: Object.assign({}, process.env, { SPINADOC_EXE: exe }) });
+    const r = spawnSync(node, [path.join(root, 'test', t)], { stdio: 'inherit', env: Object.assign({}, process.env, { ORICALPDF_EXE: exe }) });
     if (r.status !== 0) failed++;
   }
 }
@@ -41,7 +41,7 @@ exeIcon('l\'application', unpacked); exeIcon('la version portable', portable); e
 {
   const found = Names.existingInstall();
   if (found.length) {
-    console.error('REFUS : Orical PDF (ou l\'ancienne version Spin A Doc) est déjà installé sur ce compte (' + found.join(', ') +
+    console.error('REFUS : Orical PDF est déjà installé sur ce compte (' + found.join(', ') +
       ').\nLa désinstallation de test les retirerait. Désinstallez-le (Paramètres > Applications) puis relancez « npm run test:packaged ».');
     process.exit(3);
   }
@@ -53,9 +53,9 @@ run('portable', portable, ['test-home-ui.js']);
 // Version installée : installation silencieuse (NSIS /S, /D= en dernier argument) dans un dossier temporaire, deux cycles :
 //  1. tests sur la version installée, puis désinstallation SANS option : le dossier de données de test est conservé ;
 //  2. réinstallation, puis désinstallation avec /DELETEDATA=1 : le dossier de données de test est supprimé.
-// Le dossier de données de test (/DATADIR=, avec le fichier témoin .spinadoc-test exigé par l'installeur) remplace le profil réel, qui n'est
+// Le dossier de données de test (/DATADIR=, avec le fichier témoin .oricalpdf-test exigé par l'installeur) remplace le profil réel, qui n'est
 // jamais touché : son contenu est comparé avant / après. La désinstallation doit avoir retiré « Orical PDF.exe » elle-même.
-const dir = path.join(os.tmpdir(), 'spinadoc-installed');
+const dir = path.join(os.tmpdir(), 'oricalpdf-installed');
 const running = () => { const r = spawnSync('tasklist', ['/FI', 'IMAGENAME eq Orical PDF.exe', '/NH'], { encoding: 'utf8' }); return /Orical PDF\.exe/i.test(r.stdout || ''); };
 const wait = (s) => spawnSync(node, ['-e', 'setTimeout(()=>{},' + s * 1000 + ')']);
 const candidates = [dir, path.join(dir, 'Orical PDF')];
@@ -108,9 +108,9 @@ function install() {
   for (let i = 0; i < 60 && !findInstalled(); i++) wait(1); // l'installation peut finir après le retour du processus
   return findInstalled();
 }
-const realProfile = path.join(process.env.APPDATA || '', 'Spin A Doc');
+const realProfile = path.join(process.env.APPDATA || '', 'Orical PDF');
 const snapshot = () => (fs.existsSync(realProfile) ? fs.readdirSync(realProfile).sort().join('|') : '(absent)');
-const fakeData = (tag) => { const d = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-uninst-' + tag + '-')); fs.writeFileSync(path.join(d, '.spinadoc-test'), ''); fs.writeFileSync(path.join(d, 'settings.json'), '{}'); fs.mkdirSync(path.join(d, 'library')); return d; };
+const fakeData = (tag) => { const d = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-uninst-' + tag + '-')); fs.writeFileSync(path.join(d, '.oricalpdf-test'), ''); fs.writeFileSync(path.join(d, 'settings.json'), '{}'); fs.mkdirSync(path.join(d, 'library')); return d; };
 function uninstall(home, args) {
   const un = path.join(home, 'Uninstall Orical PDF.exe');
   if (!fs.existsSync(un)) { console.error('Désinstalleur absent : ' + un); failed++; return false; }
@@ -132,11 +132,9 @@ function systemTrace(label) {
   const start = path.join(process.env.APPDATA || '', 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Orical PDF.lnk');
   const un = spawnSync('reg', ['query', key('HKCU', 'Software', 'Microsoft', 'Windows', 'CurrentVersion', 'Uninstall'), '/s', '/f', 'Orical PDF', '/d'], { encoding: 'utf8' });
   const t = { pdfDefault: regQuery(key('HKCU', 'Software', 'Classes', '.pdf'), ['/ve']), openWith: regQuery(key('HKCU', 'Software', 'Classes', '.pdf', 'OpenWithProgids')), uninstallKey: /Orical PDF/.test(un.stdout || ''), desktopLnk: fs.existsSync(desk), startLnk: fs.existsSync(start),
-    progId: regQuery(key('HKCU', 'Software', 'Classes', 'SpinADoc.pdf', 'shell', 'open', 'command'), ['/ve']), app: regQuery(key('HKCU', 'Software', 'Classes', 'Applications', 'Orical PDF.exe', 'SupportedTypes')),
-    registered: regQuery(key('HKCU', 'Software', 'RegisteredApplications'), ['/v', 'Orical PDF']), caps: regQuery(key('HKCU', 'Software', 'SpinADoc', 'Capabilities', 'FileAssociations')),
-    defaultIcon: regQuery(key('HKCU', 'Software', 'Classes', 'SpinADoc.pdf', 'DefaultIcon'), ['/ve']),
-    legacyApp: regQuery(key('HKCU', 'Software', 'Classes', 'Applications', Names.LEGACY + '.exe')), legacyRegistered: regQuery(key('HKCU', 'Software', 'RegisteredApplications'), ['/v', Names.LEGACY]),
-    legacyLnk: Names.shortcuts(Names.LEGACY).filter((p) => fs.existsSync(p)).length };
+    progId: regQuery(key('HKCU', 'Software', 'Classes', 'OricalPDF.pdf', 'shell', 'open', 'command'), ['/ve']), app: regQuery(key('HKCU', 'Software', 'Classes', 'Applications', 'Orical PDF.exe', 'SupportedTypes')),
+    registered: regQuery(key('HKCU', 'Software', 'RegisteredApplications'), ['/v', 'Orical PDF']), caps: regQuery(key('HKCU', 'Software', 'Orical', 'OricalPDF', 'Capabilities', 'FileAssociations')),
+    defaultIcon: regQuery(key('HKCU', 'Software', 'Classes', 'OricalPDF.pdf', 'DefaultIcon'), ['/ve']) };
   console.log('Registre et raccourcis (' + label + ') : ' + JSON.stringify(t));
   return t;
 }
@@ -149,12 +147,11 @@ if (home) {
   const exe = path.join(home, 'Orical PDF.exe');
   const assoc = [
     ['valeur par défaut de .pdf inchangée', t.pdfDefault === sysBefore.pdfDefault],
-    ['« Ouvrir avec » : SpinADoc.pdf ajouté, entrées existantes conservées', /SpinADoc\.pdf/.test(t.openWith) && sysBefore.openWith.split(' ; ').filter((l) => l !== '(absent)').every((l) => t.openWith.includes(l))],
-    ['classe SpinADoc.pdf : commande = application installée "%1"', t.progId.includes('"' + exe + '" "%1"')],
+    ['« Ouvrir avec » : OricalPDF.pdf ajouté, entrées existantes conservées', /OricalPDF\.pdf/.test(t.openWith) && sysBefore.openWith.split(' ; ').filter((l) => l !== '(absent)').every((l) => t.openWith.includes(l))],
+    ['classe OricalPDF.pdf : commande = application installée "%1"', t.progId.includes('"' + exe + '" "%1"')],
     ['Applications\\Orical PDF.exe : type .pdf', /\.pdf/.test(t.app)],
-    ['RegisteredApplications + Capabilities (page « Applications par défaut »)', /SpinADoc/.test(t.registered) && /SpinADoc\.pdf/.test(t.caps)],
+    ['RegisteredApplications + Capabilities (page « Applications par défaut »)', /Orical\\OricalPDF\\Capabilities/.test(t.registered) && /OricalPDF\.pdf/.test(t.caps)],
     ['icône des fichiers PDF : DefaultIcon = resources\\pdf-file.ico (fichier installé)', t.defaultIcon.includes(path.join(home, 'resources', 'pdf-file.ico')) && fs.existsSync(path.join(home, 'resources', 'pdf-file.ico'))],
-    ['aucune trace de l\'ancien nom (Applications\\Spin A Doc.exe, RegisteredApplications, raccourcis)', t.legacyApp === '(absent)' && t.legacyRegistered === '(absent)' && t.legacyLnk === 0],
   ];
   for (const [n, ok] of assoc) { console.log('Association : ' + n + ' : ' + ok); if (!ok) failed++; }
   exeIcon('le désinstalleur', path.join(home, 'Uninstall Orical PDF.exe'));

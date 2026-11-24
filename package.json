@@ -1,5 +1,5 @@
 {
-  "name": "spin-a-doc",
+  "name": "orical-pdf",
   "version": "1.4.0",
   "description": "Orical PDF - viewer et éditeur PDF",
   "main": "main.js",
@@ -38,7 +38,7 @@
     "license-checker": "^25.0.1"
   },
   "build": {
-    "appId": "com.spinadoc.app",
+    "appId": "com.orical.pdf",
     "productName": "Orical PDF",
     "directories": {
       "output": "dist",

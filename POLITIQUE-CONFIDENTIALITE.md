@@ -19,7 +19,7 @@ utilisateur, ni télémétrie, ni statistiques d'usage, ni rapport de plantage a
 
 ## Données conservées sur votre poste uniquement
 
-Dans `%APPDATA%\Spin A Doc` : réglages, liste des documents récents (chemins des fichiers), bibliothèque de tampons et de signatures,
+Dans `%APPDATA%\Orical PDF` : réglages, liste des documents récents (chemins des fichiers), bibliothèque de tampons et de signatures,
 échelles de mesure mémorisées par document, caches techniques du moteur d'affichage. Ces données ne quittent jamais le poste. Vous pouvez
 les effacer : Réglages (documents récents), ou en cochant « Supprimer aussi mes réglages et ma bibliothèque » lors de la désinstallation.
 

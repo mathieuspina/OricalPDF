@@ -3,7 +3,7 @@
 // (illisible : aucune rotation), texte clairsemé droit et couché, manuscrit simulé, et la page fautive de 0.12.3 (fixture JPEG : confiance
 // 60 % pile à 0°, qui n'était pas redressée). Vérifie : mots justes, orientation essayée seulement si la lecture à 0° est douteuse (aucune
 // passe en plus sur une page droite), essais sur un échantillon puis UNE relecture de la page entière, scans identiques à graine égale.
-// Usage : node test/test-ocr-orient-ui.js   (SPINADOC_EXE pour tester l'application empaquetée)
+// Usage : node test/test-ocr-orient-ui.js   (ORICALPDF_EXE pour tester l'application empaquetée)
 const crypto = require('crypto');
 const fs = require('fs');
 const os = require('os');
@@ -47,8 +47,8 @@ const EXPECT = {
 };
 
 (async () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-orient-'));
-  const f = await makeAll(path.join(os.tmpdir(), 'spinadoc-ocr-pdfs'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-orient-'));
+  const f = await makeAll(path.join(os.tmpdir(), 'oricalpdf-ocr-pdfs'));
   const c = await launchApp({ files: [f.d] });
   const open = async (file, n) => { await c.openMore(file); await c.waitFor(`document.querySelectorAll('.doctab').length===${n}`, 20000); await c.waitFor(`document.querySelectorAll('.docview.active canvas').length>0`, 20000); await sleep(600); };
   const verify = (label, r, truth, kind) => {

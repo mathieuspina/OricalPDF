@@ -63,7 +63,7 @@ async function pass(f, favs) {
 }
 
 (async () => {
-  const f = await makeAll(path.join(os.tmpdir(), 'spinadoc-ui-pdfs'));
+  const f = await makeAll(path.join(os.tmpdir(), 'oricalpdf-ui-pdfs'));
   await pass(f, []);
   await pass(f, TWELVE);
   console.log(`\n${passed} vérifications réussies, ${failures.length} échec(s).`);

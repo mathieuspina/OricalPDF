@@ -195,13 +195,13 @@ ${steps('Signaler un problème : Réglages > À propos > « Copier les informati
 <li><b>Icône des fichiers PDF</b> : l'installation ne change jamais le lecteur par défaut ; l'icône Orical des fichiers PDF n'apparaît donc que si vous avez choisi Orical PDF comme application par défaut pour les PDF.</li></ul>` },
   { id: 'informatique', title: 'Notes pour le service informatique', html: `<ul>
 <li>Installeur par utilisateur (NSIS), sans droits administrateur. Dossier par défaut : <code>%LOCALAPPDATA%\\Programs\\Orical PDF</code> (modifiable).</li>
-<li>Données de l'utilisateur (réglages, récents, bibliothèque de tampons et signatures, échelles) : <code>%APPDATA%\\Spin A Doc</code> (nom historique, gardé pour retrouver les données des versions précédentes).</li>
+<li>Données de l'utilisateur (réglages, récents, bibliothèque de tampons et signatures, échelles) : <code>%APPDATA%\\Orical PDF</code>.</li>
 <li>Aucun service Windows, aucune tâche planifiée, aucune connexion réseau, aucune télémétrie.</li>
 <li>Installation silencieuse : <code>OricalPDF-Setup-x.y.z.exe /S</code> ; dossier imposé : <code>/D=C:\\Programmes\\OricalPDF</code> (toujours en dernier, sans guillemets).</li>
 <li>Désinstallation : Paramètres > Applications, ou <code>"Uninstall Orical PDF.exe" /S</code> dans le dossier d'installation ; les données de l'utilisateur sont conservées,
 sauf si la case « Supprimer aussi mes réglages et ma bibliothèque » est cochée (en silencieux : <code>/DELETEDATA=1</code>).</li>
-<li>Association .pdf : inscription dans « Ouvrir avec » seulement (<code>HKCU\Software\Classes\.pdf\OpenWithProgids</code> = <code>SpinADoc.pdf</code>, RegisteredApplications) ; la valeur par défaut de <code>.pdf</code> n'est jamais modifiée. Tout est retiré à la désinstallation.</li>
-<li>Version portable : aucun installateur, mêmes données dans <code>%APPDATA%\\Spin A Doc</code>.</li>
+<li>Association .pdf : inscription dans « Ouvrir avec » seulement (<code>HKCU\Software\Classes\.pdf\OpenWithProgids</code> = <code>OricalPDF.pdf</code>, RegisteredApplications) ; la valeur par défaut de <code>.pdf</code> n'est jamais modifiée. Tout est retiré à la désinstallation.</li>
+<li>Version portable : aucun installateur, mêmes données dans <code>%APPDATA%\\Orical PDF</code>.</li>
 <li>Fichiers non signés : SmartScreen peut avertir (voir <a href="#aide-smartscreen">Avertissement de Windows à l'installation</a>). AppLocker / listes blanches : autoriser par chemin ou par empreinte SHA-256 (<code>Get-FileHash</code>).</li>
 <li>Licences : application « Tous droits réservés » ; composants tiers sous licences permissives (MIT, Apache-2.0, BSD, ISC, OFL), liste dans À propos.</li></ul>` },
 ];

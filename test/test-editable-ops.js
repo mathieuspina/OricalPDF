@@ -152,7 +152,7 @@ function ops(st) {
 
   console.log('3. Formulaire d\'origine rempli, optimisation, protection');
   {
-    const ff = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-edops-')), 'formulaire.pdf');
+    const ff = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-edops-')), 'formulaire.pdf');
     const fb = new Uint8Array(fs.readFileSync(await makeForm(ff)));
     const doc = docOf(fb, 2, [D('stamp', { id: 1, page: 0, label: 'Reçu', cx: 450, cy: 790, w: 110, h: 36, rot: 0 })], {}, [], 2);
     const w = await exportDoc(doc, { editable: true, form: { values: { nom: 'Client Exemple' }, flatten: false } });

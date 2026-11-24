@@ -2,7 +2,7 @@
 // réouverture (appelé par js/editable-worker.js). Format de l'état : voir editable-state.js. Fonctionne dans le renderer, un worker et Node.
 //
 // ÉCRITURE (pdf-edit) : begin() AVANT tout dessin d'objet : pour chaque page concernée, relevé des clés de ressources (Font, XObject,
-// ExtGState) puis ouverture d'un flux NEUF (/SpinADoc BMC) ; pdf-lib ajoute ses ressources AVANT d'ouvrir son flux, d'où le relevé préalable
+// ExtGState) puis ouverture d'un flux NEUF (/OricalPDF BMC) ; pdf-lib ajoute ses ressources AVANT d'ouvrir son flux, d'où le relevé préalable
 // (sinon une entrée en trop à chaque enregistrement). end() : EMC, clés ajoutées, empreinte SHA-256 du flux (contenu non compressé), images
 // (page + clé de ressource) ; le flux est ensuite « détaché » (un dessin ultérieur, aplatissement de formulaire par exemple, va dans un autre flux).
 // LECTURE : tout est vérifié AVANT la moindre modification (nombre de pages, flux retrouvé par son empreinte) ; repli sinon. Le retrait

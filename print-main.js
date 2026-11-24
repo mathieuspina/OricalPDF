@@ -11,11 +11,11 @@
 // l'interface), qu'elle isole la mémoire des grands formats et qu'elle se détruit à la fin de la file.
 //
 // Variables d'environnement de test :
-//   SPINADOC_TEST_PRINT_DIR   : les tâches sont écrites dans ce dossier (job-1.pdf, jobs.json) au lieu d'être envoyées (aucune impression).
-//   SPINADOC_TEST_PRINTERS    : JSON [{ name, isDefault?, caps?: { color, duplex, hardMarginMm, maxCopies, papers } }] : imprimantes simulées (avec le dossier ci-dessus).
-//   SPINADOC_PRINT_ALLOW      : nom de l'unique imprimante autorisée ; toute autre est REFUSÉE (garde-fou des tests).
-//   SPINADOC_TEST_PRINT_PENDING : (avec SPINADOC_TEST_PRINT_DIR) chaque tâche laisse aussi une fenêtre d'envoi cachée « sans rappel du pilote »
-//                               et son dossier temporaire spinadoc-print-*, comme printOne après 8 s (test de la fermeture : test/test-quit.js).
+//   ORICALPDF_TEST_PRINT_DIR   : les tâches sont écrites dans ce dossier (job-1.pdf, jobs.json) au lieu d'être envoyées (aucune impression).
+//   ORICALPDF_TEST_PRINTERS    : JSON [{ name, isDefault?, caps?: { color, duplex, hardMarginMm, maxCopies, papers } }] : imprimantes simulées (avec le dossier ci-dessus).
+//   ORICALPDF_PRINT_ALLOW      : nom de l'unique imprimante autorisée ; toute autre est REFUSÉE (garde-fou des tests).
+//   ORICALPDF_TEST_PRINT_PENDING : (avec ORICALPDF_TEST_PRINT_DIR) chaque tâche laisse aussi une fenêtre d'envoi cachée « sans rappel du pilote »
+//                               et son dossier temporaire oricalpdf-print-*, comme printOne après 8 s (test de la fermeture : test/test-quit.js).
 const { BrowserWindow, app } = require('electron');
 const { spawn } = require('child_process');
 const fs = require('fs');
@@ -26,8 +26,8 @@ const PrintLog = require('./src/print-log.js');
 const UserData = require('./src/user-data.js');
 const AppInfo = require('./app-info.js');
 
-const ALLOW = () => process.env.SPINADOC_PRINT_ALLOW || '';
-// Registre central des fenêtres cachées créées ici (fenêtre de travail, fenêtres d'envoi) et des dossiers temporaires spinadoc-print-* :
+const ALLOW = () => process.env.ORICALPDF_PRINT_ALLOW || '';
+// Registre central des fenêtres cachées créées ici (fenêtre de travail, fenêtres d'envoi) et des dossiers temporaires oricalpdf-print-* :
 // à la fermeture de l'application (shutdown), tout est détruit. Sans cela, une fenêtre cachée encore vivante (fenêtre de travail gardée 15 s,
 // fenêtre d'envoi « sans rappel du pilote » gardée jusqu'à 10 min) empêchait 'window-all-closed' : le processus restait vivant avec le verrou
 // d'instance unique, et un nouveau lancement se fermait aussitôt (1.3.1).
@@ -39,8 +39,8 @@ const rmTmp = (d) => { try { fs.rmSync(d, { recursive: true, force: true }); } c
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const toBuffer = (b) => Buffer.from(b.buffer ? new Uint8Array(b.buffer, b.byteOffset, b.byteLength) : b);
 const testPrinters = () => {
-  if (!process.env.SPINADOC_TEST_PRINT_DIR) return null;
-  try { if (process.env.SPINADOC_TEST_PRINTERS) return JSON.parse(process.env.SPINADOC_TEST_PRINTERS); } catch { /* */ }
+  if (!process.env.ORICALPDF_TEST_PRINT_DIR) return null;
+  try { if (process.env.ORICALPDF_TEST_PRINTERS) return JSON.parse(process.env.ORICALPDF_TEST_PRINTERS); } catch { /* */ }
   return [{ name: 'Imprimante de test', isDefault: true }];
 };
 
@@ -50,7 +50,7 @@ const testPrinters = () => {
 // capabilitiesEx → { caps, status: 'ok' | 'invalide' | 'expiré' | 'échec', ms } ; papers[].kind = code de papier du pilote (RawKind, dmPaperSize),
 // defaultPaper = papier par défaut du pilote. Une imprimante réseau injoignable peut bloquer la lecture .NET bien au-delà de 15 s (mesuré : 114 s
 // pour un serveur absent) : PowerShell est alors arrêté au bout de 15 s et le résultat est « expiré » (journalisé).
-const CAPS_TIMEOUT = () => Number(process.env.SPINADOC_CAPS_TIMEOUT_MS) || 15000; // délai réglable pour les tests
+const CAPS_TIMEOUT = () => Number(process.env.ORICALPDF_CAPS_TIMEOUT_MS) || 15000; // délai réglable pour les tests
 function capabilitiesEx(name) {
   const t0 = Date.now();
   return new Promise((resolve0) => {
@@ -223,7 +223,7 @@ function logJob(t, j, plan, result, send, capsRec) {
 function readLog() { try { return fs.readFileSync(logPath(), 'utf8'); } catch { return ''; } }
 
 function onJob(t, j) {
-  const dir = process.env.SPINADOC_TEST_PRINT_DIR;
+  const dir = process.env.ORICALPDF_TEST_PRINT_DIR;
   if (dir) { // test : aucune impression, le PDF d'impression est écrit dans le dossier
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, `job-${j.index + 1}.pdf`), toBuffer(j.bytes));
@@ -239,8 +239,8 @@ function onJob(t, j) {
       logJob(t, j, plan, 'test : non imprimé (dossier de test)', send, capsRec);
       fs.writeFileSync(path.join(dir, 'jobs.json'), JSON.stringify({ opts: t.opts, name: t.name, jobs: t.jobs, pendingTmp: t.pendingTmp || [] }));
     });
-    if (process.env.SPINADOC_TEST_PRINT_PENDING) { // simulation d'un pilote qui ne rappelle pas : fenêtre cachée gardée jusqu'à 10 min
-      const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-print-'));
+    if (process.env.ORICALPDF_TEST_PRINT_PENDING) { // simulation d'un pilote qui ne rappelle pas : fenêtre cachée gardée jusqu'à 10 min
+      const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-print-'));
       tmpDirs.add(tmp);
       fs.writeFileSync(path.join(tmp, j.fileName), toBuffer(j.bytes));
       const w = track(new BrowserWindow({ show: false, webPreferences: { backgroundThrottling: false } }));
@@ -252,7 +252,7 @@ function onJob(t, j) {
     return;
   }
   // dossier temporaire UNIQUE par travail (pas de collision entre files), fichier nommé d'après le document
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-print-'));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-print-'));
   tmpDirs.add(tmp);
   const f = path.join(tmp, j.fileName);
   fs.writeFileSync(f, toBuffer(j.bytes));
@@ -295,12 +295,12 @@ function register(ipcMain, mainGetter) {
   // task : { name, edBytes, groups: [{ w, h, sheets }], raster: null | { mode, dpi, thin }, opts: { device, copies, collate, duplex, color, dialog } }
   // Retour immédiat : { id }. La tâche travaille sur la copie figée reçue ici (fermer l'onglet ou modifier le document ne change rien).
   ipcMain.handle('print:submit', (_e, task) => {
-    if (ALLOW() && !process.env.SPINADOC_TEST_PRINT_DIR && task.opts.device !== ALLOW()) return { ok: false, message: 'Imprimante refusée par le garde-fou de test.' };
+    if (ALLOW() && !process.env.ORICALPDF_TEST_PRINT_DIR && task.opts.device !== ALLOW()) return { ok: false, message: 'Imprimante refusée par le garde-fou de test.' };
     const t = { id: ++seq, name: task.name || 'Sans titre', edBytes: task.edBytes, groups: task.groups, raster: task.raster || null, opts: task.opts, state: 'queued', label: 'En attente', fraction: 0 };
     queue.push(t);
     notify(t);
     pump();
-    return { ok: true, id: t.id, test: !!process.env.SPINADOC_TEST_PRINT_DIR };
+    return { ok: true, id: t.id, test: !!process.env.ORICALPDF_TEST_PRINT_DIR };
   });
 
   ipcMain.handle('print:cancel', (_e, id) => {
@@ -331,7 +331,7 @@ function register(ipcMain, mainGetter) {
 
   // Propriétés de l'imprimante : la boîte de préférences de Windows (printui.dll). Elle règle les valeurs par défaut du pilote.
   ipcMain.handle('print:props', async (_e, name) => {
-    if (process.env.SPINADOC_TEST_PRINT_DIR) return { ok: true, test: true };
+    if (process.env.ORICALPDF_TEST_PRINT_DIR) return { ok: true, test: true };
     if (ALLOW() && name !== ALLOW()) return { ok: false };
     try { spawn('rundll32.exe', ['printui.dll,PrintUIEntry', '/e', '/n', String(name)], { detached: true, stdio: 'ignore' }).unref(); return { ok: true }; } catch { return { ok: false }; }
   });

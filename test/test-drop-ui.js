@@ -16,7 +16,7 @@ function check(name, cond, detail) {
 }
 
 (async () => {
-  const dir = path.join(os.tmpdir(), 'spinadoc-ui-pdfs');
+  const dir = path.join(os.tmpdir(), 'oricalpdf-ui-pdfs');
   const f = await makeAll(dir);
   const enc = path.join(dir, 'chiffre-drop.pdf');
   {

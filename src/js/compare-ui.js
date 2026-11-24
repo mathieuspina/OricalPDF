@@ -10,7 +10,7 @@ import { renderInk, paintMap, pageSizePt } from './compare-render.js';
 
 const { Compare, CompareReport, PdfEdit, PDFLib } = window;
 const MM = 25.4 / 72;
-const PREF = 'spinadoc.compare';
+const PREF = 'oricalpdf.compare';
 const S = {
   open: false, a: null, b: null, files: [], pairs: [], cur: -1, mode: 'overlay', maxSide: 4096, tolMm: 0.5,
   pal: Object.assign({}, Compare.DEFAULT_PALETTE), manual: null, sess: null, worker: null, job: null, seq: 0, view: null, blink: null, listCur: -1,

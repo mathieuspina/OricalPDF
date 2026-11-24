@@ -15,7 +15,7 @@ const root = path.join(__dirname, '..');
 const version = require('../package.json').version;
 
 // 1. Empreintes
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-release-'));
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-release-'));
 fs.writeFileSync(path.join(tmp, 'a.exe'), 'abc');
 fs.writeFileSync(path.join(tmp, 'b.exe'), Buffer.alloc(3 << 20, 7)); // > 1 Mo : lecture par blocs
 check('SHA-256 de « abc » (valeur de référence)', sha256(path.join(tmp, 'a.exe')) === 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad');
@@ -44,8 +44,8 @@ check('package.json : scripts checksums, release-notes, test:update', ['checksum
 // 5. Licences tierces (À propos) : empaquetée = resources/THIRD_PARTY_LICENSES.txt, développement = racine du projet
 {
   const AppInfo = require('../app-info.js');
-  const dev = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-lic-dev-'));
-  const res = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-lic-res-'));
+  const dev = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-lic-dev-'));
+  const res = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-lic-res-'));
   const asarDir = path.join(res, 'app.asar'); // dossier de l'application empaquetée : sans fichier de licences
   fs.mkdirSync(asarDir);
   fs.writeFileSync(path.join(res, 'THIRD_PARTY_LICENSES.txt'), 'licences empaquetées');

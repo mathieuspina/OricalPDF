@@ -8,8 +8,8 @@ const AppInfo = require('./app-info.js');
 const WindowState = require('./src/window-state.js');
 const UserData = require('./src/user-data.js');
 
-// Nom affiché dans toutes les boîtes natives, et dossier de données stable (dev et version installée) : %APPDATA%\Spin A Doc, nom
-// historique gardé depuis le renommage en « Orical PDF » (src/user-data.js). SPINADOC_USER_DATA : dossier alternatif des tests automatisés.
+// Nom affiché dans toutes les boîtes natives, et dossier de données stable (dev et version installée) : %APPDATA%\Orical PDF
+// (src/user-data.js). ORICALPDF_USER_DATA : dossier alternatif des tests automatisés.
 app.setName('Orical PDF');
 app.setPath('userData', UserData.resolve(process.env, app.getPath('appData'), path.join));
 
@@ -43,8 +43,8 @@ function pdfsFromArgs(argv) {
 
 const gotLock = app.requestSingleInstanceLock();
 // Mémorisation de la fenêtre (taille, position, agrandie, plein écran) dans settings.json (clé window) : jamais en mode test
-// (SPIN_TEST_HEADLESS=1, fenêtres hors écran) ni dans une seconde instance (elle se ferme aussitôt).
-const rememberWindow = process.env.SPIN_TEST_HEADLESS !== '1' && gotLock;
+// (ORICALPDF_TEST_HEADLESS=1, fenêtres hors écran) ni dans une seconde instance (elle se ferme aussitôt).
+const rememberWindow = process.env.ORICALPDF_TEST_HEADLESS !== '1' && gotLock;
 const winFlags = { maximized: false, fullScreen: false }; // dernier état connu (une fenêtre réduite n'est ni agrandie ni en plein écran)
 
 // État d'origine de la fenêtre au démarrage : position gardée seulement si sa barre de titre est sur un écran qui existe encore.
@@ -74,14 +74,14 @@ if (!gotLock) {
     if (app.isReady() && initialServed && !quitting && (!win || win.isDestroyed())) { pending = files; initialServed = false; createWindow(); return; }
     // Fenêtre pas encore prête (fichiers initiaux non lus) : les fichiers rejoignent `pending` au lieu d'être perdus.
     if (!win || !initialServed) { pending.push(...files); return; }
-    if (process.env.SPIN_TEST_HEADLESS !== '1') { if (win.isMinimized()) win.restore(); win.focus(); } // tests : jamais de fenêtre affichée
+    if (process.env.ORICALPDF_TEST_HEADLESS !== '1') { if (win.isMinimized()) win.restore(); win.focus(); } // tests : jamais de fenêtre affichée
     files.forEach((f) => win.webContents.send('open-file', f));
   });
 }
 
 function createWindow() {
-  // SPIN_TEST_HEADLESS=1 (tests automatisés) : fenêtre jamais affichée, sans focus, rendu hors écran qui reste actif.
-  const headless = process.env.SPIN_TEST_HEADLESS === '1';
+  // ORICALPDF_TEST_HEADLESS=1 (tests automatisés) : fenêtre jamais affichée, sans focus, rendu hors écran qui reste actif.
+  const headless = process.env.ORICALPDF_TEST_HEADLESS === '1';
   const saved = savedWindow(); // null en mode test et dans une seconde instance
   const startState = !!saved && (saved.maximize || saved.fullScreen); // agrandie / plein écran : affichée directement dans cet état
   win = new BrowserWindow({
@@ -141,8 +141,8 @@ function createWindow() {
     win.webContents.send('app:request-close');
   });
   // Fenêtre principale fermée (après confirmation s'il y avait des modifications ou une impression active) : l'application se termine, même si
-  // une fenêtre cachée d'impression est encore vivante (voir quitAll). SPINADOC_TEST_ORPHAN=1 (test-quit) : on laisse le processus orphelin.
-  win.on('closed', () => { win = null; if (process.env.SPINADOC_TEST_ORPHAN !== '1') quitAll(); });
+  // une fenêtre cachée d'impression est encore vivante (voir quitAll). ORICALPDF_TEST_ORPHAN=1 (test-quit) : on laisse le processus orphelin.
+  win.on('closed', () => { win = null; if (process.env.ORICALPDF_TEST_ORPHAN !== '1') quitAll(); });
 }
 
 app.whenReady().then(() => {
@@ -183,10 +183,10 @@ ipcMain.handle('file:read', async (_e, filePath, opts) => {
 });
 
 // Points d'entrée réservés aux tests automatisés (variables d'environnement, absentes en usage normal) :
-//   SPINADOC_TEST_OPEN = JSON ["chemin", …] : remplace la boîte « Ouvrir »
-//   SPINADOC_TEST_SAVE_DIR = dossier : « Enregistrer sous » écrit directement dedans (sans boîte)
+//   ORICALPDF_TEST_OPEN = JSON ["chemin", …] : remplace la boîte « Ouvrir »
+//   ORICALPDF_TEST_SAVE_DIR = dossier : « Enregistrer sous » écrit directement dedans (sans boîte)
 ipcMain.handle('file:open-dialog', async () => {
-  if (process.env.SPINADOC_TEST_OPEN) return JSON.parse(process.env.SPINADOC_TEST_OPEN);
+  if (process.env.ORICALPDF_TEST_OPEN) return JSON.parse(process.env.ORICALPDF_TEST_OPEN);
   const r = await dialog.showOpenDialog(win, {
     title: 'Ouvrir un PDF',
     properties: ['openFile', 'multiSelections'],
@@ -198,8 +198,8 @@ ipcMain.handle('file:open-dialog', async () => {
 // forbid : chemin qui ne doit jamais être remplacé (document caviardé : son fichier d'origine) → { saved: false, refused: true }, rien n'est écrit.
 ipcMain.handle('file:save-as', async (_e, { bytes, suggestedName, originalPath, forbid }) => {
   const defaultPath = originalPath ? path.join(path.dirname(originalPath), suggestedName) : suggestedName;
-  const r = process.env.SPINADOC_TEST_SAVE_DIR
-    ? { canceled: false, filePath: path.join(process.env.SPINADOC_TEST_SAVE_DIR, suggestedName) }
+  const r = process.env.ORICALPDF_TEST_SAVE_DIR
+    ? { canceled: false, filePath: path.join(process.env.ORICALPDF_TEST_SAVE_DIR, suggestedName) }
     : await dialog.showSaveDialog(win, {
       title: 'Enregistrer sous',
       defaultPath,
@@ -216,9 +216,9 @@ ipcMain.handle('file:save-as', async (_e, { bytes, suggestedName, originalPath, 
 });
 
 // Division d'un PDF : choix du dossier de destination, puis écriture de plusieurs fichiers (jamais d'écrasement : « nom (2).pdf »).
-// SPINADOC_TEST_SAVE_DIR : dossier imposé, sans boîte.
+// ORICALPDF_TEST_SAVE_DIR : dossier imposé, sans boîte.
 ipcMain.handle('file:pick-dir', async (_e, startDir) => {
-  if (process.env.SPINADOC_TEST_SAVE_DIR) return process.env.SPINADOC_TEST_SAVE_DIR;
+  if (process.env.ORICALPDF_TEST_SAVE_DIR) return process.env.ORICALPDF_TEST_SAVE_DIR;
   const r = await dialog.showOpenDialog(win, { title: 'Dossier de destination', defaultPath: startDir || undefined, properties: ['openDirectory', 'createDirectory'] });
   return r.canceled || !r.filePaths.length ? null : r.filePaths[0];
 });
@@ -234,10 +234,10 @@ ipcMain.handle('file:write-many', async (_e, { dir, files }) => {
   return { dir, written };
 });
 
-// Enregistre un fichier texte (export CSV des mesures…). SPINADOC_TEST_SAVE_DIR : écrit directement dans ce dossier.
+// Enregistre un fichier texte (export CSV des mesures…). ORICALPDF_TEST_SAVE_DIR : écrit directement dans ce dossier.
 ipcMain.handle('file:save-text', async (_e, { text, suggestedName, filterName, ext }) => {
-  const r = process.env.SPINADOC_TEST_SAVE_DIR
-    ? { canceled: false, filePath: path.join(process.env.SPINADOC_TEST_SAVE_DIR, suggestedName) }
+  const r = process.env.ORICALPDF_TEST_SAVE_DIR
+    ? { canceled: false, filePath: path.join(process.env.ORICALPDF_TEST_SAVE_DIR, suggestedName) }
     : await dialog.showSaveDialog(win, { title: 'Exporter', defaultPath: suggestedName, filters: [{ name: filterName || 'Fichier', extensions: [ext || 'txt'] }] });
   if (r.canceled || !r.filePath) return { saved: false };
   await fs.promises.writeFile(r.filePath, text, 'utf8');
@@ -291,12 +291,12 @@ ipcMain.handle('lib:remove', (_e, id) => {
 });
 
 // ---------- images : sélection de fichiers, presse-papiers ----------
-//   SPINADOC_TEST_IMAGES = JSON ["chemin", …] / SPINADOC_TEST_CLIPBOARD_IMAGE = chemin : points d'entrée de test
+//   ORICALPDF_TEST_IMAGES = JSON ["chemin", …] / ORICALPDF_TEST_CLIPBOARD_IMAGE = chemin : points d'entrée de test
 const MIME = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg' };
 const readImageFile = (p) => ({ name: path.basename(p), mime: MIME[path.extname(p).toLowerCase()] || 'image/png', bytes: new Uint8Array(fs.readFileSync(p)) });
 ipcMain.handle('file:open-images', async () => {
   let paths;
-  if (process.env.SPINADOC_TEST_IMAGES) paths = JSON.parse(process.env.SPINADOC_TEST_IMAGES);
+  if (process.env.ORICALPDF_TEST_IMAGES) paths = JSON.parse(process.env.ORICALPDF_TEST_IMAGES);
   else {
     const r = await dialog.showOpenDialog(win, { title: 'Insérer une image', properties: ['openFile', 'multiSelections'], filters: [{ name: 'Images PNG / JPEG', extensions: ['png', 'jpg', 'jpeg'] }] });
     paths = r.canceled ? [] : r.filePaths;
@@ -305,7 +305,7 @@ ipcMain.handle('file:open-images', async () => {
 });
 ipcMain.handle('file:read-image', (_e, p) => readImageFile(p));
 ipcMain.handle('clipboard:image', () => {
-  if (process.env.SPINADOC_TEST_CLIPBOARD_IMAGE) return readImageFile(process.env.SPINADOC_TEST_CLIPBOARD_IMAGE);
+  if (process.env.ORICALPDF_TEST_CLIPBOARD_IMAGE) return readImageFile(process.env.ORICALPDF_TEST_CLIPBOARD_IMAGE);
   const img = clipboard.readImage();
   if (img.isEmpty()) return null;
   return { name: 'presse-papiers.png', mime: 'image/png', bytes: new Uint8Array(img.toPNG()) };
@@ -348,15 +348,15 @@ ipcMain.handle('app:print-log', () => {
   return text;
 });
 // Windows 11 : page « Applications par défaut » d'Orical PDF (nom inscrit dans RegisteredApplications par l'installeur).
-// SPINADOC_TEST_EXTERNAL : l'adresse est notée dans ce fichier au lieu d'ouvrir les Paramètres de Windows (tests).
+// ORICALPDF_TEST_EXTERNAL : l'adresse est notée dans ce fichier au lieu d'ouvrir les Paramètres de Windows (tests).
 ipcMain.handle('app:default-apps', () => {
   const uri = 'ms-settings:defaultapps?registeredAppUser=' + encodeURIComponent('Orical PDF');
-  if (process.env.SPINADOC_TEST_EXTERNAL) { fs.appendFileSync(process.env.SPINADOC_TEST_EXTERNAL, 'uri\t' + uri + '\n'); return true; }
+  if (process.env.ORICALPDF_TEST_EXTERNAL) { fs.appendFileSync(process.env.ORICALPDF_TEST_EXTERNAL, 'uri\t' + uri + '\n'); return true; }
   return shell.openExternal(uri).then(() => true, () => false);
 });
 
 ipcMain.on('doc:dirty', (_e, value) => { dirty = !!value; });
 ipcMain.on('app:close-confirmed', () => { forceClose = true; if (win) win.close(); });
-// Tests (SPIN_TEST_HEADLESS=1) : fermeture comme par le bouton Fermer (événement 'close', donc questions éventuelles). Un window.close() de la page,
+// Tests (ORICALPDF_TEST_HEADLESS=1) : fermeture comme par le bouton Fermer (événement 'close', donc questions éventuelles). Un window.close() de la page,
 // lui, ferme sans passer par 'close' (vérifié) : il ne représente pas le geste de l'utilisateur.
-if (process.env.SPIN_TEST_HEADLESS === '1') ipcMain.on('test:close', () => { if (win && !win.isDestroyed()) win.close(); });
+if (process.env.ORICALPDF_TEST_HEADLESS === '1') ipcMain.on('test:close', () => { if (win && !win.isDestroyed()) win.close(); });

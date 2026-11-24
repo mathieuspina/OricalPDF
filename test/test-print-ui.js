@@ -1,4 +1,4 @@
-// Impression : boîte de dialogue, aperçu, plages de pages, tâches produites (l'envoi réel est remplacé par SPINADOC_TEST_PRINT_DIR :
+// Impression : boîte de dialogue, aperçu, plages de pages, tâches produites (l'envoi réel est remplacé par ORICALPDF_TEST_PRINT_DIR :
 // aucune impression). Fenêtre hors écran. Usage : node test/test-print-ui.js
 const fs = require('fs');
 const os = require('os');
@@ -29,9 +29,9 @@ async function pdfInfo(file) {
 }
 
 (async () => {
-  const f = await makeAll(path.join(os.tmpdir(), 'spinadoc-ui-pdfs'));
-  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-print-out-'));
-  const c = await launchApp({ files: [f.c], env: { SPINADOC_TEST_PRINT_DIR: out } }); // f.c : A3 paysage, A4, A5, A3 paysage, Letter, A4
+  const f = await makeAll(path.join(os.tmpdir(), 'oricalpdf-ui-pdfs'));
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-print-out-'));
+  const c = await launchApp({ files: [f.c], env: { ORICALPDF_TEST_PRINT_DIR: out } }); // f.c : A3 paysage, A4, A5, A3 paysage, Letter, A4
   const J = async (e) => JSON.parse(await c.ev(e));
   try {
     await c.waitFor(`document.querySelectorAll('.docview.active canvas').length>0`);

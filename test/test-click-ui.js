@@ -14,8 +14,8 @@ function check(name, cond, detail) {
 }
 
 (async () => {
-  const f = await makeAll(path.join(os.tmpdir(), 'spinadoc-ui-pdfs'));
-  const c = await launchApp({ files: [], env: { SPINADOC_TEST_OPEN: JSON.stringify([f.a]) } });
+  const f = await makeAll(path.join(os.tmpdir(), 'oricalpdf-ui-pdfs'));
+  const c = await launchApp({ files: [], env: { ORICALPDF_TEST_OPEN: JSON.stringify([f.a]) } });
   const key = (k, code, vk, mods = 0) => c.key(k, { code, windowsVirtualKeyCode: vk, modifiers: mods });
   const view = async (label, scope, minN = 1) => {
     const r = JSON.parse(await c.ev(SCRIPT(scope)));

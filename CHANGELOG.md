@@ -15,6 +15,12 @@ Tampons techniques pour annoter les plans (charpente, bardage, couverture, bâti
   plein ou contour, épaisseur du trait (proportionnelle à la taille du tampon), opacité.
 - Favoris : clic droit sur une miniature pour épingler un symbole dans l'onglet Accueil.
 
+Installation et données.
+- Nouvelle identité d'installation (`com.orical.pdf`), données dans `%APPDATA%\Orical PDF`, association « Ouvrir avec » `OricalPDF.pdf`
+  (`Software\Orical\OricalPDF`). Désinstaller d'abord une version antérieure : la 1.4.0 ne reprend ni ses réglages, ni ses récents, ni sa
+  bibliothèque ; les PDF « Modifiables » enregistrés par une version antérieure s'ouvrent avec leurs annotations figées (visibles, non
+  modifiables).
+
 Corrections d'impression et de fermeture (jamais publiées séparément : prévues pour une 1.3.1, livrées dans la 1.4.0).
 - Après une impression, fermer puis relancer Orical PDF fonctionne de nouveau : les fenêtres cachées d'impression ne gardent plus l'application
   ouverte en arrière-plan (il fallait arrêter le processus à la main). Un nouveau lancement rouvre aussi la fenêtre d'une instance restée ouverte.
@@ -35,26 +41,20 @@ Corrections d'impression et de fermeture (jamais publiées séparément : prévu
   étaient reproposées pour le suivant, même après un redémarrage).
 
 ## 1.3.0 — 2026-11-22
-« Spin A Doc » devient « Orical PDF » (suite Orical).
-- Nouveau nom partout : fenêtre, accueil, À propos (« fait partie de la suite Orical », sous licence Orical), aide, installeur et raccourcis,
-  exécutable `Orical PDF.exe`, installeurs `OricalPDF-Setup-x.y.z.exe` et `OricalPDF-Portable-x.y.z.exe`. Contrat de licence et politique de
-  confidentialité : seuls le nom du produit et celui de l'éditeur changent.
+Nouvelle identité visuelle (suite Orical).
+- Fenêtre, accueil, À propos (« fait partie de la suite Orical », sous licence Orical), aide, installeur et raccourcis ; exécutable
+  `Orical PDF.exe`, installeurs `OricalPDF-Setup-x.y.z.exe` et `OricalPDF-Portable-x.y.z.exe`.
 - Nouveau logo (barre de titre, accueil, À propos, aide) et nouvelle icône de l'application, dessinée à chaque taille (16 à 256 px).
 - Nouvelle icône des fichiers PDF, visible pour les PDF dont l'application par défaut est Orical PDF (l'installeur ne change jamais le lecteur
   par défaut).
-- Intégration à Windows : « Ouvrir avec » et « Applications par défaut » au nouveau nom ; les traces de l'ancien nom sont retirées.
-- Mise à jour par-dessus la 1.2.1 sans rien perdre : réglages, documents récents, bibliothèque et échelles conservés (dossier
-  `%APPDATA%\Spin A Doc`, nom historique), choix « application par défaut » conservé, une seule entrée de désinstallation, raccourcis
-  renommés, ancien dossier du programme remplacé. Les PDF enregistrés en « Modifiables » par les versions précédentes se rouvrent à l'identique.
-
-*Les versions ci-dessous portaient le nom Spin A Doc (Spin A Doc devient Orical PDF en 1.3.0).*
+- Intégration à Windows : « Ouvrir avec » et « Applications par défaut ».
 
 ## 1.2.1 — 2026-11-20
 - Contrat de licence : retrait de la mention de brouillon (de même dans la politique de confidentialité ; texte inchangé par ailleurs).
 
 ## 1.2.0 — 2026-11-20
 Annotations modifiables après réouverture.
-- À l'enregistrement : « Modifiables » (le PDF reste lisible partout, Spin A Doc peut rééditer les annotations à la réouverture) ou « Aplaties »
+- À l'enregistrement : « Modifiables » (le PDF reste lisible partout, Orical PDF peut rééditer les annotations à la réouverture) ou « Aplaties »
   (figées dans la page, comme avant). Avertissement : tampons et signatures retirables. « Mémoriser mon choix » (Réglages > Annotations).
 - Réouverture : annotations, mesures et échelles, numérotation et champs créés redeviennent modifiables ; restauration en arrière-plan (bandeau
   au-delà d'une seconde, « Ouvrir sans les annotations modifiables ») ; indicateur « Annotations modifiables » dans la barre d'état.
@@ -106,7 +106,7 @@ Première version publique. Lecteur et éditeur de PDF pour Windows, 100 % hors-
 - Aide intégrée (F1), fenêtre À propos, informations de diagnostic sans nom de fichier ni chemin.
 
 Publication :
-- Titulaire des droits : SpinASoft ; contrat de licence utilisateur final (EULA) affiché par l'installeur ; politique de confidentialité.
+- Titulaire des droits : Orical ; contrat de licence utilisateur final (EULA) affiché par l'installeur ; politique de confidentialité.
 - Plus de fichier de configuration de mise à jour dans l'application (aucune mise à jour automatique).
 - Licences tierces complétées (modèles de langue de l'OCR, polices, icônes) et livrées dans le dossier de l'application.
 - Logiciel non signé numériquement : avertissement possible de Windows SmartScreen, vérification par empreinte SHA-256 (README, aide).
@@ -126,11 +126,11 @@ Publication :
 
 ## 0.12.2 — 2026-11-11
 - Imprimante virtuelle retirée : « Microsoft Print to PDF », fourni avec Windows, suffit.
-- Un PDF ouvert alors que Spin A Doc tourne déjà s'ajoute en onglet, même pendant le démarrage.
+- Un PDF ouvert alors que Orical PDF tourne déjà s'ajoute en onglet, même pendant le démarrage.
 - Ruban : étiquettes de groupe toujours entières, libellés des boutons sur deux lignes au plus.
 
 ## 0.12.1 — 2026-11-11
-- Spin A Doc s'inscrit dans « Ouvrir avec » pour les PDF, sans jamais remplacer le lecteur par défaut ; accès direct à la page « Applications par défaut » de Windows.
+- Orical PDF s'inscrit dans « Ouvrir avec » pour les PDF, sans jamais remplacer le lecteur par défaut ; accès direct à la page « Applications par défaut » de Windows.
 
 ## 0.12.0 — 2026-11-11
 - Aide intégrée (F1) avec sommaire et recherche, rubrique « Où sont les commandes ? ».

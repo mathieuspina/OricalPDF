@@ -1,7 +1,7 @@
 // Mesure de la détection d'orientation de l'OCR (mode texte) : pour chaque page de test, confiance moyenne à 0°, passes essayées,
 // orientation retenue, taux de mots justes et DURÉE (pages reconnues une par une, moteur déjà chargé). Scans déterministes (graine fixe).
 // Pages : jeu « orient » (droit, 90°, 180°, 270°, médiocres, clairsemés, manuscrit simulé), page fautive (fixture JPEG), plan A3 clairsemé
-// et A0 en mode TEXTE. Usage : node scripts/bench-ocr-orient.js [--no-a0] [--seed N]   (SPINADOC_EXE = application empaquetée)
+// et A0 en mode TEXTE. Usage : node scripts/bench-ocr-orient.js [--no-a0] [--seed N]   (ORICALPDF_EXE = application empaquetée)
 // Sortie : test-logs/bench-ocr-orient.json + tableau à l'écran.
 const fs = require('fs');
 const os = require('os');
@@ -40,8 +40,8 @@ const RUN = (pages) => `(async () => {
 })()`;
 
 (async () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-bench-orient-'));
-  const f = await makeAll(path.join(os.tmpdir(), 'spinadoc-ocr-pdfs'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-bench-orient-'));
+  const f = await makeAll(path.join(os.tmpdir(), 'oricalpdf-ocr-pdfs'));
   const c = await launchApp({ files: [f.d] });
   const rows = [];
   const open = async (file, n) => { await c.openMore(file); await c.waitFor(`document.querySelectorAll('.doctab').length===${n}`, 20000); await c.waitFor(`document.querySelectorAll('.docview.active canvas').length>0`, 20000); await sleep(600); };
@@ -84,6 +84,6 @@ const RUN = (pages) => `(async () => {
     fs.rmSync(dir, { recursive: true, force: true });
   }
   fs.mkdirSync(path.join(root, 'test-logs'), { recursive: true });
-  fs.writeFileSync(path.join(root, 'test-logs', 'bench-ocr-orient.json'), JSON.stringify({ date: new Date().toISOString(), seed, exe: process.env.SPINADOC_EXE || 'dev', rows }, null, 1));
+  fs.writeFileSync(path.join(root, 'test-logs', 'bench-ocr-orient.json'), JSON.stringify({ date: new Date().toISOString(), seed, exe: process.env.ORICALPDF_EXE || 'dev', rows }, null, 1));
   console.log('Écrit : test-logs/bench-ocr-orient.json');
 })();

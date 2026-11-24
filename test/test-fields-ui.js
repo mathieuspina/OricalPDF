@@ -21,15 +21,15 @@ const MM = 72 / 25.4;
 const near = (a, b, tol) => a.length === b.length && a.every((v, i) => Math.abs(v - b[i]) <= (tol || 0.2 * MM));
 
 (async () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-fields-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-fields-'));
   const file = path.join(dir, 'formulaire.pdf');
   const src = await PDFLib.PDFDocument.create();
   const font = await src.embedFont(PDFLib.StandardFonts.Helvetica);
   const p1 = src.addPage([595, 842]); p1.drawText('Fiche d\'inscription', { x: 72, y: 780, size: 18, font });
   const p2 = src.addPage([595, 842]); p2.setRotation(PDFLib.degrees(90)); p2.drawText('Page pivotee', { x: 72, y: 780, size: 14, font });
   fs.writeFileSync(file, await src.save());
-  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-fields-out-'));
-  const c = await launchApp({ files: [file], env: { SPINADOC_TEST_SAVE_DIR: out } });
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-fields-out-'));
+  const c = await launchApp({ files: [file], env: { ORICALPDF_TEST_SAVE_DIR: out } });
   const doc = (expr) => c.ev(`import('./js/ui.js').then((m)=>{const d=m.store.active; return JSON.stringify(${expr})})`).then((x) => (x === undefined ? undefined : JSON.parse(x)));
   const fields = () => doc(`d.edits.filter(e=>e.type==='field').map(e=>({id:e.id,name:e.name,ftype:e.ftype,page:e.page,r:[e.cx-e.w/2,e.cy-e.h/2,e.cx+e.w/2,e.cy+e.h/2],export:e.export,value:e.value,options:e.options,required:e.required,tab:e.tab}))`);
   const key = (k, code, vk, mods = 0) => c.key(k, { code, windowsVirtualKeyCode: vk, modifiers: mods });

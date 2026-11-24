@@ -1,7 +1,7 @@
 // Annotations « modifiables » (1.2.0) : état JSON versionné écrit dans le PDF à côté d'un flux de contenu DÉDIÉ (voir editable-pdf.js).
 // Pur (ni DOM ni Electron). Le PDF reste lisible partout : les objets sont dessinés dans un flux ajouté à /Contents de chaque page
-// (/SpinADoc BMC … EMC) ; l'état (objets, échelles, numérotation, empreinte SHA-256 de chaque flux) est un flux référencé par la clé
-// /SpinADoc du catalogue. À la réouverture, le flux est retiré (la page redevient celle d'avant les annotations) et l'état restauré.
+// (/OricalPDF BMC … EMC) ; l'état (objets, échelles, numérotation, empreinte SHA-256 de chaque flux) est un flux référencé par la clé
+// /OricalPDF du catalogue. À la réouverture, le flux est retiré (la page redevient celle d'avant les annotations) et l'état restauré.
 //
 // Contenu de l'état (version 1) — UNIQUEMENT ce qui est écrit dans le PDF (jamais de mesure non incluse ni de zone de caviardage) :
 //   { v: 1, app, pages: nombre de pages écrites, edits: [objets, page = indice de page écrite], nextId,
@@ -16,9 +16,9 @@
   'use strict';
 
   const VERSION = 1;
-  const KEY = 'SpinADoc'; // clé du catalogue → flux d'état
-  const TYPE = 'SpinADocState'; // /Type du flux d'état (dictionnaire de flux : jamais compressé dans un flux d'objets, donc repérable par octets)
-  const TAG = 'SpinADoc'; // étiquette du contenu marqué (BMC) du flux dédié
+  const KEY = 'OricalPDF'; // clé du catalogue → flux d'état
+  const TYPE = 'OricalPDFState'; // /Type du flux d'état (dictionnaire de flux : jamais compressé dans un flux d'objets, donc repérable par octets)
+  const TAG = 'OricalPDF'; // étiquette du contenu marqué (BMC) du flux dédié
 
   const clone = (o) => JSON.parse(JSON.stringify(o));
   const isMeasure = (e) => /^m-/.test(e.type);
@@ -43,7 +43,7 @@
   function build(o) {
     const m = o.measure || {};
     return {
-      v: VERSION, app: 'Spin A Doc', pages: o.pages, edits: clone(o.edits || []), nextId: o.nextId || 1 + Math.max(0, ...(o.edits || []).map((e) => e.id || 0)),
+      v: VERSION, app: 'Orical PDF', pages: o.pages, edits: clone(o.edits || []), nextId: o.nextId || 1 + Math.max(0, ...(o.edits || []).map((e) => e.id || 0)),
       measure: { scales: clone(m.scales || {}), unit: m.unit || 'm', precision: m.precision === undefined ? 2 : m.precision },
       numbering: clone(o.numbering || []), streams: o.streams || [], images: o.images || {}, fields: o.fields || [],
     };
@@ -69,7 +69,7 @@
     return { ok: true, state: s };
   }
 
-  // Le fichier contient-il un état ? Recherche des octets « /SpinADocState » (dictionnaire d'un flux : en clair, même chiffré ou avec flux
+  // Le fichier contient-il un état ? Recherche des octets « /OricalPDFState » (dictionnaire d'un flux : en clair, même chiffré ou avec flux
   // d'objets). Coût : une recherche d'octets ; un PDF ordinaire n'est pas analysé.
   const NEEDLE = '/' + TYPE;
   function detect(bytes) {

@@ -2,7 +2,7 @@
 // (nouveau processus, nouveau profil), même parcours que test-ocr-ui (OCR de tout le document, mode texte, orientation, pages natives ignorées).
 // Aucune relance : chaque essai est noté tel quel. Rapport : taux de mots justes, orientation retenue, passes (mots, confiance, score), nombre de
 // workers, erreurs de console (chargement des données de langue…), durée. Les PDF des essais en échec sont gardés pour être rejoués.
-// Usage : node scripts/repro-ocr.js [N=20] [--replay fichier.pdf]   (SPINADOC_EXE = application empaquetée à tester)
+// Usage : node scripts/repro-ocr.js [N=20] [--replay fichier.pdf]   (ORICALPDF_EXE = application empaquetée à tester)
 // Journal : test-logs/repro-ocr.log (une ligne JSON par essai) + résumé.
 const fs = require('fs');
 const os = require('os');
@@ -65,10 +65,10 @@ async function trial(k, dir, f) {
 }
 
 (async () => {
-  const dir = path.join(os.tmpdir(), 'spinadoc-repro-ocr');
+  const dir = path.join(os.tmpdir(), 'oricalpdf-repro-ocr');
   fs.mkdirSync(dir, { recursive: true });
-  const f = await makeAll(path.join(os.tmpdir(), 'spinadoc-ocr-pdfs'));
-  const exe = process.env.SPINADOC_EXE || '(développement)';
+  const f = await makeAll(path.join(os.tmpdir(), 'oricalpdf-ocr-pdfs'));
+  const exe = process.env.ORICALPDF_EXE || '(développement)';
   fs.appendFileSync(logFile, `\n# ${new Date().toISOString()} : ${N} essais, application ${exe}${replay ? ', REJEU de ' + path.basename(replay) : ''}\n`);
   const rows = [];
   for (let k = 1; k <= N; k++) {

@@ -4,7 +4,7 @@ param([string]$out, [string]$stop)
 $seen = @{}
 while (-not (Test-Path $stop)) {
   $now = Get-Date
-  $procs = Get-CimInstance Win32_Process -Filter "Name='Orical PDF.exe' OR Name='Spin A Doc.exe' OR Name LIKE 'OricalPDF%' OR Name LIKE 'SpinADoc%' OR Name LIKE 'Uninstall Orical%' OR Name LIKE 'Uninstall Spin%' OR Name LIKE 'Au_%' OR Name='taskkill.exe' OR Name='tasklist.exe' OR Name='WerFault.exe'"
+  $procs = Get-CimInstance Win32_Process -Filter "Name='Orical PDF.exe' OR Name LIKE 'OricalPDF%' OR Name LIKE 'Uninstall Orical%' OR Name LIKE 'Au_%' OR Name='taskkill.exe' OR Name='tasklist.exe' OR Name='WerFault.exe'"
   $ids = @{}
   foreach ($p in $procs) {
     $ids[$p.ProcessId] = 1

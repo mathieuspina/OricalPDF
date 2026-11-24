@@ -1,5 +1,5 @@
 // Tests d'interface de l'onglet Mesure (lot 2b-2) : échelle, aimantation, outils, unités, verrouillage, panneau, CSV, PDF, persistance.
-// Fenêtre hors écran (SPIN_TEST_HEADLESS=1 par défaut). Usage : node test/test-measure-ui.js
+// Fenêtre hors écran (ORICALPDF_TEST_HEADLESS=1 par défaut). Usage : node test/test-measure-ui.js
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -22,8 +22,8 @@ async function pdfTexts(file) {
 }
 
 (async () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-measure-ui-'));
-  const saveDir = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-measure-save-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-measure-ui-'));
+  const saveDir = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-measure-save-'));
   // Plan de test : deux lignes qui se croisent, un rectangle (pour l'aimantation). Coordonnées PDF (origine en bas à gauche).
   const d = await PDFLib.PDFDocument.create();
   const pg = d.addPage([595, 842]);
@@ -33,7 +33,7 @@ async function pdfTexts(file) {
   const planPath = path.join(dir, 'plan-mesures.pdf');
   fs.writeFileSync(planPath, await d.save());
 
-  const c = await launchApp({ files: [planPath], env: { SPINADOC_TEST_SAVE_DIR: saveDir } });
+  const c = await launchApp({ files: [planPath], env: { ORICALPDF_TEST_SAVE_DIR: saveDir } });
   const J = async (e) => JSON.parse(await c.ev(e));
   const userData = c.userData;
   let scalesJson = null; // le dossier utilisateur est supprimé à la fermeture : on garde le fichier des échelles

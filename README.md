@@ -32,8 +32,7 @@ Ce que chaque fonction fait exactement, ses étapes et ses pièges : aide intég
 - **Installeur** `OricalPDF-Setup-x.y.z.exe` : par utilisateur, sans droits administrateur, dossier par défaut `%LOCALAPPDATA%\Programs\Orical PDF`.
   Installation silencieuse : `OricalPDF-Setup-x.y.z.exe /S` (dossier imposé : `/D=C:\Programmes\OricalPDF`, toujours en dernier).
 - **Portable** `OricalPDF-Portable-x.y.z.exe` : aucun installateur.
-- Données de l'utilisateur (réglages, récents, bibliothèque de tampons et signatures, échelles) : `%APPDATA%\Spin A Doc` (nom historique,
-  gardé pour retrouver les données des versions précédentes).
+- Données de l'utilisateur (réglages, récents, bibliothèque de tampons et signatures, échelles) : `%APPDATA%\Orical PDF`.
 - Désinstallation : Paramètres Windows > Applications ; les données sont conservées sauf si la case « Supprimer aussi mes réglages et ma bibliothèque »
   est cochée (en silencieux : `/DELETEDATA=1`).
 - Fichiers PDF : Orical PDF est ajouté à « Ouvrir avec », sans remplacer le lecteur par défaut (choix dans les Paramètres de Windows).
@@ -75,7 +74,7 @@ npm start
 | `npm run licences` | Vérifie que toutes les dépendances ont une licence permissive (jamais GPL / AGPL / LGPL) et régénère `THIRD_PARTY_LICENSES` |
 | `npm run dist` | Construit l'installeur et le portable dans `dist/` (les binaires ne vont jamais dans git) |
 | `npm run test:packaged` | Teste l'application construite : dépaquetée, portable, installée puis désinstallée dans un dossier temporaire |
-| `npm run test:print` | Impression réelle vers l'imprimante virtuelle de test « SpinADoc Test PDF » uniquement (à la demande) |
+| `npm run test:print` | Impression réelle vers l'imprimante virtuelle de test « OricalPDF Test PDF » uniquement (à la demande) |
 
 ## Architecture (résumé)
 

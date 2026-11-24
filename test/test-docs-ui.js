@@ -17,7 +17,7 @@ function check(name, cond, detail) {
 }
 
 (async () => {
-  const dir = path.join(os.tmpdir(), 'spinadoc-ui-pdfs');
+  const dir = path.join(os.tmpdir(), 'oricalpdf-ui-pdfs');
   const f = await makeAll(dir);
   const enc = path.join(dir, 'protege-docs.pdf');
   {
@@ -28,8 +28,8 @@ function check(name, cond, detail) {
     d.encrypt({ userPassword: 'sesame', ownerPassword: 'sesame2', permissions: { printing: true } });
     fs.writeFileSync(enc, await d.save());
   }
-  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-docs-out-'));
-  const c = await launchApp({ files: [f.c, enc], env: { SPINADOC_TEST_SAVE_DIR: out } });
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-docs-out-'));
+  const c = await launchApp({ files: [f.c, enc], env: { ORICALPDF_TEST_SAVE_DIR: out } });
   const key = (k, code, vk, mods = 0) => c.key(k, { code, windowsVirtualKeyCode: vk, modifiers: mods });
   const doc = (expr) => c.ev(`import('./js/ui.js').then((m)=>{const d=m.store.active; return JSON.stringify(${expr})})`).then((x) => (x === undefined ? undefined : JSON.parse(x)));
   const setv = (id, v) => c.ev(`(()=>{const e=document.getElementById(${JSON.stringify(id)});e.value=${JSON.stringify(v)};e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));})()`);

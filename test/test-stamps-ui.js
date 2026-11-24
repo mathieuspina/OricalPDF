@@ -14,7 +14,7 @@ function check(name, cond, detail) {
   else { failures.push(name); console.log('  ECHEC', name, detail !== undefined ? '→ ' + JSON.stringify(detail) : ''); }
 }
 
-const dir = path.join(os.tmpdir(), 'spinadoc-stamps-ui');
+const dir = path.join(os.tmpdir(), 'oricalpdf-stamps-ui');
 fs.mkdirSync(dir, { recursive: true });
 function writeImg(file, w, h, mime, color) {
   const c = createCanvas(w, h);
@@ -31,9 +31,9 @@ writeImg(big, 4200, 100, 'image/png', 'rgb(30,30,200)');
 writeImg(photo, 90, 90, 'image/jpeg', 'rgb(30,160,60)');
 
 (async () => {
-  const f = await makeAll(path.join(os.tmpdir(), 'spinadoc-ui-pdfs'));
-  const saveDir = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-stamps-save-'));
-  const c = await launchApp({ files: [f.a], env: { SPINADOC_TEST_IMAGES: JSON.stringify([small]), SPINADOC_TEST_CLIPBOARD_IMAGE: photo, SPINADOC_TEST_SAVE_DIR: saveDir } });
+  const f = await makeAll(path.join(os.tmpdir(), 'oricalpdf-ui-pdfs'));
+  const saveDir = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-stamps-save-'));
+  const c = await launchApp({ files: [f.a], env: { ORICALPDF_TEST_IMAGES: JSON.stringify([small]), ORICALPDF_TEST_CLIPBOARD_IMAGE: photo, ORICALPDF_TEST_SAVE_DIR: saveDir } });
   const J = async (e) => JSON.parse(await c.ev(e));
   try {
     await c.waitFor(`document.querySelectorAll('.docview.active canvas').length>0`);
@@ -50,7 +50,7 @@ writeImg(photo, 90, 90, 'image/jpeg', 'rgb(30,160,60)');
     const key = (k, code, vk, mods = 0) => c.key(k, { code, windowsVirtualKeyCode: vk, modifiers: mods });
     const objs = () => J(`JSON.stringify([...document.querySelectorAll('.docview.active .page:nth-child(1) .objs > g')].map(g=>({id:g.dataset.id, texts:[...g.querySelectorAll('text')].map(t=>t.textContent), image:!!g.querySelector('image'), imgHref:(g.querySelector('image')||{getAttribute:()=>null}).getAttribute('href'), fill:(g.querySelector('path')||{getAttribute:()=>null}).getAttribute('fill'), stroke:(g.querySelector('path')||{getAttribute:()=>null}).getAttribute('stroke'), paths:g.querySelectorAll('path').length})))`);
     const state = () => J(`JSON.stringify({tool:[...document.querySelectorAll('[data-cmd^=tool-][aria-pressed=true]')].map(b=>b.dataset.cmd).join(','), label:document.getElementById('tool-label').textContent, title:document.getElementById('props-title').textContent, propsOpen:!document.getElementById('props').hidden})`);
-    const lib = () => J(`window.spinadoc.libList().then(l=>JSON.stringify(l.map(e=>({kind:e.kind,name:e.name,hasBytes:!!e.bytes}))))`);
+    const lib = () => J(`window.oricalpdf.libList().then(l=>JSON.stringify(l.map(e=>({kind:e.kind,name:e.name,hasBytes:!!e.bytes}))))`);
     const assetCount = () => c.ev(`import('./js/ui.js').then(m=>Object.keys(m.store.active.assets.images).length)`);
     const rgbOf = (s) => (String(s).match(/\d+/g) || []).map(Number);
     const doDrop = async (file, x, y) => {

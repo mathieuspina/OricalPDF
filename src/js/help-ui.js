@@ -32,7 +32,7 @@ function build() {
     else if (e.key !== 'F1') e.stopPropagation(); // les raccourcis de l'application ne s'appliquent pas pendant la lecture
   });
   // version lue dans package.json par le processus principal (app.getVersion), jamais écrite en dur
-  const api = window.spinadoc;
+  const api = window.oricalpdf;
   if (api && api.getAbout) api.getAbout().then((i) => { $('help-version').textContent = 'Version ' + i.version; }).catch(() => {});
   built = true;
 }

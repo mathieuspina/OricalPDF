@@ -12,7 +12,7 @@ function check(name, cond, detail) {
 }
 
 (async () => {
-  const f = await makeAll(path.join(os.tmpdir(), 'spinadoc-ui-pdfs'));
+  const f = await makeAll(path.join(os.tmpdir(), 'oricalpdf-ui-pdfs'));
   const c = await launchApp({ files: [f.a] });
   const J = async (e) => JSON.parse(await c.ev(e));
   try {
@@ -75,11 +75,11 @@ function check(name, cond, detail) {
     check('épinglé : le panneau est dans la mise en page', (await c.ev(`document.getElementById('sidebar').classList.contains('pinned') && getComputedStyle(document.getElementById('sidebar')).position`)) === 'static');
     const gp = await geo();
     check('épinglé : la zone de lecture est plus étroite (le document est repoussé)', gp.vw < base.vw - 200, { base: base.vw, pinned: gp.vw });
-    check('le choix est mémorisé (réglage persistant)', (await c.ev(`window.spinadoc.getSettings().then(s=>s.pinSidebar)`)) === true);
+    check('le choix est mémorisé (réglage persistant)', (await c.ev(`window.oricalpdf.getSettings().then(s=>s.pinSidebar)`)) === true);
     await c.click('#sb-pin'); await sleep(500);
     check('désépinglé : retour exact à la position d\'origine', same(base, await geo()) === false || (await geo()).vw === base.vw);
     await c.click('#sb-toggle'); await sleep(300);
-    check('panneau de propriétés épinglé : réglage mémorisé', await (async () => { await c.click('#rtab-annotate'); await c.click('#rpanel-annotate [data-cmd=props]'); await c.click('#rpanel-annotate [data-cmd=tool-rect]'); await sleep(350); await c.click('#props-pin'); await sleep(300); return (await c.ev(`window.spinadoc.getSettings().then(s=>s.pinProps)`)) === true && (await geo()).vw < base.vw - 200; })());
+    check('panneau de propriétés épinglé : réglage mémorisé', await (async () => { await c.click('#rtab-annotate'); await c.click('#rpanel-annotate [data-cmd=props]'); await c.click('#rpanel-annotate [data-cmd=tool-rect]'); await sleep(350); await c.click('#props-pin'); await sleep(300); return (await c.ev(`window.oricalpdf.getSettings().then(s=>s.pinProps)`)) === true && (await geo()).vw < base.vw - 200; })());
     await c.click('#props-pin'); await sleep(300);
     await c.click('#rpanel-annotate [data-cmd=props]'); await c.click('#rpanel-annotate [data-cmd=tool-select]'); await sleep(300);
 
@@ -110,11 +110,11 @@ function check(name, cond, detail) {
       check(`en-tête à ${label} (${w}×${h}) : 48 px, onglets entiers, réglages visibles et sans chevauchement`, v.th === 48 && v.tabsOk && v.sright <= w + 1 && v.noOverlap, v);
     }
     await c.send('Emulation.clearDeviceMetricsOverride'); await sleep(300);
-    await c.ev(`window.spinadoc.toggleFullscreen()`); await sleep(800);
-    check('plein écran (F11) : activé', (await c.ev(`window.spinadoc.isFullscreen()`)) === true);
+    await c.ev(`window.oricalpdf.toggleFullscreen()`); await sleep(800);
+    check('plein écran (F11) : activé', (await c.ev(`window.oricalpdf.isFullscreen()`)) === true);
     check('plein écran : l\'en-tête reste utilisable', (await c.ev(`document.getElementById('topbar').getBoundingClientRect().height`)) > 0);
-    await c.ev(`window.spinadoc.toggleFullscreen()`); await sleep(800);
-    check('sortie du plein écran', (await c.ev(`window.spinadoc.isFullscreen()`)) === false);
+    await c.ev(`window.oricalpdf.toggleFullscreen()`); await sleep(800);
+    check('sortie du plein écran', (await c.ev(`window.oricalpdf.isFullscreen()`)) === false);
     check('aucune erreur JavaScript', c.logs.length === 0, c.logs);
   } catch (e) {
     check('exécution sans exception', false, String(e && e.stack || e));

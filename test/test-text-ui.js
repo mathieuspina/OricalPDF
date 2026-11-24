@@ -32,7 +32,7 @@ async function makeSource(file) {
 }
 
 (async () => {
-  const file = path.join(os.tmpdir(), 'spinadoc-text-ui.pdf');
+  const file = path.join(os.tmpdir(), 'oricalpdf-text-ui.pdf');
   await makeSource(file);
   const c = await launchApp({ files: [file] });
   const J = async (e) => JSON.parse(await c.ev(e));

@@ -204,7 +204,7 @@ async function check(label, srcBytes, o, expect) {
   const long = L.cleanName('x'.repeat(300) + '.pdf');
   assert(long.length <= 90 && long.endsWith('…'), 'nom très long tronqué');
   assert(!/[<>:"/\\|?*…]/.test(L.jobFileName('x'.repeat(300) + '.pdf', 0, 1)), 'nom de fichier sûr');
-  assert(L.isPdfPrinter('PDFCreator') && L.isPdfPrinter('Microsoft Print to PDF') && L.isPdfPrinter('SpinADoc Test PDF') && !L.isPdfPrinter('\\\\serveur\\imprimante'));
+  assert(L.isPdfPrinter('PDFCreator') && L.isPdfPrinter('Microsoft Print to PDF') && L.isPdfPrinter('OricalPDF Test PDF') && !L.isPdfPrinter('\\\\serveur\\imprimante'));
   assert.strictEqual(L.normMargin('', 2), 2, 'champ vide : valeur précédente'); assert.strictEqual(L.normMargin('abc', 3), 3); assert.strictEqual(L.normMargin('-1', 3), 3);
   assert.strictEqual(L.normMargin('2,5', 0), 2.5); assert.strictEqual(L.normMargin('0', 2), 0, '0 est une valeur valide'); assert.strictEqual(L.normMargin('500', 2), 2);
   assert.strictEqual(L.defaultMargin(null), 2); assert.strictEqual(L.defaultMargin(0), 2); assert.strictEqual(L.defaultMargin(4.2), 4.2, 'jamais sous la marge matérielle');
@@ -251,7 +251,7 @@ async function check(label, srcBytes, o, expect) {
           assert.ok(!op.node.get(PDFLib.PDFName.of('Rotate')) && op.getRotation().angle === 0, label + ' : aucun /Rotate sur la feuille composée');
           const job = { wMm: L.toMm(pl.sheet.w), hMm: L.toMm(pl.sheet.h) };
           for (const orient of ['auto', 'portrait', 'landscape']) {
-            const r = L.printOptions(job, { device: 'SpinADoc Test PDF', copies: 3, collate: true, color: false, duplex: 'longEdge', orient }, caps);
+            const r = L.printOptions(job, { device: 'OricalPDF Test PDF', copies: 3, collate: true, color: false, duplex: 'longEdge', orient }, caps);
             const o = r.options;
             const want = orient === 'auto' ? sheetLand : orient === 'landscape';
             assert.strictEqual(o.landscape, want, `${label}, envoi ${orient} : landscape`);
@@ -262,7 +262,7 @@ async function check(label, srcBytes, o, expect) {
             assert.strictEqual(r.paper, fname === 'A2' ? null : fname === 'A3' ? 'A3 (exact pilote)' : 'A4', label + ' : papier annoncé');
             assert.strictEqual(r.sheet, sheetLand ? 'paysage' : 'portrait');
             assert.strictEqual(r.forced, orient);
-            assert.deepStrictEqual([o.silent, o.deviceName, o.printBackground, o.margins.marginType, o.copies, o.collate, o.color, o.duplexMode], [true, 'SpinADoc Test PDF', true, 'none', 3, true, false, 'longEdge'], label + ' : options conservées');
+            assert.deepStrictEqual([o.silent, o.deviceName, o.printBackground, o.margins.marginType, o.copies, o.collate, o.color, o.duplexMode], [true, 'OricalPDF Test PDF', true, 'none', 3, true, false, 'longEdge'], label + ' : options conservées');
             n++;
           }
         }
@@ -320,7 +320,7 @@ async function check(label, srcBytes, o, expect) {
         for (const method of L.PAPER_METHODS) {
           for (const orient of ['auto', 'portrait', 'landscape']) {
             const label = `${f} ${land ? 'paysage' : 'portrait'}, ${prof}, ${method}, envoi ${orient}`;
-            const r = L.printOptions(job, { device: 'SpinADoc Test PDF', copies: 2, collate: true, color: true, duplex: 'simplex', orient, paperMethod: method }, caps);
+            const r = L.printOptions(job, { device: 'OricalPDF Test PDF', copies: 2, collate: true, color: true, duplex: 'simplex', orient, paperMethod: method }, caps);
             assert.strictEqual(r.landscape, orient === 'auto' ? land : orient === 'landscape', label + ' : landscape');
             assert.strictEqual(r.method, method, label + ' : méthode demandée');
             assert.strictEqual(r.format, f, label + ' : format reconnu');
@@ -340,7 +340,7 @@ async function check(label, srcBytes, o, expect) {
             const si = L.sendArgs(r, true);
             assert.strictEqual(si.api, 'interne');
             assert.ok(!('pageSize' in si.args) && si.args.mediaSize.vendor_id === r.media.vendor_id && si.args.landscape === r.landscape, label + ' : appel interne (mediaSize avec code, sans pageSize)');
-            assert.deepStrictEqual([si.args.silent, si.args.deviceName, si.args.copies, si.args.collate, si.args.color, si.args.duplexMode, si.args.margins.marginType], [true, 'SpinADoc Test PDF', 2, true, true, 'simplex', 'none'], label + ' : options conservées');
+            assert.deepStrictEqual([si.args.silent, si.args.deviceName, si.args.copies, si.args.collate, si.args.color, si.args.duplexMode, si.args.margins.marginType], [true, 'OricalPDF Test PDF', 2, true, true, 'simplex', 'none'], label + ' : options conservées');
             assert.notStrictEqual(si.args.mediaSize, r.media, 'mediaSize copié (Electron ne modifie pas le plan)');
             const sp = L.sendArgs(r, false);
             assert.ok(sp.api === 'publique' && !('mediaSize' in sp.args) && sp.args.pageSize.width === W, label + ' : repli API publique');

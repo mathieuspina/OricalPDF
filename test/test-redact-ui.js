@@ -18,11 +18,11 @@ function check(name, cond, detail) {
 }
 
 (async () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-redact-in-'));
-  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-redact-out-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-redact-in-'));
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-redact-out-'));
   const file = path.join(dir, 'piege.pdf');
   fs.writeFileSync(file, await makeRedactPdf());
-  const c = await launchApp({ files: [file], env: { SPINADOC_TEST_SAVE_DIR: out } });
+  const c = await launchApp({ files: [file], env: { ORICALPDF_TEST_SAVE_DIR: out } });
   const doc = (expr) => c.ev(`import('./js/ui.js').then((m)=>{const d=m.store.active; return JSON.stringify(${expr})})`).then((x) => (x === undefined ? undefined : JSON.parse(x)));
   const zones = () => doc(`d.edits.filter((e)=>e.type==='redact')`);
   const key = (k, code, vk, mods = 0) => c.key(k, { code, windowsVirtualKeyCode: vk, modifiers: mods });

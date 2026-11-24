@@ -1,6 +1,6 @@
 // Test complet de l'écran d'accueil et de l'onglet Accueil du ruban, élément par élément.
 // Usage : node test/test-home-ui.js                      (version de développement)
-//         SPINADOC_EXE="chemin\Orical PDF.exe" node test/test-home-ui.js   (app empaquetée / portable / installée)
+//         ORICALPDF_EXE="chemin\Orical PDF.exe" node test/test-home-ui.js   (app empaquetée / portable / installée)
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -15,12 +15,12 @@ function check(name, cond, detail) {
 }
 
 (async () => {
-  const label = process.env.SPINADOC_EXE ? path.basename(process.env.SPINADOC_EXE) : 'développement';
+  const label = process.env.ORICALPDF_EXE ? path.basename(process.env.ORICALPDF_EXE) : 'développement';
   console.log(`Accueil — variante : ${label}`);
   // Fichiers « réels » : chemins avec espaces, majuscules et tirets, comme C:\Projets\1234_56 CLIENT EXEMPLE\...
   const base = path.join(os.tmpdir(), 'Spin Test Dossiers', '1234_56 CLIENT EXEMPLE');
   fs.mkdirSync(base, { recursive: true });
-  const gen = await makeAll(path.join(os.tmpdir(), 'spinadoc-home-gen'));
+  const gen = await makeAll(path.join(os.tmpdir(), 'oricalpdf-home-gen'));
   const f1 = path.join(base, 'RAPPORT - Chargement 24-25.pdf');
   const f2 = path.join(base, 'PLAN-A3 Final (v2).pdf');
   const f3 = path.join(base, 'à supprimer.pdf');
@@ -29,8 +29,8 @@ function check(name, cond, detail) {
   const f4 = path.join(absentDrive, 'Disque absent', 'plan.pdf');
   const now = Date.now();
   const recents = [f1, f2, f3, f4].map((p, i) => ({ path: p, name: path.basename(p), date: now - i * 1000 }));
-  const saveDir = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-save-'));
-  const openEnv = (list) => ({ SPINADOC_TEST_OPEN: JSON.stringify(list), SPINADOC_TEST_SAVE_DIR: saveDir });
+  const saveDir = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-save-'));
+  const openEnv = (list) => ({ ORICALPDF_TEST_OPEN: JSON.stringify(list), ORICALPDF_TEST_SAVE_DIR: saveDir });
 
   const c = await launchApp({ files: [], env: openEnv([f1]), userDataFiles: { 'recents.json': recents } });
   const J = async (e) => JSON.parse(await c.ev(e));
@@ -83,7 +83,7 @@ function check(name, cond, detail) {
     check('l\'application répond toujours après ces erreurs', (await reachable('#welcome-open')) === 'ok');
     await c.click('#recents-clear'); await sleep(400);
     check('« Vider la liste » : liste masquée', (await c.ev(`document.getElementById('welcome-recents').hidden`)) === true);
-    check('« Vider la liste » : persisté (liste vide côté application)', (await c.ev(`window.spinadoc.listRecents().then(l=>l.length)`)) === 0);
+    check('« Vider la liste » : persisté (liste vide côté application)', (await c.ev(`window.oricalpdf.listRecents().then(l=>l.length)`)) === 0);
 
     // ------------------------------------------------------------ 4. glisser-déposer
     console.log('4. Glisser-déposer');
@@ -96,7 +96,7 @@ function check(name, cond, detail) {
     };
     await drop(f2);
     check('dépôt d\'un PDF depuis l\'Explorateur : ouvert', (await tabs()) === 1 && /PLAN-A3 Final/.test(await c.ev(`document.querySelector('.doctab-name').textContent`)));
-    check('le fichier déposé apparaît dans les récents', (await c.ev(`window.spinadoc.listRecents().then(l=>l.length)`)) === 1);
+    check('le fichier déposé apparaît dans les récents', (await c.ev(`window.oricalpdf.listRecents().then(l=>l.length)`)) === 1);
     await closeAll();
     const txt = path.join(base, 'notes.txt'); fs.writeFileSync(txt, 'x');
     await drop(txt);

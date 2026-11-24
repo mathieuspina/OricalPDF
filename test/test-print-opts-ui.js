@@ -1,6 +1,6 @@
 // Impression : marges par défaut sûres (jamais vides), réglages par imprimante, marge matérielle (zone hachurée + message chiffré),
 // « Couleur » toujours sélectionnable (imprimante simulée sans couleur annoncée), imprimante PDF vectorielle, nom du travail.
-// Imprimantes SIMULÉES (SPINADOC_TEST_PRINTERS) et tâches écrites dans un dossier (SPINADOC_TEST_PRINT_DIR) : aucune impression réelle.
+// Imprimantes SIMULÉES (ORICALPDF_TEST_PRINTERS) et tâches écrites dans un dossier (ORICALPDF_TEST_PRINT_DIR) : aucune impression réelle.
 // Usage : node test/test-print-opts-ui.js
 const fs = require('fs');
 const os = require('os');
@@ -17,8 +17,8 @@ function check(name, cond, detail) {
 }
 
 (async () => {
-  const f = await makeAll(path.join(os.tmpdir(), 'spinadoc-ui-pdfs'));
-  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-print-opts-'));
+  const f = await makeAll(path.join(os.tmpdir(), 'oricalpdf-ui-pdfs'));
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-print-opts-'));
   const papers = [{ name: 'A4', w: 210, h: 297 }, { name: 'A3', w: 297, h: 420 }];
   // avec codes de papier du pilote (RawKind) et papier par défaut, comme les lit print-main.js depuis 1.3.1 (correctif du 24/11)
   const papersK = [{ name: 'A4', w: 210, h: 297, kind: 9 }, { name: 'A3', w: 297, h: 420, kind: 8 }];
@@ -28,7 +28,7 @@ function check(name, cond, detail) {
     { name: 'Autre imprimante', caps: { duplex: true, color: true, maxCopies: 99, hardMarginMm: null, papers: papersK, defaultPaper: papersK[0] } },
   ];
   let c2 = null;
-  const c = await launchApp({ files: [f.a], env: { SPINADOC_TEST_PRINT_DIR: out, SPINADOC_TEST_PRINTERS: JSON.stringify(printers) } });
+  const c = await launchApp({ files: [f.a], env: { ORICALPDF_TEST_PRINT_DIR: out, ORICALPDF_TEST_PRINTERS: JSON.stringify(printers) } });
   const key = (k, code, vk, mods = 0) => c.key(k, { code, windowsVirtualKeyCode: vk, modifiers: mods });
   const setv = (id, v) => c.ev(`(()=>{const e=document.getElementById(${JSON.stringify(id)});e.value=${JSON.stringify(v)};e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));})()`);
   const val = (id) => c.ev(`document.getElementById(${JSON.stringify(id)}).value`);
@@ -203,8 +203,8 @@ function check(name, cond, detail) {
     check('journal : une ligne par tâche dans le dossier des données', lines.length >= 5 && lines.every((l) => /^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d \| /.test(l)), lines.length);
     check('journal : orientation, format, options exactes, résultat', /420 × 297 mm \| portrait \(imposée\), feuille paysage \| format A3 \(annoncé par l'imprimante : « A3 »\) \| méthode automatique, appliquée : code de papier \(API interne\) \| Envoi : A3 \(papier de l'imprimante, code 8\), portrait \| options \{.*"landscape":false.*"vendor_id":"8".*\} \| capacités : imprimante de test \| papiers annoncés \(2\) : A4 210 × 297 mm #9 ; A3 297 × 420 mm #8 \| résultat : test/.test(log) && /"deviceName":"Autre imprimante"/.test(log), lines.slice(-1));
     check('journal : les trois méthodes (demandée et appliquée)', /méthode taille personnalisée, appliquée : taille personnalisée \(API interne\) \| Envoi : taille personnalisée 420 × 297 mm, paysage/.test(log) && /méthode papier par défaut du pilote, appliquée : papier par défaut du pilote \(API interne\) \| Envoi : papier par défaut du pilote \(A4, code 9\), paysage/.test(log), lines.slice(-3));
-    check('journal : jamais de nom de fichier ni de chemin', !/a-huit-pages|\.pdf|[A-Za-z]:\\|spinadoc-/i.test(log), log.slice(0, 300));
-    const copied = await c.ev(`(async()=>{document.getElementById('about-printlog').click(); await new Promise(r=>setTimeout(r,400)); return [document.getElementById('about-diag-msg').textContent, await window.spinadoc.printLog()];})()`);
+    check('journal : jamais de nom de fichier ni de chemin', !/a-huit-pages|\.pdf|[A-Za-z]:\\|oricalpdf-/i.test(log), log.slice(0, 300));
+    const copied = await c.ev(`(async()=>{document.getElementById('about-printlog').click(); await new Promise(r=>setTimeout(r,400)); return [document.getElementById('about-diag-msg').textContent, await window.oricalpdf.printLog()];})()`);
     check('À propos : « Copier le journal d\'impression » copie le journal', /Journal d'impression copié/.test(copied[0]) && copied[1] === log, copied[0]);
 
     console.log('9. Copies : toujours 1 à l\'ouverture (jamais mémorisées)');
@@ -231,7 +231,7 @@ function check(name, cond, detail) {
     // Nouvelle session avec le même profil (settings.json recopié) ; on y ajoute une ANCIENNE valeur « copies: 6 », qui doit être ignorée.
     const profile = JSON.parse(fs.readFileSync(path.join(c.userData, 'settings.json'), 'utf8'));
     profile.print = Object.assign({}, profile.print, { copies: 6 });
-    c2 = await launchApp({ files: [f.a], userDataFiles: { 'settings.json': profile }, env: { SPINADOC_TEST_PRINT_DIR: out, SPINADOC_TEST_PRINTERS: JSON.stringify(printers) } });
+    c2 = await launchApp({ files: [f.a], userDataFiles: { 'settings.json': profile }, env: { ORICALPDF_TEST_PRINT_DIR: out, ORICALPDF_TEST_PRINTERS: JSON.stringify(printers) } });
     await c2.waitFor(`document.querySelectorAll('.docview.active canvas').length>0`); await sleep(800);
     await c2.ev(`document.body.click()`); await c2.key('p', { code: 'KeyP', windowsVirtualKeyCode: 80, modifiers: 2 }); await sleep(1800);
     const v2 = await c2.ev(`document.getElementById('pr-copies').value`);
