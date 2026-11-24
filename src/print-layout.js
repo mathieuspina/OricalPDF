@@ -174,7 +174,7 @@
   // paysage. opts.orient ('auto' | 'portrait' | 'landscape') ne change QUE l'orientation annoncée au pilote.
   // FORMAT ANNONCÉ AU PILOTE (1.3.1, correctif du 24/11) : Electron 33 convertit pageSize (objet en micromètres OU nom 'A3') en mediaSize SANS
   // code de papier ; Chromium 130 écrit alors dmPaperWidth / dmPaperLength et laisse dmPaperSize au papier par défaut du pilote (A4). Beaucoup
-  // de pilotes de copieurs (vérifié : Canon Generic Plus PCL6, Canon UFR II, Konica Minolta, par DocumentProperties + CreateDC) ignorent ces
+  // de pilotes de copieurs (vérifié : pilotes Canon PCL6 et UFR II, Konica Minolta, par DocumentProperties + CreateDC) ignorent ces
   // dimensions et gardent A4 ; le pilote « Microsoft Print To PDF » les convertit, lui, en formulaire A3 (d'où des tests verts). Chromium
   // n'écrit dmPaperSize que si mediaSize.vendor_id est un code numérique < 256 (DMPAPER_USER) : c'est ce que fait la méthode « auto ».
   // opts.paperMethod :

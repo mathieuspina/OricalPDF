@@ -9,7 +9,7 @@ import { guardOutput } from './redact-guard.js';
 
 const { PDFLib, PdfEdit, PrintLayout: L, PrintCompose: C, PageOps } = window;
 
-const st = { internal: true, margin: L.DEFAULT_MARGIN, hard: null, doc: null, printers: [], caps: {}, cache: null, previewIdx: 0, token: 0, plan: null, timer: 0 };
+const st = { nativePrint: true, margin: L.DEFAULT_MARGIN, hard: null, doc: null, printers: [], caps: {}, cache: null, previewIdx: 0, token: 0, plan: null, timer: 0 };
 const val = (id) => $(id).value;
 const chk = (id) => $(id).checked;
 
@@ -138,7 +138,7 @@ async function refresh() {
     + (p.groups.length > 1 ? ` · ${p.groups.length} tâches (formats de feuille différents)` : '');
   { // ce qui partira vers le pilote pour cette feuille (même calcul que print-main.js)
     const plan = L.printOptions({ wMm: L.toMm(s.sheet.w), hMm: L.toMm(s.sheet.h) }, { orient: val('pr-sendorient'), paperMethod: val('pr-sendpaper') }, st.caps[val('pr-printer')]);
-    $('pr-send').textContent = L.sendText(plan, L.sendArgs(plan, st.internal).applied);
+    $('pr-send').textContent = L.sendText(plan, L.sendArgs(plan, st.nativePrint).applied);
   }
   const warns = [...new Set(p.sheets.flatMap((x) => x.plan.warnings))];
   const hardMsg = hardwareMessage(p);
@@ -306,7 +306,7 @@ export async function openPrint(doc) {
   $('pr-warn').textContent = 'Recherche des imprimantes…';
   const list = await api.printPrinters().catch(() => []);
   st.printers = list;
-  st.internal = ((await (api.printApi ? api.printApi() : Promise.resolve(null)).catch(() => null)) || { internal: true }).internal !== false;
+  st.nativePrint = ((await (api.printApi ? api.printApi() : Promise.resolve(null)).catch(() => null)) || { internal: true }).internal !== false;
   const sel = $('pr-printer');
   sel.replaceChildren();
   for (const pr of list) { const o = document.createElement('option'); o.value = pr.name; o.textContent = pr.displayName + (pr.isDefault ? ' (par défaut)' : ''); sel.append(o); }

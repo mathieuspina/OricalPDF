@@ -112,4 +112,6 @@ Signaler une faille de sécurité : [SECURITY.md](SECURITY.md). Signalements et 
   autre lecteur PDF avant de le diffuser.
 - **Pages** : après une opération de pages, les liens internes et les champs du PDF d'origine ne sont pas conservés (signets et champs créés le sont).
 - **Impression** sur imprimante physique ou traceur : non vérifiée au papier par les tests automatiques. En cas de feuille tournée ou coupée :
-  option avancée « Orientation envoyée à l'imprimante » dans la boîte d'impression, et « Copier le journal d'impression » dans À propos.
+  options avancées « Orientation envoyée à l'imprimante » et « Méthode d'envoi du format » dans la boîte d'impression (la ligne « Envoi » sous
+  l'aperçu indique ce qui part vers l'imprimante), et « Copier le journal d'impression » dans À propos. Traceurs dont le pilote ne donne pas de
+  code de papier Windows (A1, A0) : choisir le papier par « Boîte Windows… ».

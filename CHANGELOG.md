@@ -10,10 +10,16 @@ Corrections.
 - Impression en paysage : le format du papier est toujours annoncé à l'imprimante en portrait, avec l'orientation paysage indiquée à part ;
   formats usuels reconnus (A5 à A0, Letter, Legal, Tabloid) et dimensions exactes du papier annoncé par l'imprimante. Documents mêlant
   plusieurs formats : une tâche par format, chacune dans son orientation.
+- Impression sur copieur : le format du papier est maintenant annoncé à l'imprimante par son code de papier Windows (A3, A4, A5, Letter,
+  Legal, Tabloid, A2, ou le code du papier annoncé par l'imprimante) pour les formats usuels. Avant, il n'était annoncé que par ses dimensions,
+  que de nombreux pilotes de copieurs ignorent : la feuille sortait sur le papier par défaut (A4), non réduite, coupée à droite et en bas.
+- Option avancée « Méthode d'envoi du format » (Automatique, Taille personnalisée, Papier par défaut du pilote), mémorisée par imprimante ;
+  la boîte d'impression affiche sous l'aperçu ce qui part vers l'imprimante (« Envoi : A3 (…, code 8), paysage »).
 - Option avancée de la boîte d'impression « Orientation envoyée à l'imprimante » (Automatique, Portrait, Paysage), mémorisée par imprimante :
   pour un pilote qui tournerait mal la feuille ; ne change ni l'aperçu ni la mise en page.
 - Journal d'impression (200 dernières tâches, sans nom de fichier ni chemin) : « Copier le journal d'impression » dans À propos, à joindre à un
-  signalement.
+  signalement. Il indique la méthode d'envoi demandée et appliquée, le format et l'orientation exacts envoyés, les papiers annoncés par
+  l'imprimante (40 au plus) et si leur lecture a réussi ou dépassé le délai.
 
 ## 1.3.0 — 2026-11-22
 « Spin A Doc » devient « Orical PDF » (suite Orical).
