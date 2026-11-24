@@ -1,6 +1,6 @@
 # Contrat de licence utilisateur final — Orical PDF
 
-Version du 12 novembre 2026. Éditeur : Orical (« l'Éditeur »). Logiciel : Orical PDF, lecteur et éditeur de documents PDF pour Windows,
+Version du 24 novembre 2026. Éditeur : Orical (« l'Éditeur »). Logiciel : Orical PDF, lecteur et éditeur de documents PDF pour Windows,
 dans la version installable ou portable distribuée par l'Éditeur (« le Logiciel »).
 
 En installant ou en utilisant le Logiciel, vous acceptez le présent contrat. Si vous ne l'acceptez pas, n'installez pas et n'utilisez pas le
@@ -57,7 +57,9 @@ impérative contraire (notamment en cas de faute lourde ou intentionnelle, ou de
 
 ## 7. Données personnelles
 
-Le Logiciel fonctionne entièrement hors ligne et ne collecte ni n'envoie aucune donnée : voir POLITIQUE-CONFIDENTIALITE.md.
+Le Logiciel fonctionne hors ligne et ne collecte ni n'envoie aucune donnée personnelle ni aucun document. Seule exception, désactivable :
+la recherche de mise à jour (une requête HTTPS vers orical.app, une fois par jour au plus, désactivable) ; elle ne transmet aucune donnée personnelle ; le serveur
+voit techniquement l'adresse IP de la connexion, comme tout serveur web. Voir POLITIQUE-CONFIDENTIALITE.md.
 
 ## 8. Mises à jour et durée
 

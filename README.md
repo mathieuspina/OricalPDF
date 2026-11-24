@@ -1,8 +1,9 @@
 # Orical PDF
 
 Lecteur et éditeur de PDF pour Windows, pensé pour les plans (charpente, bâtiment) : annoter, mesurer, organiser les pages, imprimer à la taille
-réelle, comparer deux indices, reconnaître le texte, créer et remplir des formulaires, caviarder. **100 % hors-ligne** : aucune connexion réseau,
-aucune télémétrie, aucune mise à jour automatique. Interface en français. Aide intégrée : touche **F1**.
+réelle, comparer deux indices, reconnaître le texte, créer et remplir des formulaires, caviarder. **Fonctionne hors ligne** : aucune télémétrie, aucun
+document ni donnée personnelle envoyés ; seule connexion réseau, désactivable : la recherche de mise à jour (une requête vers orical.app,
+une fois par jour au plus ; rien n'est installé automatiquement). Interface en français. Aide intégrée : touche **F1**.
 
 Version actuelle : **1.0.0** (historique : [CHANGELOG.md](CHANGELOG.md)).
 
@@ -78,14 +79,15 @@ npm start
 
 ## Architecture (résumé)
 
-- `main.js`, `preload.js`, `print-main.js`, `app-info.js` : processus principal Electron (fenêtre, fichiers, impression, garde réseau, diagnostic).
+- `main.js`, `preload.js`, `print-main.js`, `app-info.js`, `update-main.js` : processus principal Electron (fenêtre, fichiers, impression, garde réseau, diagnostic, recherche de mise à jour).
 - `src/*.js` : logique pure (UMD, testée sous Node) : modèle de document et historique (`doc-model`), géométrie des objets (`shapes`), écriture
   du PDF (`pdf-edit`, seul module qui écrit), opérations de pages (`page-ops`), signets (`outline`), mesure, numérotation, formulaires (`forms`,
   `fields`, `fields-pdf`), OCR, comparaison, caviardage (`redact*`), impression (`print-*`).
 - `src/js/*.js` : interface (modules ES, un fichier par fonction) ; `src/js/annot/` : annotations ; aide intégrée : `help-content.js`.
 - Aperçu et écriture partagent les mêmes primitives : ce qui est vu est ce qui est écrit.
 - Bibliothèques embarquées (`vendor/`) : pdf.js (affichage), pdf-lib (écriture), tesseract.js (OCR), toutes sous licence permissive.
-- Sécurité : CSP stricte (aucune ressource externe), navigation et nouvelles fenêtres bloquées, requêtes réseau bloquées et comptées.
+- Sécurité : CSP stricte (aucune ressource externe), navigation et nouvelles fenêtres bloquées, requêtes réseau des fenêtres bloquées et comptées ;
+  seule requête de l'application : recherche de mise à jour par le processus principal (`src/update-check.js` valide strictement la réponse).
 
 ## Licence
 

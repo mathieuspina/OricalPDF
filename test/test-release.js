@@ -63,6 +63,34 @@ check('package.json : scripts checksums, release-notes, test:update', ['checksum
   fs.rmSync(dev, { recursive: true, force: true }); fs.rmSync(res, { recursive: true, force: true });
 }
 
+// 3 bis. Fichier de recherche de mise à jour (dist/latest.json) : produit par scripts/make-latest-json.js, validé par le MÊME parse que l'application
+{
+  const UpdateCheck = require('../src/update-check.js');
+  const LJ = require('../scripts/make-latest-json.js');
+  check('package.json : script latest-json', pkg.scripts['latest-json'] === 'node scripts/make-latest-json.js');
+  const fake = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-latest-'));
+  fs.writeFileSync(path.join(fake, 'package.json'), JSON.stringify({ version: '9.8.7' }));
+  fs.writeFileSync(path.join(fake, 'CHANGELOG.md'), '# Journal\n\n## 9.8.7 — 2026-12-01\nRésumé.\n- Point 1 sur\n  deux lignes\n- Point 2 <b>gras</b>\n### Détail\n' +
+    Array.from({ length: 12 }, (_, i) => `- Ligne ${i + 3}`).join('\n') + '\n\n## 9.8.6 — 2026-11-01\n- Ancien\n');
+  const r0 = LJ.main(fake);
+  check('latest-json : refus (code 2) si l\'installeur de la version est absent', r0.code === 2 && /Installeur absent/.test(r0.message) && !fs.existsSync(path.join(fake, 'dist', 'latest.json')), r0);
+  fs.mkdirSync(path.join(fake, 'dist'));
+  fs.writeFileSync(path.join(fake, 'dist', 'OricalPDF-Setup-9.8.7.exe'), 'installeur factice');
+  const r1 = LJ.main(fake);
+  const written = r1.code === 0 ? fs.readFileSync(path.join(fake, 'dist', 'latest.json'), 'utf8') : '';
+  const p = UpdateCheck.parse(written);
+  check('latest-json : fichier écrit, accepté par UpdateCheck.parse (schéma 1, version, page de téléchargement, empreinte de l\'installeur)',
+    r1.code === 0 && p.ok && p.info.version === '9.8.7' && p.info.url === 'https://orical.app/orical-pdf/' && p.info.sha256 === sha256(path.join(fake, 'dist', 'OricalPDF-Setup-9.8.7.exe')) && /^\d{4}-\d\d-\d\d$/.test(p.info.date), { r1, p });
+  check('latest-json : 8 premières lignes de la section (point de liste + ligne de suite réunis, titres écartés, autre version exclue)',
+    p.ok && p.info.notes.length === 8 && p.info.notes[0] === 'Résumé.' && p.info.notes[1] === 'Point 1 sur deux lignes' && p.info.notes[2] === 'Point 2 <b>gras</b>' && !p.info.notes.some((n) => /Ancien|Détail/.test(n)), p.info && p.info.notes);
+  check('latest-json : refus si la section de la version manque', !LJ.build({ changelog: '# x\n## 1.0.0\n- a\n', version: '9.8.7', sha: 'a'.repeat(64), date: '2026-12-01' }).ok);
+  check('latest-json : refus si le résultat est invalide (empreinte incorrecte)', !LJ.build({ changelog: '## 9.8.7\n- a\n', version: '9.8.7', sha: 'xyz', date: '2026-12-01' }).ok);
+  fs.rmSync(fake, { recursive: true, force: true });
+  const rel = fs.readFileSync(path.join(root, 'RELEASING.md'), 'utf8');
+  check('RELEASING : latest.json transmis APRÈS la Release et la page de téléchargement, jamais avant ; retrait = republier l\'ancien',
+    /npm run latest-json/.test(rel) && /JAMAIS[^.]*latest\.json[^.]*avant/i.test(rel) && /republier l'ancien latest\.json/.test(rel));
+}
+
 // 4. Dépôt : aucun binaire suivi, dist/ ignoré
 const tracked = spawnSync('git', ['ls-files'], { cwd: root, encoding: 'utf8' }).stdout.split('\n');
 check('git : aucun .exe / .msi / .7z suivi', !tracked.some((f) => /\.(exe|msi|7z|blockmap)$/i.test(f)), tracked.filter((f) => /\.(exe|msi|7z)$/i.test(f)));

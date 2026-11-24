@@ -1,19 +1,28 @@
 # Politique de confidentialité — Orical PDF
 
-Version du 12 novembre 2026. Éditeur : Orical.
+Version du 24 novembre 2026. Éditeur : Orical.
 
 ## En résumé
 
-**Orical PDF ne collecte, ne transmet et ne vend aucune donnée.** Le logiciel fonctionne entièrement hors ligne : il n'a ni compte
-utilisateur, ni télémétrie, ni statistiques d'usage, ni rapport de plantage automatique, ni mise à jour automatique, ni publicité.
+**Orical PDF ne collecte, ne transmet et ne vend aucune donnée personnelle, et n'envoie aucun document.** Le logiciel fonctionne hors
+ligne : il n'a ni compte utilisateur, ni télémétrie, ni statistiques d'usage, ni rapport de plantage automatique, ni installation
+automatique, ni publicité. Seule connexion réseau, désactivable : la recherche de mise à jour décrite ci-dessous.
 
 ## Ce qui est vérifié dans le logiciel
 
-- **Aucune connexion réseau** : toute requête réseau (http, https, ws, ftp…) émise par l'application est **bloquée** et comptée par une
-  garde intégrée ; le compteur est visible dans Réglages > À propos (attendu : 0). Les pages de l'application sont en outre limitées par une
+- **Fenêtres de l'application sans réseau** : toute requête réseau (http, https, ws, ftp…) émise par les fenêtres de l'application est
+  **bloquée** et comptée par une garde intégrée ; le compteur est visible dans Réglages > À propos (attendu : 0). Les pages de l'application sont en outre limitées par une
   politique de sécurité de contenu (CSP) qui n'autorise que les fichiers de l'application elle-même. Des tests automatiques vérifient ces
   deux points à chaque version.
-- **Pas de rapport de plantage** ni de module de mise à jour : aucun n'est inclus.
+- **Pas de rapport de plantage** : aucun n'est inclus.
+- **Recherche de mise à jour** (seule connexion réseau) : au plus une fois par jour, environ 10 secondes après l'ouverture, ou quand vous
+  cliquez sur « Rechercher maintenant », le programme principal (jamais les fenêtres) envoie UNE requête HTTPS GET à l'adresse fixe
+  `https://orical.app/orical-pdf/latest.json` pour lire le numéro de la dernière version. La requête ne contient aucune donnée
+  personnelle, aucun document, aucun identifiant, ni la version installée (agent utilisateur générique, sans cookie). Comme pour tout
+  site web, le serveur voit techniquement l'adresse IP de la connexion (et l'heure de la requête). Rien n'est installé automatiquement :
+  « Télécharger » ouvre la page de téléchargement dans votre navigateur. Désactivation : Réglages > Mises à jour (case « Rechercher
+  automatiquement ») ; en entreprise, la stratégie `DisableUpdateCheck` (DWORD = 1) sous `HKLM\Software\Policies\Orical\OricalPDF`
+  (ou HKCU) désactive toute recherche, automatique et manuelle.
 - **Vérification orthographique** : assurée par le correcteur intégré à Windows, sur le poste ; Orical PDF ne télécharge aucun dictionnaire.
 - **Reconnaissance de texte (OCR)** : faite sur le poste, avec des modèles de langue livrés avec le logiciel ; aucun document n'est envoyé.
 

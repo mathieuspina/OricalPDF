@@ -28,6 +28,7 @@ import { initAnim, startupSpin, getAnim, setAnim } from './anim.js';
 import * as Settings from './settings.js';
 import * as FavUI from './favorites-ui.js';
 import * as EditUI from './editable-ui.js';
+import * as UpdateUI from './update-ui.js';
 
 const { DocModel } = window;
 const APP = 'Orical PDF';
@@ -580,6 +581,7 @@ $('btn-about').addEventListener('click', async () => {
   $('about-license').textContent = info.license;
   $('about-copyright').textContent = info.copyright;
   $('about-net').textContent = `Requêtes réseau bloquées depuis le démarrage : ${info.net.blocked}.`;
+  $('about-update').textContent = await UpdateUI.aboutText();
   $('about-diag-msg').textContent = '';
   $('about-licenses').textContent = info.licenses;
   closeDialog('settings');
@@ -678,6 +680,7 @@ document.addEventListener('keydown', async (e) => {
   Measures.initMeasure();
   initPan();
   Print.initPrint();
+  UpdateUI.initUpdate();
   Pages.initCropBar();
   NumUI.init();
   FormsUI.init();

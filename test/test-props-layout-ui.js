@@ -128,7 +128,26 @@ const TOOLS = [
     await c.ev(`(()=>{document.getElementById('savemode').hidden=true; document.getElementById('edit-restore-msg').textContent='Restauration des annotations modifiables de « Plan_de_fondations_indice_B_nom_de_fichier_tres_long_sans_espace.pdf »…'; document.getElementById('edit-restore').hidden=false; return 1})()`); await sleep(150);
     await overflow('Bandeau de restauration des annotations modifiables (nom très long)', '#edit-restore');
     await c.ev(`(()=>{document.getElementById('edit-restore').hidden=true; return 1})()`);
-    await c.click('#btn-settings'); await sleep(200); await overflow('Réglages (annotations : modifiables ou aplaties)', '#settings .dialog'); await c.click('#settings-close'); await sleep(150);
+    await c.click('#btn-settings'); await sleep(200); await overflow('Réglages (annotations : modifiables ou aplaties ; mises à jour, 2 colonnes)', '#settings .dialog');
+    // 1.4.0 : la boîte Réglages tient dans la fenêtre (aucun défilement, « Fermer » visible) ; mention d'administrateur affichée (texte le plus long)
+    await c.ev(`(()=>{document.getElementById('opt-update-policy').hidden=false; document.getElementById('update-result').textContent='Impossible de joindre le serveur.'; return 1})()`); await sleep(100);
+    await overflow('Réglages : « Désactivée par votre administrateur » et résultat de recherche', '#settings .dialog');
+    {
+      const fit = JSON.parse(await c.ev(`(()=>{const d=document.querySelector('#settings .dialog'); const b=document.getElementById('settings-close').getBoundingClientRect(); return JSON.stringify({ch:d.clientHeight, sh:d.scrollHeight, bottom:Math.round(b.bottom), vh:innerHeight})})()`));
+      check('Réglages : la boîte tient dans la fenêtre sans défiler, « Fermer » visible', fit.sh <= fit.ch + 1 && fit.bottom <= fit.vh, fit);
+    }
+    await c.ev(`(()=>{document.getElementById('opt-update-policy').hidden=true; document.getElementById('update-result').textContent=''; return 1})()`);
+    await c.click('#settings-close'); await sleep(150);
+    // Bandeau de mise à jour (1.4.0) : version longue, notes longues dépliées, empreinte de 64 caractères sans espace
+    await c.ev(`(()=>{document.getElementById('update-title').textContent='Orical PDF 123456.123456.123456 est disponible'; document.getElementById('update-date').textContent='publiée le 31/12/2026';
+      const ul=document.getElementById('update-notes'); ul.textContent=''; for (let i=0;i<20;i++){const li=document.createElement('li'); li.textContent='Note '+i+' : '+'impression_A3_paysage_sans_espace_'.repeat(5); ul.appendChild(li);}
+      document.getElementById('update-sha').textContent='0123456789abcdef'.repeat(4); document.getElementById('update-more').hidden=false; document.getElementById('update-banner').hidden=false; return 1})()`); await sleep(150);
+    await overflow('Bandeau de mise à jour (version longue, 20 notes longues dépliées, empreinte)', '#update-banner');
+    {
+      const bb = JSON.parse(await c.ev(`(()=>{const r=document.getElementById('update-banner').getBoundingClientRect(); return JSON.stringify({top:Math.round(r.top), bottom:Math.round(r.bottom), right:Math.round(r.right), vw:innerWidth, vh:innerHeight})})()`));
+      check('bandeau de mise à jour : entièrement dans la fenêtre, sous la barre de titre', bb.top >= 48 && bb.bottom <= bb.vh && bb.right <= bb.vw, bb);
+    }
+    await c.ev(`(()=>{document.getElementById('update-banner').hidden=true; document.getElementById('update-more').hidden=true; return 1})()`);
     await c.ev(`(()=>{document.getElementById('fldorder').hidden=true; return 1})()`);
     // Favoris (1.1.0) : menu du clic droit (commande, favori, liste non épinglable) et groupe « Favoris » de l'Accueil (libellés longs)
     {

@@ -24,6 +24,12 @@ contextBridge.exposeInMainWorld('oricalpdf', {
   diagnostic: () => ipcRenderer.invoke('app:diag'),
   printLog: () => ipcRenderer.invoke('app:print-log'),
   netStats: () => ipcRenderer.invoke('app:net'),
+  // Recherche de mise à jour (seule connexion réseau, faite par le processus principal)
+  updateState: () => ipcRenderer.invoke('update:state'),
+  updateCheck: () => ipcRenderer.invoke('update:check'),
+  updateSet: (patch) => ipcRenderer.invoke('update:set', patch),
+  updateOpen: () => ipcRenderer.invoke('update:open'),
+  onUpdateAvailable: (cb) => ipcRenderer.on('update:available', (_e, info) => cb(info)),
   defaultApps: () => ipcRenderer.invoke('app:default-apps'),
   setDirty: (v) => ipcRenderer.send('doc:dirty', v),
   onOpenFile: (cb) => ipcRenderer.on('open-file', (_e, p) => cb(p)),

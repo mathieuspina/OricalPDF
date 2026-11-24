@@ -61,6 +61,8 @@ function check(name, cond, detail) {
     check('recherche d\'un raccourci « Ctrl+D » : table des raccourcis', r.includes('raccourcis'), r);
     r = await search('caviarder');
     check('recherche d\'une commande déplacée : la rubrique « Où sont les commandes ? » répond', r.includes('ruban'), r);
+    r = await search('mise a jour orical.app');
+    check('recherche « mise a jour orical.app » (sans accents) : rubrique « Mises à jour »', r.includes('mises-a-jour'), r);
     r = await search('zzzqqq');
     check('aucun résultat : message', r.length === 0 && /Aucune rubrique/.test(await c.ev(`document.getElementById('help-count').textContent`)));
     await c.click('#help-q'); await c.key('Escape', { code: 'Escape', windowsVirtualKeyCode: 27 }); await sleep(100);
@@ -78,7 +80,8 @@ function check(name, cond, detail) {
     console.log('2. À propos et diagnostic');
     await c.click('#btn-settings'); await sleep(250); await c.click('#btn-about'); await sleep(400);
     const ab = await c.ev(`JSON.stringify({v:document.getElementById('about-version').textContent, c:document.getElementById('about-copyright').textContent, o:document.getElementById('about-offline').textContent, l:document.getElementById('about-licenses').textContent.length, missing:/introuvable/i.test(document.getElementById('about-licenses').textContent.slice(0,200))})`).then(JSON.parse);
-    check('À propos : version, mention « Tous droits réservés », « 100 % hors-ligne », licences tierces', ab.v.includes(require('../package.json').version) && /Tous droits réservés/.test(ab.c) && /100 % hors-ligne, aucune donnée envoyée/.test(ab.o) && ab.l > 1000 && !ab.missing, ab);
+    check('À propos : version, mention « Tous droits réservés », « fonctionne hors ligne » + seule exception (recherche de mise à jour, dernière recherche), licences tierces', ab.v.includes(require('../package.json').version) && /Tous droits réservés/.test(ab.c) &&
+      /Fonctionne hors ligne, aucun document ni donnée personnelle envoyés/.test(ab.o) && /Seule exception, désactivable : la recherche de mise à jour/.test(ab.o) && /Dernière recherche de mise à jour : jamais\./.test(ab.o) && !/100 % hors-ligne/.test(ab.o) && ab.l > 1000 && !ab.missing, ab);
     const ck2 = JSON.parse(await c.ev(CLICKABLE('#about')));
     const ov2 = JSON.parse(await c.ev(OVERFLOW('#about .dialog')));
     check(`À propos : cliquable (${ck2.n}) et sans débordement`, ck2.bad.length === 0 && ov2.bad.length === 0, [ck2.bad, ov2.bad].map((x) => x.slice(0, 3)));

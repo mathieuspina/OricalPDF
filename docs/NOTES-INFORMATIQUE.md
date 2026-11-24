@@ -17,8 +17,19 @@ Version de référence : 1.4.0. Tout ce qui suit est vérifié dans la configura
 - Icône des fichiers PDF : elle n'apparaît que pour les PDF dont l'application par défaut est Orical PDF (choix de l'utilisateur ; la version
   portable n'écrit rien). Windows garde les icônes en cache : après une installation ou une mise à jour, si l'ancienne icône reste affichée,
   `ie4uinit.exe -show` (sans droits administrateur) ou une réouverture de session la rafraîchit.
-- **Aucun** service Windows, **aucune** tâche planifiée, **aucun** pilote ni imprimante ajoutés, **aucune** connexion réseau, **aucune** télémétrie, **aucune** mise à jour
-  automatique. Toute tentative de requête réseau de l'application est bloquée et comptée (Réglages > À propos).
+- **Aucun** service Windows, **aucune** tâche planifiée, **aucun** pilote ni imprimante ajoutés, **aucune** télémétrie, **aucune** installation
+  automatique. Toute requête réseau des fenêtres de l'application est bloquée et comptée (Réglages > À propos).
+- **Seule connexion réseau : la recherche de mise à jour** (depuis la 1.4.0). Le processus principal envoie au plus une fois par jour
+  (environ 10 s après l'ouverture, ou sur « Rechercher maintenant ») une requête HTTPS GET vers `https://orical.app/orical-pdf/latest.json`
+  (port 443) : ni donnée personnelle, ni document, ni identifiant, ni version installée (agent utilisateur générique, sans cookie).
+  Certificat TLS toujours vérifié (magasin de certificats de Windows, proxy du système). Réponse plafonnée à 64 Ko, délai 8 s, redirections
+  seulement vers le même hôte. Si une mise à jour existe, un bandeau propose « Télécharger » (ouvre le navigateur) : rien n'est installé seul.
+  - **Pare-feu / proxy** : autoriser `orical.app` (HTTPS) si la recherche est souhaitée ; sinon, un blocage est sans conséquence (échec
+    silencieux de la recherche automatique).
+  - **Désactiver pour tous** (stratégie) : valeur DWORD `DisableUpdateCheck` = `1` sous `HKLM\Software\Policies\Orical\OricalPDF` (ou
+    `HKCU\Software\Policies\Orical\OricalPDF`). Recherche automatique ET manuelle désactivées ; la case des Réglages est grisée avec la mention
+    « Désactivée par votre administrateur ». Absence de clé = recherche autorisée (l'utilisateur peut la désactiver dans Réglages > Mises à jour).
+    Exemple : `reg add "HKLM\Software\Policies\Orical\OricalPDF" /v DisableUpdateCheck /t REG_DWORD /d 1 /f`
 
 ## Emplacements
 
@@ -66,7 +77,7 @@ Get-FileHash "$env:LOCALAPPDATA\Programs\Orical PDF\Orical PDF.exe" -Algorithm S
 
 ## Mises à jour
 
-Aucune mise à jour automatique (l'application ne se connecte jamais à Internet). Pour mettre à jour : lancer le nouvel installeur
+Aucune installation automatique (la recherche de mise à jour, désactivable, ne fait que signaler une nouvelle version). Pour mettre à jour : lancer le nouvel installeur
 par-dessus l'ancien, sans désinstaller (`OricalPDF-Setup-x.y.z.exe /S` en silencieux). Le programme est remplacé ; `%APPDATA%\Orical PDF`
 (réglages, récents, bibliothèque) est conservé.
 

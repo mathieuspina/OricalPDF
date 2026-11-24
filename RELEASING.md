@@ -1,7 +1,8 @@
 # Publier une version d'Orical PDF
 
 Procédure pas à pas, sur le poste de développement (Windows, Node.js 20 ou plus, dépôt à jour, `gh` connecté au dépôt GitHub).
-Règles permanentes : **jamais** d'exécutable ni de PDF dans git (les binaires vont uniquement dans la Release GitHub), 100 % hors-ligne,
+Règles permanentes : **jamais** d'exécutable ni de PDF dans git (les binaires vont uniquement dans la Release GitHub), fenêtres sans
+réseau (seule connexion : recherche de mise à jour vers orical.app, désactivable),
 licences permissives, aucun nom réel (client, entreprise, serveur, personne, chantier, chemin local) dans les notes ni les messages.
 
 ## 1. Changer la version
@@ -141,12 +142,30 @@ de `dist/RELEASE-NOTES-x.y.z.md`, joindre les trois fichiers, « Save draft », 
 - Télécharger l'installeur depuis la Release et vérifier son empreinte (`Get-FileHash … -Algorithm SHA256`) contre `SHA256SUMS.txt`.
 - Prévenir les collègues avec le lien de la Release et la marche à suivre ci-dessous.
 
+## 9. Annoncer la version à la recherche de mise à jour (dist/latest.json)
+
+Depuis la 1.4.0, l'application lit au plus une fois par jour `https://orical.app/orical-pdf/latest.json` (processus principal, désactivable).
+
+```
+npm run latest-json
+```
+
+- Écrit `dist/latest.json` (schéma 1 : version de package.json, date du jour, page `https://orical.app/orical-pdf/`, SHA-256 de
+  `dist/OricalPDF-Setup-x.y.z.exe`, 8 premières lignes de la section du CHANGELOG), validé par le même `UpdateCheck.parse` que l'application.
+  Refus (code 2) si l'installeur manque ou si le fichier serait refusé par l'application. L'empreinte doit être celle de l'installeur publié.
+- Ordre OBLIGATOIRE : 1) Release publiée et installeur téléchargeable ; 2) page de téléchargement du site mise à jour ; 3) SEULEMENT ALORS,
+  transmettre `dist/latest.json` à la personne qui publie le site (à placer à `https://orical.app/orical-pdf/latest.json`).
+  Ne JAMAIS publier latest.json avant que l'installeur soit réellement téléchargeable (les postes afficheraient un lien mort).
+- Retirer une version (problème découvert après publication) : republier l'ancien latest.json (celui de la version précédente) ; les postes
+  déjà à jour ne sont pas rétrogradés (seule une version STRICTEMENT plus récente est proposée).
+- Aucun binaire ni latest.json dans git (dist/ est ignoré).
+
 ## Checklist de la première publication (dépôt rendu public)
 
 À faire à la main, dans cet ordre. Rien n'est publié tant que le dépôt est privé et que la Release est en brouillon.
 
 **Réglages du dépôt GitHub** (Settings > General)
-- [ ] Description courte (ex. « Lecteur et éditeur de PDF pour Windows, 100 % hors-ligne, en français ») et sujets (Topics) :
+- [ ] Description courte (ex. « Lecteur et éditeur de PDF pour Windows, hors ligne, en français ») et sujets (Topics) :
       `pdf`, `pdf-editor`, `windows`, `electron`, `offline`, `ocr`, `french`.
 - [ ] Features : décocher **Issues**, **Projects**, **Wiki** si inutile, **Discussions** ; Settings > Actions > General : **Disable actions**.
       (Si les Issues restent fermées, CONTRIBUTING.md doit indiquer un autre moyen de signaler un bogue.)
@@ -173,8 +192,8 @@ de `dist/RELEASE-NOTES-x.y.z.md`, joindre les trois fichiers, « Save draft », 
 
 ## Mettre à jour un poste
 
-Orical PDF n'a **pas de mise à jour automatique** : il ne se connecte jamais à Internet (principe du 100 % hors-ligne). Pour passer à une
-nouvelle version :
+Orical PDF n'installe **rien automatiquement** : depuis la 1.4.0, il signale seulement une nouvelle version (recherche une fois par jour au
+plus, désactivable) et « Télécharger » ouvre la page de téléchargement. Pour passer à une nouvelle version :
 
 1. Fermer Orical PDF.
 2. Télécharger `OricalPDF-Setup-x.y.z.exe` (et, si le service informatique le demande, vérifier son empreinte avec `SHA256SUMS.txt`).

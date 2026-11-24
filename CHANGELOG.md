@@ -4,6 +4,15 @@ Une ligne par fonction importante. Les dates sont celles du dépôt. Les version
 Pour la mise à jour d'un poste, voir [RELEASING.md](RELEASING.md#mettre-à-jour-un-poste).
 
 ## 1.4.0 — en préparation
+- Tampons techniques pour les plans : 33 symboles de charpente, bardage, couverture et repères (onglet Annoter).
+- Impression sur copieur : le format A3 / A4… est annoncé par son code de papier Windows ; plus de feuille A3 sortie en A4 coupée.
+- Boîte d'impression : copies, papier, pages par feuille et échelle reviennent aux valeurs par défaut à chaque ouverture.
+- Fermer puis relancer Orical PDF après une impression fonctionne de nouveau.
+- Recherche de mise à jour (une fois par jour au plus, désactivable) : bandeau avec lien vers la page de téléchargement.
+- Journal d'impression à joindre à un signalement (Réglages > À propos).
+- Nouvelle identité d'installation : désinstaller d'abord la version précédente (réglages non repris).
+- Détail ci-dessous.
+
 Tampons techniques pour annoter les plans (charpente, bardage, couverture, bâtiment).
 - Onglet Annoter > Tampons techniques : 33 silhouettes schématiques, sans cotes ni échelle, posées d'un clic puis agrandies aux poignées
   (proportions gardées, Maj = libres), tournées, copiées, annulables comme les autres tampons ; miniatures dessinées à partir de la même géométrie.
@@ -14,6 +23,17 @@ Tampons techniques pour annoter les plans (charpente, bardage, couverture, bâti
 - Panneau Propriétés : libellé modifiable (ex. « IPE 200 »), couleur (noir pour les profilés, rouge pour les repères par défaut),
   plein ou contour, épaisseur du trait (proportionnelle à la taille du tampon), opacité.
 - Favoris : clic droit sur une miniature pour épingler un symbole dans l'onglet Accueil.
+
+Recherche de mise à jour (seule connexion réseau de l'application, désactivable).
+- Au plus une fois par jour, environ 10 secondes après l'ouverture (jamais pendant une impression), le programme principal lit
+  `https://orical.app/orical-pdf/latest.json` : une requête HTTPS, certificat vérifié, sans donnée personnelle, sans document, sans
+  identifiant ni numéro de version envoyés. Les fenêtres de l'application restent sans aucun accès réseau.
+- Si une version plus récente existe : bandeau « Orical PDF x.y.z est disponible » (date, notes, empreinte SHA-256 vérifiable avec
+  Get-FileHash) ; « Télécharger » ouvre la page de téléchargement dans le navigateur (rien n'est installé seul), « Plus tard »,
+  « Ignorer cette version ».
+- Réglages > Mises à jour : case « Rechercher automatiquement une mise à jour (une fois par jour) », bouton « Rechercher maintenant » ;
+  À propos : date de la dernière recherche. En entreprise : stratégie `DisableUpdateCheck` (voir docs/NOTES-INFORMATIQUE.md).
+- Contrat de licence et politique de confidentialité mis à jour en conséquence (version du 24 novembre 2026).
 
 Installation et données.
 - Nouvelle identité d'installation (`com.orical.pdf`), données dans `%APPDATA%\Orical PDF`, association « Ouvrir avec » `OricalPDF.pdf`

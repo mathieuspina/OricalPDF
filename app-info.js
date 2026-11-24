@@ -1,6 +1,6 @@
 // Processus principal : garde réseau, informations « À propos » et diagnostic.
-//  - installNetGuard : toute requête http(s) / ws(s) / ftp de la session est BLOQUÉE et comptée (l'application est 100 % hors-ligne ; ce
-//    compteur prouve qu'aucune donnée n'est envoyée). Seuls les schémas locaux (file, data, blob, devtools, chrome-extension) passent.
+//  - installNetGuard : toute requête http(s) / ws(s) / ftp de la session est BLOQUÉE et comptée (les fenêtres sont hors ligne ; ce
+//    compteur prouve qu'aucune donnée n'en part ; seule requête de l'application : update-main.js, processus principal, autre session). Seuls les schémas locaux (file, data, blob, devtools, chrome-extension) passent.
 //  - about : nom, version, date de build (build-info.json écrit par scripts/build-info.js avant electron-builder), licences tierces.
 //  - diagnostic : version, Windows, mémoire, écrans (résolution, mise à l'échelle), noms des imprimantes. AUCUN nom de fichier, chemin ni
 //    contenu de document ; le nom d'utilisateur Windows est masqué s'il apparaît dans un nom d'imprimante.

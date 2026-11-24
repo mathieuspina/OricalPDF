@@ -7,6 +7,7 @@ const PrintMain = require('./print-main.js');
 const AppInfo = require('./app-info.js');
 const WindowState = require('./src/window-state.js');
 const UserData = require('./src/user-data.js');
+const UpdateMain = require('./update-main.js');
 
 // Nom affiché dans toutes les boîtes natives, et dossier de données stable (dev et version installée) : %APPDATA%\Orical PDF
 // (src/user-data.js). ORICALPDF_USER_DATA : dossier alternatif des tests automatisés.
@@ -128,6 +129,8 @@ function createWindow() {
   win.on('leave-full-screen', () => { if (!win.isMinimized()) winFlags.fullScreen = false; });
 
   win.loadFile(path.join(__dirname, 'src', 'index.html'));
+  // Recherche de mise à jour automatique (au plus une fois par jour, ~10 s après l'ouverture ; voir update-main.js)
+  win.webContents.once('did-finish-load', () => UpdateMain.schedule());
 
   // Aucune navigation ni fenêtre externe depuis l'application.
   win.webContents.on('will-navigate', (e) => e.preventDefault());
@@ -147,7 +150,7 @@ function createWindow() {
 
 app.whenReady().then(() => {
   Menu.setApplicationMenu(null);
-  AppInfo.installNetGuard(require('electron').session.defaultSession); // 100 % hors-ligne : toute requête réseau est bloquée et comptée
+  AppInfo.installNetGuard(require('electron').session.defaultSession); // fenêtres hors ligne : toute requête réseau est bloquée et comptée (recherche de mise à jour : update-main.js, autre session)
   pending = pdfsFromArgs(process.argv).concat(pending); // + fichiers d'un deuxième lancement arrivés avant que l'application soit prête
   createWindow();
 });
@@ -336,11 +339,14 @@ ipcMain.handle('win:is-fullscreen', () => !!win && win.isFullScreen());
 ipcMain.handle('app:about', () => AppInfo.about(app, __dirname, app.isPackaged ? process.resourcesPath : null));
 // Diagnostic (sans nom de fichier, chemin ni contenu) : copié dans le presse-papiers et renvoyé.
 ipcMain.handle('app:diag', async () => {
-  const text = await AppInfo.diagnostic(app, require('electron').screen, win.webContents, __dirname);
+  const text = (await AppInfo.diagnostic(app, require('electron').screen, win.webContents, __dirname)).replace(/\s*$/, '\n') + (await UpdateMain.diagLine()) + '\n';
   clipboard.writeText(text);
   return text;
 });
 ipcMain.handle('app:net', () => AppInfo.netStats());
+// Recherche de mise à jour (processus principal seulement) : update:state / update:check / update:set / update:open
+UpdateMain.init({ app, electron: require('electron'), readSettings: () => readJson('settings.json', {}), writeSettings: (s) => writeJson('settings.json', s),
+  isPrinting: () => PrintMain.active(), getWin: () => win });
 // Journal d'impression (sans nom de fichier, chemin ni contenu ; imprimantes masquées) : copié dans le presse-papiers et renvoyé.
 ipcMain.handle('app:print-log', () => {
   const text = PrintMain.readLog() || "Journal d'impression vide : aucune impression envoyée depuis la version 1.3.1.\n";

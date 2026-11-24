@@ -17,8 +17,9 @@ donnée réelle.
 
 ## Rappel : application hors-ligne
 
-Orical PDF fonctionne entièrement hors-ligne : aucune connexion réseau, aucune télémétrie, aucune mise à jour automatique. Toute tentative
-de requête réseau de l'application est bloquée et comptée (Réglages > À propos). Les documents ouverts ne quittent jamais le poste.
+Orical PDF fonctionne hors ligne : aucune télémétrie, aucun document envoyé. Toute tentative de requête réseau des fenêtres de
+l'application est bloquée et comptée (Réglages > À propos). Seule connexion, désactivable : la recherche de mise à jour (une requête HTTPS
+vers orical.app, une fois par jour au plus, réponse validée strictement ; rien n'est installé automatiquement). Les documents ouverts ne quittent jamais le poste.
 
 ## Versions prises en charge
 

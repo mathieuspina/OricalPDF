@@ -49,12 +49,19 @@ check('EULA en texte brut : titres, gras, code et liens simplifiés, fins de lig
   const hit = Object.entries(visible).filter(([, s]) => DRAFT.test(s)).map(([k, s]) => k + ' : ' + s.match(DRAFT)[0]);
   check('aucune mention de brouillon / relecture juridique dans le texte visible (EULA, installeur, politique, README, aide, notes, LICENSE, À propos)', hit.length === 0, hit);
   // Empreintes du texte juridique : toute modification doit être VOLONTAIRE (mise à jour de l'empreinte ici, avec la raison).
-  // 1.4.0 : seul le nom du dossier de données a changé dans la politique (« %APPDATA%\Orical PDF ») ; le contrat est inchangé.
-  check('EULA.fr.md : texte figé (empreinte), en-tête conservé (titre, version du 12 novembre 2026, Éditeur, Logiciel)',
-    sha(eula) === '88f0615400a45095a99961d1806fe7adc6a4e229b639a9d84e27c99b8f4790a7' &&
-    /^# Contrat de licence utilisateur final — Orical PDF\n\nVersion du 12 novembre 2026\. Éditeur : Orical \(« l'Éditeur »\)\. Logiciel : Orical PDF,/.test(eula), sha(eula));
-  check('POLITIQUE-CONFIDENTIALITE.md : texte figé (empreinte ; 1.4.0 : seul le nom du dossier de données a changé)',
-    sha(read('POLITIQUE-CONFIDENTIALITE.md')) === 'e76803bb8ae58dd649a36287058c897fa28fb0774970a73f9d96d5a1e82d3bbf', sha(read('POLITIQUE-CONFIDENTIALITE.md')));
+  // 1.4.0 : nom du dossier de données (« %APPDATA%\Orical PDF ») dans la politique ; PUIS texte juridique MODIFIÉ PAR DÉCISION DE
+  // L'UTILISATEUR LE 24/11/2026 : la recherche de mise à jour (une requête HTTPS vers orical.app, une fois par jour au plus, désactivable,
+  // sans donnée personnelle ; le serveur voit l'adresse IP) remplace « aucune connexion réseau » dans le contrat (§ 7) et la politique ;
+  // « Version du » des deux textes passée au 24 novembre 2026.
+  check('EULA.fr.md : texte figé (empreinte), en-tête conservé (titre, version du 24 novembre 2026, Éditeur, Logiciel)',
+    sha(eula) === '7dc7fce173bac0f21df79411bee5047aa243be0f85f714873c31cbc8cef054c0' &&
+    /^# Contrat de licence utilisateur final — Orical PDF\n\nVersion du 24 novembre 2026\. Éditeur : Orical \(« l'Éditeur »\)\. Logiciel : Orical PDF,/.test(eula), sha(eula));
+  check('POLITIQUE-CONFIDENTIALITE.md : texte figé (empreinte ; 24/11/2026 : recherche de mise à jour décrite)',
+    sha(read('POLITIQUE-CONFIDENTIALITE.md')) === '85b3f7d8c441649dcaa1286afa870b8ba77543938db89c9137a0e35c5d7f0402', sha(read('POLITIQUE-CONFIDENTIALITE.md')));
+  check('EULA et politique : la recherche de mise à jour est décrite exactement (orical.app, une fois par jour, désactivable, adresse IP)',
+    /recherche de mise à jour \(une requête HTTPS vers orical\.app, une fois par jour au plus, désactivable\)/.test(eula) && /adresse IP/.test(eula) &&
+    /https:\/\/orical\.app\/orical-pdf\/latest\.json/.test(read('POLITIQUE-CONFIDENTIALITE.md')) && /DisableUpdateCheck/.test(read('POLITIQUE-CONFIDENTIALITE.md')) &&
+    !/Aucune connexion réseau|entièrement hors ligne/.test(eula + read('POLITIQUE-CONFIDENTIALITE.md')));
   check('EULA : pas de double ligne vide laissée par le retrait', !/\n\n\n/.test(eula) && !/\n\n\n/.test(read('POLITIQUE-CONFIDENTIALITE.md')));
   const rel = read('RELEASING.md');
   check('rappel interne dans RELEASING.md : « Contrat de licence (EULA) rédigé sans conseil juridique : à faire relire par un juriste avant une diffusion large »',

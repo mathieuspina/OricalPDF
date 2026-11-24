@@ -186,10 +186,22 @@ ${steps('Cliquer sur « Informations complémentaires ».', 'Cliquer sur « Exé
 <p><b>Vérifier le fichier téléchargé</b> : comparer son empreinte SHA-256 avec celle du fichier <code>SHA256SUMS.txt</code> joint à la Release. Dans PowerShell, dans le dossier du téléchargement : <code>Get-FileHash .\\OricalPDF-Setup-x.y.z.exe -Algorithm SHA256</code>. Les deux valeurs doivent être identiques (la casse des lettres ne compte pas) ; sinon, ne pas lancer le fichier et le télécharger de nouveau.</p>` },
 
   { id: 'confidentialite', title: 'Hors-ligne, confidentialité, diagnostic', html: `
-<p>Orical PDF fonctionne <strong>100 % hors-ligne</strong> : aucune connexion réseau, aucune télémétrie, aucune mise à jour automatique. Toute tentative de
-requête réseau est bloquée et comptée (Réglages > À propos).</p>
+<p>Orical PDF <strong>fonctionne hors ligne</strong> : aucune télémétrie, aucun document ni donnée personnelle envoyés. Toute requête réseau des
+fenêtres de l'application est bloquée et comptée (Réglages > À propos). Seule exception, désactivable : la <b>recherche de mise à jour</b> (une requête
+vers orical.app, une fois par jour au plus, voir « Mises à jour »).</p>
 ${steps('Signaler un problème : Réglages > À propos > « Copier les informations de diagnostic ».',
     'Coller le texte dans votre message : version, Windows, mémoire, écrans, noms des imprimantes. Aucun nom de fichier, chemin ni contenu de document n\'y figure.')}` },
+
+  { id: 'mises-a-jour', title: 'Mises à jour', html: `
+<p>Orical PDF recherche une nouvelle version <b>une fois par jour au plus</b>, environ 10 secondes après son ouverture (jamais pendant une impression) :
+une seule requête HTTPS vers <code>orical.app</code>, qui renvoie le numéro de la dernière version. Aucune donnée personnelle, aucun document, aucun
+identifiant n'est envoyé ; comme pour tout site web, le serveur voit l'adresse IP de la connexion.</p>
+${steps('Une version plus récente existe : un bandeau s\'affiche en bas à droite (« Orical PDF x.y.z est disponible »), avec les nouveautés dans « Détails ».',
+    '« Télécharger » ouvre la page de téléchargement dans votre navigateur ; installez ensuite la nouvelle version par-dessus l\'ancienne. Rien n\'est installé automatiquement.',
+    '« Plus tard » masque le bandeau jusqu\'au prochain lancement ; « Ignorer cette version » ne la propose plus (une version suivante le sera).',
+    'Réglages > Mises à jour : décocher « Rechercher automatiquement… » pour ne plus rien demander au réseau ; « Rechercher maintenant » pour une recherche immédiate.')}
+${traps('Vérifiez le fichier téléchargé : l\'empreinte SHA-256 affichée dans « Détails » doit être celle donnée par Get-FileHash (voir « Avertissement de Windows à l\'installation »).',
+    'En entreprise, l\'administrateur peut désactiver la recherche pour tous (stratégie DisableUpdateCheck) : la case est alors grisée, avec la mention « Désactivée par votre administrateur ».')}` },
 
   { id: 'windows', title: 'Lecteur PDF de Windows', html: `<p>Réglages > <b>Intégration à Windows</b>.</p><ul>
 <li><b>Lecteur PDF</b> : l'installation ajoute Orical PDF à « Ouvrir avec » (clic droit sur un PDF), sans remplacer votre lecteur actuel. Pour en faire le lecteur par défaut : bouton « Applications par défaut de Windows… ».</li>
@@ -197,7 +209,7 @@ ${steps('Signaler un problème : Réglages > À propos > « Copier les informati
   { id: 'informatique', title: 'Notes pour le service informatique', html: `<ul>
 <li>Installeur par utilisateur (NSIS), sans droits administrateur. Dossier par défaut : <code>%LOCALAPPDATA%\\Programs\\Orical PDF</code> (modifiable).</li>
 <li>Données de l'utilisateur (réglages, récents, bibliothèque de tampons et signatures, échelles) : <code>%APPDATA%\\Orical PDF</code>.</li>
-<li>Aucun service Windows, aucune tâche planifiée, aucune connexion réseau, aucune télémétrie.</li>
+<li>Aucun service Windows, aucune tâche planifiée, aucune télémétrie. Seule connexion réseau : la recherche de mise à jour, HTTPS vers <code>orical.app</code> (à autoriser dans le pare-feu si elle est souhaitée), désactivable pour tous par la stratégie <code>DisableUpdateCheck</code> (DWORD = 1) sous <code>HKLM\\Software\\Policies\\Orical\\OricalPDF</code> (ou HKCU).</li>
 <li>Installation silencieuse : <code>OricalPDF-Setup-x.y.z.exe /S</code> ; dossier imposé : <code>/D=C:\\Programmes\\OricalPDF</code> (toujours en dernier, sans guillemets).</li>
 <li>Désinstallation : Paramètres > Applications, ou <code>"Uninstall Orical PDF.exe" /S</code> dans le dossier d'installation ; les données de l'utilisateur sont conservées,
 sauf si la case « Supprimer aussi mes réglages et ma bibliothèque » est cochée (en silencieux : <code>/DELETEDATA=1</code>).</li>
