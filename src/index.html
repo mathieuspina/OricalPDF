@@ -546,6 +546,8 @@
           <fieldset><legend>Papier et échelle</legend><div class="form-grid">
           <label for="pr-paper">Papier</label><select id="pr-paper"></select>
           <label for="pr-orient">Orientation</label><select id="pr-orient"><option value="auto" selected>Automatique (selon la page)</option><option value="portrait">Portrait</option><option value="landscape">Paysage</option></select>
+          <label for="pr-sendorient">Orientation envoyée à l'imprimante</label><select id="pr-sendorient" title="Option avancée : change seulement l'orientation annoncée au pilote de l'imprimante (ni l'aperçu ni la mise en page). À essayer si une feuille sort tournée ou coupée."><option value="auto" selected>Automatique (défaut)</option><option value="portrait">Portrait</option><option value="landscape">Paysage</option></select>
+          <label for="pr-sendpaper">Méthode d'envoi du format</label><select id="pr-sendpaper" title="Option avancée : manière d'annoncer le format du papier au pilote de l'imprimante (ni l'aperçu ni la mise en page). Automatique : code de papier Windows du format (A3, A4…). À essayer si la feuille sort dans un autre format que celui affiché."><option value="auto" selected>Automatique (défaut)</option><option value="custom">Taille personnalisée</option><option value="driver">Papier par défaut du pilote</option></select>
           <label for="pr-scale">Échelle</label><div><select id="pr-scale"><option value="fit" selected>Ajuster à la page imprimable</option><option value="shrink">Réduire les pages trop grandes seulement</option><option value="actual">Taille réelle (100 %)</option><option value="percent">Pourcentage</option></select> <input id="pr-percent" type="number" min="1" max="1000" value="100" aria-label="Pourcentage"> %</div>
           <label for="pr-margin">Marges (mm)</label><div><input id="pr-margin" type="number" min="0" max="100" step="0.5" value="2" aria-describedby="pr-hardinfo"> <label class="chk"><input type="checkbox" id="pr-center" checked> Centrer</label></div>
           </div></fieldset>
@@ -560,6 +562,7 @@
           <div id="pr-preview" class="print-preview checker"><canvas id="pr-canvas"></canvas><div id="pr-area" class="print-area"></div><div id="pr-hard" class="print-hard" hidden></div></div>
           <div class="print-nav"><button type="button" id="pr-prev" class="icon-btn" aria-label="Feuille précédente"><span class="ico" data-icon="chevron-left"></span></button> <span id="pr-sheet">–</span> <button type="button" id="pr-next" class="icon-btn" aria-label="Feuille suivante"><span class="ico" data-icon="chevron-right"></span></button></div>
           <p id="pr-info" class="small"></p>
+          <p id="pr-send" class="small muted"></p>
           <p id="pr-warn" class="small print-warn" role="status"></p>
         </div>
       </div>
@@ -951,7 +954,7 @@
         <div><h2 id="about-title">Orical PDF</h2><p id="about-suite" class="muted"></p><p id="about-version" class="muted"></p><p id="about-license" class="muted small"></p><p id="about-copyright" class="muted small"></p></div>
       </div>
       <p id="about-offline" class="about-offline"><strong>100 % hors-ligne, aucune donnée envoyée</strong> : pas de connexion réseau, pas de télémétrie, pas de mise à jour automatique. <span id="about-net"></span></p>
-      <div class="about-diag"><button id="about-diag" type="button" class="secondary">Copier les informations de diagnostic</button><span id="about-diag-msg" class="muted small" aria-live="polite"></span></div>
+      <div class="about-diag"><button id="about-diag" type="button" class="secondary">Copier les informations de diagnostic</button><button id="about-printlog" type="button" class="secondary">Copier le journal d'impression</button><span id="about-diag-msg" class="muted small" aria-live="polite"></span></div>
       <p class="muted small">Pour signaler un problème : collez ces informations dans votre message (version, Windows, mémoire, écrans, noms des imprimantes ; aucun nom de fichier, chemin ni contenu de document).</p>
       <h3>Licences tierces</h3>
       <pre id="about-licenses"></pre>

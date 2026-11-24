@@ -22,6 +22,7 @@ contextBridge.exposeInMainWorld('spinadoc', {
   getPathForFile: (file) => webUtils.getPathForFile(file),
   getAbout: () => ipcRenderer.invoke('app:about'),
   diagnostic: () => ipcRenderer.invoke('app:diag'),
+  printLog: () => ipcRenderer.invoke('app:print-log'),
   netStats: () => ipcRenderer.invoke('app:net'),
   defaultApps: () => ipcRenderer.invoke('app:default-apps'),
   setDirty: (v) => ipcRenderer.send('doc:dirty', v),
@@ -41,6 +42,7 @@ contextBridge.exposeInMainWorld('spinadoc', {
   measureSave: (p, data) => ipcRenderer.invoke('measure:save', { path: p, data }),
   printPrinters: () => ipcRenderer.invoke('print:printers'),
   printCaps: (name) => ipcRenderer.invoke('print:caps', name),
+  printApi: () => ipcRenderer.invoke('print:api'),
   printSend: (jobs, opts) => ipcRenderer.invoke('print:send', { jobs, opts }),
   printProps: (name) => ipcRenderer.invoke('print:props', name),
   openImages: () => ipcRenderer.invoke('file:open-images'),
@@ -48,5 +50,6 @@ contextBridge.exposeInMainWorld('spinadoc', {
   clipboardImage: () => ipcRenderer.invoke('clipboard:image'),
   onRequestClose: (cb) => ipcRenderer.on('app:request-close', () => cb()),
   confirmClose: () => ipcRenderer.send('app:close-confirmed'),
+  testClose: () => ipcRenderer.send('test:close'), // tests seulement (SPIN_TEST_HEADLESS=1) : comme le bouton Fermer de la fenêtre
   isFullscreen: () => ipcRenderer.invoke('win:is-fullscreen'),
 });

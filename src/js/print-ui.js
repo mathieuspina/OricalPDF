@@ -9,7 +9,7 @@ import { guardOutput } from './redact-guard.js';
 
 const { PDFLib, PdfEdit, PrintLayout: L, PrintCompose: C, PageOps } = window;
 
-const st = { margin: L.DEFAULT_MARGIN, hard: null, doc: null, printers: [], caps: {}, cache: null, previewIdx: 0, token: 0, plan: null, timer: 0 };
+const st = { nativePrint: true, margin: L.DEFAULT_MARGIN, hard: null, doc: null, printers: [], caps: {}, cache: null, previewIdx: 0, token: 0, plan: null, timer: 0 };
 const val = (id) => $(id).value;
 const chk = (id) => $(id).checked;
 
@@ -127,7 +127,7 @@ async function refresh() {
     $('pr-cnote').textContent = notes.join(' ');
   }
   $('pr-rnote').textContent = needsRaster(p.o) ? `Ce réglage rasterise l'impression à ${p.o.dpi} dpi : les traits vectoriels deviennent des pixels (plus lourd et plus lent, surtout en A1/A0).` : 'Impression vectorielle : les traits restent nets à toute échelle.';
-  if (p.error) { $('pr-warn').textContent = p.error; $('pr-info').textContent = ''; $('pr-sheet').textContent = '–'; return; }
+  if (p.error) { $('pr-warn').textContent = p.error; $('pr-info').textContent = ''; $('pr-send').textContent = ''; $('pr-sheet').textContent = '–'; return; }
   st.previewIdx = Math.min(st.previewIdx, p.sheets.length - 1);
   const s = p.sheets[st.previewIdx];
   const it = s.plan.items[0];
@@ -136,6 +136,10 @@ async function refresh() {
   $('pr-sheet').textContent = `Feuille ${st.previewIdx + 1} / ${p.sheets.length}`;
   $('pr-info').textContent = `Papier : ${sz(s.sheet.w)} × ${sz(s.sheet.h)} mm · Page ${s.pages[0] + 1} : ${sz(first.w)} × ${sz(first.h)} mm · Échelle : ${it ? (it.scale * 100).toFixed(1).replace('.', ',') + ' %' : '–'}`
     + (p.groups.length > 1 ? ` · ${p.groups.length} tâches (formats de feuille différents)` : '');
+  { // ce qui partira vers le pilote pour cette feuille (même calcul que print-main.js)
+    const plan = L.printOptions({ wMm: L.toMm(s.sheet.w), hMm: L.toMm(s.sheet.h) }, { orient: val('pr-sendorient'), paperMethod: val('pr-sendpaper') }, st.caps[val('pr-printer')]);
+    $('pr-send').textContent = L.sendText(plan, L.sendArgs(plan, st.nativePrint).applied);
+  }
   const warns = [...new Set(p.sheets.flatMap((x) => x.plan.warnings))];
   const hardMsg = hardwareMessage(p);
   if (hardMsg) warns.push(hardMsg);
@@ -199,7 +203,7 @@ function savePrinterSettings() {
   const name = val('pr-printer');
   if (!name) return;
   const all = Object.assign({}, Settings.get('printPrinters'));
-  all[name] = { margin: L.normMargin(val('pr-margin'), st.margin), mode: val('pr-scale'), percent: Number(val('pr-percent')) || 100, orientation: val('pr-orient'), center: chk('pr-center') };
+  all[name] = { margin: L.normMargin(val('pr-margin'), st.margin), mode: val('pr-scale'), percent: Number(val('pr-percent')) || 100, orientation: val('pr-orient'), center: chk('pr-center'), sendOrient: val('pr-sendorient'), sendPaper: val('pr-sendpaper') };
   Settings.set('printPrinters', all);
 }
 function applyPrinterSettings(name) {
@@ -211,6 +215,8 @@ function applyPrinterSettings(name) {
   $('pr-percent').value = String(s.percent || 100);
   $('pr-orient').value = s.orientation || 'auto';
   $('pr-center').checked = s.center !== false;
+  $('pr-sendorient').value = ['portrait', 'landscape'].includes(s.sendOrient) ? s.sendOrient : 'auto'; // réglages avancés, par imprimante
+  $('pr-sendpaper').value = L.PAPER_METHODS.includes(s.sendPaper) ? s.sendPaper : 'auto';
 }
 
 const later = () => { clearTimeout(st.timer); st.timer = setTimeout(refresh, 120); };
@@ -229,7 +235,7 @@ async function print(dialog) {
     edBytes: p.ed.bytes,
     groups: p.groups.map((g) => ({ w: g.w, h: g.h, sheets: g.sheets.map(sheetOf) })),
     raster: needsRaster(o) ? { mode: o.color, dpi: o.dpi, thin: o.thin } : null,
-    opts: { device: o.device, copies: o.copies, collate: o.collate, duplex: o.duplex, color: o.color === 'color', dialog: !!dialog },
+    opts: { device: o.device, copies: o.copies, collate: o.collate, duplex: o.duplex, color: o.color === 'color', dialog: !!dialog, orient: val('pr-sendorient'), paperMethod: val('pr-sendpaper') },
   };
   let r;
   try { r = await api.printSubmit(task); } catch (e) { r = { ok: false, message: e && e.message || String(e) }; }
@@ -300,6 +306,7 @@ export async function openPrint(doc) {
   $('pr-warn').textContent = 'Recherche des imprimantes…';
   const list = await api.printPrinters().catch(() => []);
   st.printers = list;
+  st.nativePrint = ((await (api.printApi ? api.printApi() : Promise.resolve(null)).catch(() => null)) || { internal: true }).internal !== false;
   const sel = $('pr-printer');
   sel.replaceChildren();
   for (const pr of list) { const o = document.createElement('option'); o.value = pr.name; o.textContent = pr.displayName + (pr.isDefault ? ' (par défaut)' : ''); sel.append(o); }
@@ -315,7 +322,7 @@ export async function openPrint(doc) {
 function close() { $('printdlg').hidden = true; st.cache = null; }
 
 export function initPrint() {
-  const watch = ['pr-copies', 'pr-collate', 'pr-duplex', 'pr-range', 'pr-nup', 'pr-paper', 'pr-orient', 'pr-scale', 'pr-percent', 'pr-margin', 'pr-center', 'pr-color', 'pr-thin', 'pr-dpi', 'pr-annots', 'pr-meas'];
+  const watch = ['pr-copies', 'pr-collate', 'pr-duplex', 'pr-range', 'pr-nup', 'pr-paper', 'pr-orient', 'pr-scale', 'pr-percent', 'pr-margin', 'pr-center', 'pr-color', 'pr-thin', 'pr-dpi', 'pr-annots', 'pr-meas', 'pr-sendorient', 'pr-sendpaper'];
   for (const id of watch) { $(id).addEventListener('change', () => { st.previewIdx = 0; later(); }); $(id).addEventListener('input', later); }
   for (const r of document.querySelectorAll('input[name=pr-pages]')) r.addEventListener('change', () => { st.previewIdx = 0; later(); });
   $('pr-printer').addEventListener('change', async () => { const n = val('pr-printer'); await loadCaps(n); applyPrinterSettings(n); st.previewIdx = 0; later(); });
@@ -323,7 +330,7 @@ export function initPrint() {
   $('pr-margin').addEventListener('input', () => { const v = L.normMargin(val('pr-margin'), null); if (v !== null) st.margin = v; });
   $('pr-margin').addEventListener('change', () => { const v = L.normMargin(val('pr-margin'), st.margin); st.margin = v; $('pr-margin').value = String(v); savePrinterSettings(); });
   $('pr-margin').addEventListener('blur', () => { $('pr-margin').value = String(L.normMargin(val('pr-margin'), st.margin)); });
-  for (const id of ['pr-scale', 'pr-percent', 'pr-orient', 'pr-center']) $(id).addEventListener('change', savePrinterSettings);
+  for (const id of ['pr-scale', 'pr-percent', 'pr-orient', 'pr-center', 'pr-sendorient', 'pr-sendpaper']) $(id).addEventListener('change', savePrinterSettings);
   api.onPrintProgress(onPrintProgress);
   $('pr-prev').addEventListener('click', () => { if (st.previewIdx > 0) { st.previewIdx--; refresh(); } });
   $('pr-next').addEventListener('click', () => { if (st.plan && st.plan.sheets && st.previewIdx < st.plan.sheets.length - 1) { st.previewIdx++; refresh(); } });

@@ -69,6 +69,9 @@ if (!gotLock) {
   // Deuxième lancement : le fichier s'ouvre dans un onglet de la fenêtre existante.
   app.on('second-instance', (_e, argv) => {
     const files = pdfsFromArgs(argv);
+    // Instance ORPHELINE (fenêtre principale fermée mais processus encore vivant) : on recrée la fenêtre et on ouvre les fichiers reçus, au lieu
+    // de ne rien faire (le nouveau lancement, lui, s'est déjà fermé faute de verrou).
+    if (app.isReady() && initialServed && !quitting && (!win || win.isDestroyed())) { pending = files; initialServed = false; createWindow(); return; }
     // Fenêtre pas encore prête (fichiers initiaux non lus) : les fichiers rejoignent `pending` au lieu d'être perdus.
     if (!win || !initialServed) { pending.push(...files); return; }
     if (process.env.SPIN_TEST_HEADLESS !== '1') { if (win.isMinimized()) win.restore(); win.focus(); } // tests : jamais de fenêtre affichée
@@ -137,7 +140,9 @@ function createWindow() {
     e.preventDefault();
     win.webContents.send('app:request-close');
   });
-  win.on('closed', () => { win = null; });
+  // Fenêtre principale fermée (après confirmation s'il y avait des modifications ou une impression active) : l'application se termine, même si
+  // une fenêtre cachée d'impression est encore vivante (voir quitAll). SPINADOC_TEST_ORPHAN=1 (test-quit) : on laisse le processus orphelin.
+  win.on('closed', () => { win = null; if (process.env.SPINADOC_TEST_ORPHAN !== '1') quitAll(); });
 }
 
 app.whenReady().then(() => {
@@ -148,6 +153,17 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => app.quit());
+// Arrêt : fenêtres cachées d'impression détruites, file abandonnée, dossiers temporaires supprimés, puis app.quit() ; garde-fou : si le processus
+// n'est pas sorti 3 s après, app.exit(0) (minuteur « unref » : il ne retarde jamais une sortie normale).
+let quitting = false;
+function quitAll() {
+  if (quitting) return;
+  quitting = true;
+  PrintMain.shutdown();
+  app.quit();
+  setTimeout(() => app.exit(0), 3000).unref();
+}
+app.on('before-quit', () => { if (!win || win.isDestroyed()) PrintMain.shutdown(); }); // fenêtre encore ouverte : c'est sa fermeture qui décide
 
 // ---------- IPC ----------
 const toBuffer = (b) => Buffer.from(b.buffer ? new Uint8Array(b.buffer, b.byteOffset, b.byteLength) : b);
@@ -325,6 +341,12 @@ ipcMain.handle('app:diag', async () => {
   return text;
 });
 ipcMain.handle('app:net', () => AppInfo.netStats());
+// Journal d'impression (sans nom de fichier, chemin ni contenu ; imprimantes masquées) : copié dans le presse-papiers et renvoyé.
+ipcMain.handle('app:print-log', () => {
+  const text = PrintMain.readLog() || "Journal d'impression vide : aucune impression envoyée depuis la version 1.3.1.\n";
+  clipboard.writeText(text);
+  return text;
+});
 // Windows 11 : page « Applications par défaut » d'Orical PDF (nom inscrit dans RegisteredApplications par l'installeur).
 // SPINADOC_TEST_EXTERNAL : l'adresse est notée dans ce fichier au lieu d'ouvrir les Paramètres de Windows (tests).
 ipcMain.handle('app:default-apps', () => {
@@ -335,3 +357,6 @@ ipcMain.handle('app:default-apps', () => {
 
 ipcMain.on('doc:dirty', (_e, value) => { dirty = !!value; });
 ipcMain.on('app:close-confirmed', () => { forceClose = true; if (win) win.close(); });
+// Tests (SPIN_TEST_HEADLESS=1) : fermeture comme par le bouton Fermer (événement 'close', donc questions éventuelles). Un window.close() de la page,
+// lui, ferme sans passer par 'close' (vérifié) : il ne représente pas le geste de l'utilisateur.
+if (process.env.SPIN_TEST_HEADLESS === '1') ipcMain.on('test:close', () => { if (win && !win.isDestroyed()) win.close(); });

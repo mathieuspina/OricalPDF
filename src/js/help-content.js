@@ -70,7 +70,16 @@ ${traps('Liens internes et formulaires des sources ne sont pas repris.')}` },
 s'il est imprimé en A1 « taille réelle ».</p>
 ${steps('Choisir l\'imprimante et le papier (« format de la page » ou un format fixe).', 'Taille réelle ou ajustée à la feuille ; marges ; orientation automatique.',
     'Couleur, niveaux de gris ou noir et blanc ; traits fins renforcés pour les plans.', 'Pages : toutes, courante, sélection ou plage. La file d\'attente s\'affiche en bas ; on peut annuler.')}
-${traps('Une imprimante a des marges matérielles : sur un traceur, choisissez un format de papier qui les inclut.', 'Les annotations sont imprimées comme à l\'enregistrement.')}` },
+${traps('Une imprimante a des marges matérielles : sur un traceur, choisissez un format de papier qui les inclut.', 'Les annotations sont imprimées comme à l\'enregistrement.')}
+<p><b>Feuille tournée ou coupée par l'imprimante</b> : l'option avancée « Orientation envoyée à l'imprimante » (Automatique par défaut, Portrait ou
+Paysage) change seulement l'orientation annoncée au pilote, ni l'aperçu ni la mise en page ; elle est mémorisée pour chaque imprimante.</p>
+<p><b>Feuille sortie dans un autre format</b> (A4 au lieu d'A3, dessin coupé) : la ligne « Envoi » sous l'aperçu indique ce qui part vers
+l'imprimante. L'option avancée « Méthode d'envoi du format » est mémorisée pour chaque imprimante : « Automatique » (défaut) annonce le format
+par son code de papier Windows (A3, A4…), ce que les copieurs respectent ; « Taille personnalisée » n'envoie que les
+dimensions (ancien comportement, à essayer si l'automatique échoue) ; « Papier par défaut du pilote » laisse le papier réglé dans le pilote. Pour un format sans code (A1, A0 sur certains
+traceurs), choisissez le papier dans « Boîte Windows… ».</p>
+<p>Si le problème persiste, « Copier le journal d'impression » (À propos) donne, pour chaque tâche, le format, l'orientation et les options envoyées,
+sans nom de fichier ni chemin : à joindre à votre signalement.</p>` },
 
   { id: 'comparer', title: 'Comparer deux documents (indices de plan)', html: `
 <p>Onglet Document, « Comparer » : superposition en deux couleurs, côte à côte ou fondu, liste des zones modifiées, comparaison du texte.</p>

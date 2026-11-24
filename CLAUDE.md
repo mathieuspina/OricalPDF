@@ -39,7 +39,74 @@ commits), puis ATTENDRE le « go » de l'utilisateur. Ne jamais prétendre avoir
 - Rapports courts : sans répéter ce qui n'a pas changé ; « Ce que je n'ai PAS pu tester » et la checklist manuelle restent complètes.
 
 ## État du projet
-LOT 1.4 EN COURS (branche `orical-pdf-1.4` créée depuis main le 2026-11-23 : aucune branche 1.3.1 n'existait ; NON fusionnée ; version
+Version : 1.3.1 PRÊTE, NON publiée (branche `orical-pdf-1.3.1`, poussée, NON fusionnée dans main ; ni tag ni Release publiée ; la branche
+`orical-pdf-1.4` (tampons techniques, 3 commits) est à part, ne pas y toucher). Clone REFAIT le 2026-11-24 sur ce poste (npm ci avec
+NODE_OPTIONS=--use-system-ca ; src/icons inchangé). Correctif du FORMAT ANNONCÉ AU PILOTE (2026-11-24, après le test réel de l'utilisateur :
+3 feuilles A3 paysage sur un copieur réseau sorties en A4, dessin à 100 %, cartouche coupé ; « Papier = A3 » identique) :
+CONFIRMÉ (source + mesures) : Electron 33.4.11 (`lib/browser/api/web-contents.ts`, tag v33.4.11) convertit pageSize, objet OU nom ('A3'),
+en `mediaSize` {name 'CUSTOM' | 'ISO_A3', width_microns, height_microns} SANS `vendor_id`, puis appelle `this._print(options, cb)` ; sans
+pageSize il impose 'A4'. Chromium 130.0.6723.191 (`printing/printing_context_win.cc` UpdatePrinterSettings) n'écrit `dmPaperSize` que si
+`vendor_id` est un code numérique 0 < code < 256 (DMPAPER_USER), sinon `dmPaperWidth / dmPaperLength` seulement, et laisse `dmPaperSize` au
+défaut du pilote (A4 = 9). Le nom 'A3' ne change donc RIEN (l'hypothèse « par son nom » était fausse). Mesuré SANS impression sur les pilotes
+de ce poste (DocumentProperties DM_IN_BUFFER|DM_OUT_BUFFER puis CreateDC + GetDeviceCaps PHYSICALWIDTH/HEIGHT, script de diagnostic hors
+dépôt) : pilote Canon PCL6 générique (le copieur du problème), Canon UFR II, Konica Minolta PCL : largeur/longueur A3 → pilote ramené à A4
+(296,9 × 210 mm en paysage = le symptôme exact) ; code 8 → 419,9 × 296,9 mm. « Microsoft Print To PDF » (imprimante de test) convertit
+largeur/longueur en formulaire A3 : c'est pourquoi les tests 1.3.1 étaient verts. Traceur grand format du poste : largeur/longueur ET codes standard
+ignorés (reste sur son défaut A0) et ses codes sont tous ≥ 256 (A0 #261 … A4 #265) → inaccessibles depuis Electron (limite : « Boîte
+Windows… »). Sans mediaSize, Chromium refuse (« Printer settings invalid … page size is empty ») et le rappel ne vient jamais. Imprimante de
+test, par Electron : code 8 + dimensions A4 → feuille A3 (le code atteint le pilote ; témoin sans code : dimensions suivies). SUPPOSÉ (non
+vérifié au papier) : le copieur réel imprime en A3 avec le code 8 (le pilote le dit via CreateDC ; impression réelle à faire par l'utilisateur).
+CORRECTIF : `PrintLayout.printOptions` → `media` (mediaSize avec `vendor_id`) + `method` / `applied` / `code` / `codeFrom` ; option
+`opts.paperMethod` 'auto' (défaut : code du papier annoncé par l'imprimante caps.papers[].kind < 256, ±1 mm, préféré à un papier de mêmes
+dimensions sans code ; capacités inconnues ou papier sans code → code Windows standard DMPAPER {Letter 1, Tabloid 3, Legal 5, A3 8, A4 9,
+A5 11, A2 66} ; sinon taille personnalisée) | 'custom' (dimensions seules = 1.3.1 d'avant) | 'driver' (papier par défaut annoncé
+caps.defaultPaper, code + dimensions ; inconnu → custom). `PrintLayout.sendArgs(plan, internal)` : appel interne `webContents._print(args)`
+avec notre mediaSize (API NON documentée d'Electron 33 ; détectée à l'exécution) ; sans elle → API publique, pageSize, « code perdu »
+journalisé. `sendText` = ligne « Envoi : A3 (papier de l'imprimante, code 8), paysage ». print-main : `capabilitiesEx` → {caps, status ok |
+invalide | expiré | échec, ms}, papers[].kind = RawKind, defaultPaper ; délai `SPINADOC_CAPS_TIMEOUT_MS` (15 s par défaut ; serveur injoignable
+mesuré à 114 s sans délai) ; échec gardé 1 min en cache seulement (avant : null gardé toute la session, sans trace) ; IPC `print:api`
+(`spinadoc.printApi`). Interface : `#pr-sendpaper` (« Méthode d'envoi du format », Papier et échelle, `printPrinters[nom].sendPaper`),
+`#pr-send` sous l'aperçu. Journal : méthode demandée / appliquée + API, ligne Envoi, arguments réellement passés (mediaSize, vendor_id),
+état et durée des capacités, papiers annoncés (nom, mm, #code, 40 au plus). En mode test, `jobs.json` → `jobs[i].send` {api, args, applied, text}.
+Vérifications du 2026-11-24 (ce poste : Smart App Control = 0, désactivé) : suite complète verte ; test-print-real (10, imprimante de test :
+A3 paysage automatique et taille personnalisée → 420 × 297 mm ; papier par défaut du pilote → A4 paysage, dessin ajusté à 70,95 %) ;
+`npm run dist` du premier coup ; sur dist/win-unpacked et le portable : test-home-ui, test-about-ui, test-print-opts-ui (49, API interne
+présente dans le build). test:packaged et test:update : REFUS (code 3) car une VRAIE installation d'Orical PDF 1.3.1 (ancien build du
+brouillon) existe sur ce compte (entrée de désinstallation + raccourcis Bureau / menu Démarrer ; dossiers « Orical PDF » et « Spin A Doc »
+sous %LOCALAPPDATA%\Programs) : rien installé ni désinstallé ; test:packaged a seulement vérifié les icônes (OK). Installeurs 1.3.0 d'origine
+(gh release download v1.3.0, sha256sum -c OK) copiés dans dist/. Empreintes 1.3.1 : Setup b209aad6…fe5b, Portable 38a68ad2…128b.
+Brouillon v1.3.1 : INVISIBLE pour le jeton gh de ce poste (jeton à droits précis ; l'API ne liste que les Releases publiées) → non mis à jour.
+Lot 1.3.1 (corrections) : A FERMETURE APRÈS IMPRESSION (417d71a) : cause reproduite par test-quit AVANT correction = fenêtres cachées
+d'impression (fenêtre de travail gardée 15 s ; fenêtre d'envoi « sans rappel du pilote » gardée jusqu'à 10 min) → pas de 'window-all-closed',
+processus vivant avec le verrou d'instance unique, relancement fermé aussitôt (second-instance ne faisait rien avec win null). print-main :
+registre `windows` (track) + `tmpDirs` (spinadoc-print-*), `shutdown()` (file abandonnée, fenêtres détruites, dossiers supprimés, idempotent) ;
+main.js : 'closed' de la fenêtre principale → `quitAll` (shutdown + app.quit + garde-fou `app.exit(0)` après 3 s, minuteur unref), 'before-quit'
+→ shutdown si plus de fenêtre, second-instance d'une instance orpheline → createWindow + fichiers reçus. Confirmation « Impression en cours »
+inchangée (`active()` = file + tâche en cours ; une fenêtre d'envoi en attente de rappel N'EST PAS comptée). Variables de test :
+`SPINADOC_TEST_PRINT_PENDING` (avec SPINADOC_TEST_PRINT_DIR : fenêtre d'envoi cachée + dossier temporaire simulés), `SPINADOC_TEST_ORPHAN`
+(la fermeture ne quitte pas), IPC `test:close` / `spinadoc.testClose()` (SPIN_TEST_HEADLESS=1 seulement : fermeture par l'événement 'close' ;
+PIÈGE : un `window.close()` de la page ferme SANS passer par 'close', donc sans question). B ORIENTATION / FORMAT (1f40b50) :
+`PrintLayout.printOptions(job, opts, caps)` (pageSize TOUJOURS en portrait en micromètres + `landscape` ; Electron 33.4 : pageSize nom A0-A6 /
+Legal / Letter / Tabloid ou {width, height}, `landscape` booléen ; `standardFormat` ±1 mm, `announcedPaper` = papier de caps.papers ±1 mm quel
+que soit son nom → dimensions exactes, sinon format standard, sinon feuille ; `opts.orient` auto | portrait | landscape ne change QUE
+`landscape`) ; print-compose inchangé (MediaBox = feuille, aucun /Rotate, /Rotate source absorbé par drawPage : vérifié par la matrice) ;
+caps mises en cache par imprimante (`capsOf`) ; `src/print-log.js` (UMD : line, append, MAX 200, FILE print-log.txt) → userData/print-log.txt
+(via UserData.resolve), imprimante masquée par AppInfo.maskPrinter (aussi deviceName et messages), titre / nom du fichier remplacés par
+`<document>` ; en mode test (SPINADOC_TEST_PRINT_DIR) : `jobs.json` → `jobs[i].print` = options calculées + ligne « test : non imprimé ».
+Interface : `#pr-sendorient` (Papier et échelle, mémorisé par imprimante dans `printPrinters[nom].sendOrient`), `#about-printlog` (IPC
+`app:print-log`, `spinadoc.printLog()`). C : CHANGELOG 1.3.1, version 1.3.1, aide (rubrique impression) et README (limites) ; suite complète verte (npm test, test:ui,
+licences) ; `npm run dist` (1er essai : spawn UNKNOWN, 2e OK ; app.asar = version 1.3.1 et fichiers identiques à l'arbre de travail) ;
+SHA256SUMS : Setup 98cce90b…74e9, Portable 61c7a4d7…cc9d (dist/SHA256SUMS.txt). BLOCAGE SMART APP CONTROL (2026-11-23) : sur ce PC, SAC est en
+mode APPLICATION (HKLM\SYSTEM\CurrentControlSet\Control\CI\Policy VerifiedAndReputablePolicyState = 1) : tout exécutable NON SIGNÉ sans
+réputation est refusé au lancement (journal Microsoft-Windows-CodeIntegrity/Operational, événements 3033 / 3077 / 3118 ; Node : « spawn
+UNKNOWN », installeur : code null) : win-unpacked\Orical PDF.exe, Portable et Setup 1.3.1, ET l'installeur officiel 1.3.0 de la Release.
+test:packaged (7 séries) et test:update (1.3.0 → 1.3.1) n'ont donc RIEN vérifié (échecs au lancement ; registre, raccourcis et profil réel
+revenus à l'état initial ; garde de test:update non déclenchée). Ne JAMAIS désactiver SAC (irréversible sans réinstaller Windows) : à faire
+sur un poste sans SAC, ou signer le code. Les tests de développement (electron.exe signé de node_modules) ne sont pas touchés.
+PIÈGE d'outil : dans un heredoc passé par l'outil Bash, les barres obliques inverses d'un script Node peuvent être perdues (`\\'`, `\n`) :
+écrire les remplacements délicats avec l'outil Edit.
+Avant : 1.3.0 PUBLIÉE (2026-11-22 : commit 2db7a90 sur main, tag annoté v1.3.0 « Orical PDF 1.3.0 » poussé, Release publique « Orical PDF 1.3.0 » (Latest) du dépôt
+TAMPONS TECHNIQUES (lot 1.4, avant la fusion de la 1.3.1) : lot 1.4 : (branche `orical-pdf-1.4` créée depuis main le 2026-11-23 : aucune branche 1.3.1 n'existait ; NON fusionnée ; version
 package.json laissée à 1.3.0, CHANGELOG « 1.4.0 — en préparation » ; ni tag ni Release). TAMPONS TECHNIQUES (sous-étapes A à D enchaînées sans
 « go » sur dérogation de l'utilisateur) : NOUVEAU TYPE `tstamp` (et non un champ sur 'stamp' : le type 'stamp' et les anciens documents restent
 intacts, le panneau n'affiche que les champs utiles) ; `src/tech-stamps.js` (UMD pur, chargé après callout.js) s'enregistre comme cadre
@@ -61,7 +128,6 @@ sur une miniature) ; avec le panneau Propriétés ouvert, viser la moitié gauch
 interprète `$'` (utiliser split / join). POSTE : clone sans user.name / user.email locaux → commits avec `git -c user.name=SpinASoft
 -c user.email=<adresse masquée des commits précédents>` ; node_modules absent au départ (`NODE_OPTIONS=--use-system-ca npm ci`, icônes
 inchangées) ; aucun fichier de motifs privés sur ce poste (scan avec un fichier minimal hors du dépôt). ÉTAPE D : test-tech-stamps-ui ajouté à test:ui ; suite complète verte une fois (npm test, licences, 34 suites) ; npm run dist (winCodeSign : procédure « Nouveau PC ») ; smoke test de dist/win-unpacked (test-home-ui, test-tech-stamps-ui) vert ; installation NON testée (ni build/installeur/userData/vendor/preload modifiés). ATTENTION : les installeurs de dist/ portent le nom 1.3.0 mais contiennent le code 1.4 : ne pas les publier.
-Version : 1.3.0 PUBLIÉE (2026-11-22 : commit 2db7a90 sur main, tag annoté v1.3.0 « Orical PDF 1.3.0 » poussé, Release publique « Orical PDF 1.3.0 » (Latest) du dépôt
 OricalPDF : OricalPDF-Setup-1.3.0.exe 89,8 Mo (SHA-256 a2cfe6919dd6483f2f6a795d62f42c4f99a36f9581ca80a305a91d115c670136) + OricalPDF-Portable-1.3.0.exe 89,5 Mo
 (fefa4a3ed5c0d87dd2fb716980cf26f3754900c2729ce12a455425b1e475400c) + SHA256SUMS.txt ; brouillon d'abord, empreintes vérifiées après téléchargement du brouillon
 puis des adresses publiques ; artefacts = commit (fichiers de app.asar comparés à HEAD) ; scan complet propre ; notes = section 1.3.0 du CHANGELOG SANS la ligne
@@ -175,7 +241,7 @@ Décisions : mesures = objets figés comme les autres, échelle mémorisée par 
 couleur/fond du texte par échantillonnage de rendu (pas d'opérateurs PDF) ; signature = image/tracé figé, sans valeur juridique (écrit dans l'UI et le README).
 Limites connues : après une opération de pages, signets / formulaires / liens internes du PDF d'origine non conservés à l'écriture (champs CRÉÉS conservés) ; formulaire créé : pas de JavaScript, date = texte, ordre de tabulation non vérifié dans Acrobat ; texte non éditable sur page pivotée (y compris par l'onglet Pages) ; pas de glisser-déposer de pages entre documents ; ruban Mesure défile horizontalement ; pas d'aimantation sur plans-images ; échelle non lue dans le PDF ; annotations modifiables après réouverture seulement si enregistrées en « Modifiables » et fichier non réécrit par un autre outil (historique d'annulation vide à la réouverture ; autres lecteurs : visibles, non modifiables ; fichier modifiable ajouté à une fusion : figé) ; mesures tracées avec la vue seule tournée (Affichage) : textes orientés pour la page, pas pour la vue ; texte multicolore = une couleur ; polices d'origine incorporées non réutilisables ;
 le ruban Annoter défile horizontalement ; PDF de plans à texte vectorisé sans texte éditable.
-Commandes : `npm test` (logique, dont test-app-info, test-icon, test-window-state, test-measure-rotate, test-favorites, test-editable, test-editable-ops, test-app-harness), `npx electron scripts/make-icon.js` (icône), `npm run test:ui` (CDP, 34 suites), `npm run test:packaged`, `npm run test:update`, `npm run checksums`, `npm run release-notes`, `npm run licences`, `npm run dist`, `node scripts/copy-vendor.js`.
+Commandes : `npm test` (logique, dont test-print-caps, test-tech-stamps, test-quit (Electron), test-app-info, test-icon, test-window-state, test-measure-rotate, test-favorites, test-editable, test-editable-ops, test-app-harness), `npx electron scripts/make-icon.js` (icône), `npm run test:ui` (CDP, 34 suites), `npm run test:packaged`, `npm run test:update`, `npm run checksums`, `npm run release-notes`, `npm run licences`, `npm run dist`, `node scripts/copy-vendor.js`.
 Nouveau PC (2026-11) : `npm ci` / `npm run dist` derrière une interception TLS (« self-signed certificate in certificate chain » au téléchargement d'Electron) → `NODE_OPTIONS=--use-system-ca npm ci` (Node 24 : magasin de certificats Windows ; ne JAMAIS désactiver la vérification TLS) ; electron-builder échoue sur winCodeSign (liens symboliques macOS refusés sans mode développeur) → extraire l'archive du cache avec node_modules/7zip-bin/win/x64/7za.exe x <n>.7z -owinCodeSign-2.6.0 (sans -snld ; les 2 erreurs darwin sont sans effet). Fins de ligne : réglées par .gitattributes (LF partout, icônes -text) ; si des fichiers apparaissent « M » sans différence, `git add` de ces fichiers (même blob) suffit.
 Pièges : tests de pointeur dans la zone visible de la page (coordonnées en points) ; scripts de patch : `split/join`, pas de regex avec `\`.
 
@@ -243,4 +309,7 @@ Pièges : tests de pointeur dans la zone visible de la page (coordonnées en poi
 | lot 1.3 : user-data, renommage (test-rename), logo et icônes (icon-geometry, pdf-icon-geometry, make-icon, pe-icons), installer.nsh (DefaultIcon, ancien nom, dossier voisin), test-update, test-editable § 8 | test-user-data (9), test-rename (10), test-icon (17), test-winint (20), test-editable (58), test-about-ui (6), test-public, suite complète, test:packaged, test:update 1.2.1 → 1.3.0 | A ddb9ac0, B 1f7787a, C 0261224, D 0b90cd1, E dd93d28, F e202e7a, 2db7a90 ; publiée (tag v1.3.0) |
 | tech-stamps (catalogue, géométrie, libellés, relabel), pdf-edit ('tstamp') | test-tech-stamps (49 : primitives valides, PDF relu pdf.js portrait / paysage / /Rotate 90 × 3 tailles, aperçu = écriture, trous, aller-retour modifiable, anciens tampons inchangés) | 1.4 A-B 9f930cc |
 | tech-stamps-ui, place / events / common / props-model (tstamp), favorites-ui (openForCommand, icône), app.js, aide, README | test-tech-stamps-ui (27), test-click-ui, test-props-layout-ui, test-stamps-ui, test-favorites-ui, test-ribbon-layout-ui, test-annot-ui, test-help-ui | 1.4 C c87e47f |
+| 1.3.1 A : print-main (registre des fenêtres cachées, shutdown), main.js (quitAll, garde-fou 3 s, before-quit, second-instance orpheline, test:close), preload (testClose) | test-quit (9, dans npm test ; échouait sur 5 points avant correction), test-print-async-ui, test-print-ui, test-winint-ui, test-home-ui | 417d71a |
+| 1.3.1 correctif du format (24/11) : print-layout (paperMethod, media / vendor_id, sendArgs, sendText, DMPAPER), print-main (capabilitiesEx, _print, cache des échecs, print:api), print-ui (#pr-sendpaper, #pr-send), print-log (méthode, envoi, capacités, papiers) | test-print (486 + 72 cas, journal), test-print-caps (6, Electron), test-print-opts-ui (49), test-print-real (10, imprimante de test) | B 59a11c1, C 733ae69, D (voir git log) |
+| 1.3.1 B : print-layout.printOptions / standardFormat / announcedPaper, print-log, print-main (options, caps en cache, journal), print-ui (#pr-sendorient), À propos (#about-printlog) | test-print (matrice 72 cas, formats mélangés, journal), test-print-opts-ui (38), test-about-ui, test-help-ui, test-click-ui, test-props-layout-ui, test-redact-guard-ui | 1f40b50 |
 | publication 1.2.1 (tag, Release, SHA256SUMS) ; package-lock resynchronisé entre les deux copies, icônes lucide 1.77.0 | suite complète, test:packaged, scan complet (arbre, historique, installeur extrait) ; après resynchronisation : npm test, licences, test-help-ui, test-ribbon-layout-ui, test-ocr-ui | 6716621 ; resynchronisation (voir git log) |
