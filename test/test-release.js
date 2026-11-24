@@ -58,6 +58,8 @@ check('package.json : scripts checksums, release-notes, test:update', ['checksum
   check('main.js passe process.resourcesPath à about() quand l\'application est empaquetée', fs.readFileSync(path.join(root, 'main.js'), 'utf8').includes('AppInfo.about(app, __dirname, app.isPackaged ? process.resourcesPath : null)'));
   check('package.json : THIRD_PARTY_LICENSES livré en extraResources sous le nom THIRD_PARTY_LICENSES.txt', (require('../package.json').build.extraResources || []).some((e) => e.from === 'THIRD_PARTY_LICENSES' && e.to === 'THIRD_PARTY_LICENSES.txt'));
   check('test:packaged lance test-about-ui sur l\'application dépaquetée et installée', fs.readFileSync(path.join(root, 'scripts', 'test-packaged.js'), 'utf8').split("'test-about-ui.js'").length - 1 >= 2);
+  check('test:packaged lance test-update-ui (serveur local) et test-quit sur l\'application dépaquetée et installée',
+    ['test-update-ui.js', 'test-quit.js'].every((t) => fs.readFileSync(path.join(root, 'scripts', 'test-packaged.js'), 'utf8').split(`'${t}'`).length - 1 >= 2));
   const real = path.join(root, 'dist', 'win-unpacked', 'resources');
   if (fs.existsSync(real)) check('build : licences lisibles depuis dist/win-unpacked/resources', AppInfo.readLicenses(path.join(real, 'app.asar'), real).length > 1000);
   fs.rmSync(dev, { recursive: true, force: true }); fs.rmSync(res, { recursive: true, force: true });

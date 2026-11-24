@@ -11,7 +11,7 @@ Pour la mise à jour d'un poste, voir [RELEASING.md](RELEASING.md#mettre-à-jour
 - Recherche de mise à jour (une fois par jour au plus, désactivable) : bandeau avec lien vers la page de téléchargement.
 - Journal d'impression à joindre à un signalement (Réglages > À propos).
 - Nouvelle identité d'installation : désinstaller d'abord la version précédente (réglages non repris).
-- Détail ci-dessous.
+- Détail complet dans les notes de version, sur la page de téléchargement.
 
 Tampons techniques pour annoter les plans (charpente, bardage, couverture, bâtiment).
 - Onglet Annoter > Tampons techniques : 33 silhouettes schématiques, sans cotes ni échelle, posées d'un clic puis agrandies aux poignées

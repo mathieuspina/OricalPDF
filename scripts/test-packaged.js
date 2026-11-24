@@ -69,7 +69,7 @@ const ztFail = (label, hits) => { console.log('Zéro trace (' + label + ') : ' +
   fs.rmSync(x, { recursive: true, force: true });
 }
 
-run('app dépaquetée', unpacked, ['test-home-ui.js', 'test-about-ui.js', 'test-layout-ui.js', 'test-stamps-ui.js', 'test-tech-stamps-ui.js', 'test-ocr-ui.js']);
+run('app dépaquetée', unpacked, ['test-home-ui.js', 'test-about-ui.js', 'test-layout-ui.js', 'test-stamps-ui.js', 'test-tech-stamps-ui.js', 'test-update-ui.js', 'test-quit.js', 'test-ocr-ui.js']);
 // Tampons techniques, test logique sur le code EMPAQUETÉ : sources extraites de app.asar du build (et non celles de l'arbre de travail).
 {
   const x = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-asar-'));
@@ -217,7 +217,7 @@ if (home) {
 }
 if (!home) { console.error('Installation échouée : Orical PDF.exe absent de ' + dir); failed++; }
 else {
-  run('installée', path.join(home, 'Orical PDF.exe'), ['test-home-ui.js', 'test-about-ui.js', 'test-tech-stamps-ui.js', 'test-quit.js', 'test-ocr-ui.js']);
+  run('installée', path.join(home, 'Orical PDF.exe'), ['test-home-ui.js', 'test-about-ui.js', 'test-tech-stamps-ui.js', 'test-update-ui.js', 'test-quit.js', 'test-ocr-ui.js']);
   const keep = fakeData('garde');
   uninstall(home, ['/DATADIR=' + keep]);
   const kept = fs.existsSync(path.join(keep, 'settings.json'));
