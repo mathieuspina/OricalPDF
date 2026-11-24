@@ -15,10 +15,13 @@ const check = (name, cond, detail) => { if (cond) { passed++; console.log('  ok 
 const root = path.join(__dirname, '..');
 const read = (f) => fs.readFileSync(path.join(root, f), 'utf8');
 
-// Ancien nom : spin a doc / spinadoc / orical-pdf / spin_a_doc (séparateurs quelconques), « Spin A » seul, préfixe ORICALPDF_TEST_.
-const OLD = /spin[\s_.%20-]*a[\s_.%20-]*doc|\bspin\s+a\b|ORICALPDF_TEST_/i;
+// Ancien nom : spin a doc / spinadoc / spin-a-doc / spin_a_doc (séparateurs quelconques), « Spin A » seul, préfixe SPIN_TEST_.
+const OLD = /spin[\s_.%20-]*a[\s_.%20-]*doc|\bspin\s+a\b|SPIN_TEST_/i;
 const SELF = 'test/test-rename.js';
 const MARK = 'DÉCISION DE L\'UTILISATEUR DU 2026-11-24 (renommage sans compatibilité)';
+// Motif partagé (source unique) : le contrôle « zéro trace » de l'installation (scripts/zero-trace.js) l'importe.
+module.exports = { OLD };
+if (require.main !== module) return; // eslint-disable-line no-unreachable
 
 const ls = spawnSync('git', ['ls-files', '--cached', '--others', '--exclude-standard'], { cwd: root, encoding: 'utf8' });
 const files = ls.stdout.split(/\r?\n/).filter((f) => f && fs.existsSync(path.join(root, f)) && fs.statSync(path.join(root, f)).isFile());
@@ -40,7 +43,7 @@ for (const f of files) {
 }
 check('aucune occurrence de l\'ancien nom dans le dépôt (noms et contenus ; exceptions : ce test, la ligne de décision de CLAUDE.md)', hits.length === 0, hits.slice(0, 30));
 check('CLAUDE.md : au plus UNE ligne d\'exception (la décision)', claudeLines <= 1, claudeLines);
-check('le motif reconnaît bien toutes les formes (témoins positifs)', ['Spin A Doc', 'SpinADoc', 'orical-pdf', 'spin_a_doc', 'ORICALPDF_X', 'ORICALPDF_TEST_HEADLESS', 'window.oricalpdf', 'Spin%20A%20Doc', 'Spin A'].every((s) => OLD.test(s)) &&
+check('le motif reconnaît bien toutes les formes (témoins positifs)', ['Spin A Doc', 'SpinADoc', 'spin-a-doc', 'spin_a_doc', 'SPINADOC_X', 'SPIN_TEST_HEADLESS', 'window.spinadoc', 'Spin%20A%20Doc', 'Spin A'].every((s) => OLD.test(s)) &&
   !['Orical PDF', 'spinner', 'spin', 'Edieresis', 'SpinASoft'].some((s) => OLD.test(s)));
 
 // Nouveaux identifiants

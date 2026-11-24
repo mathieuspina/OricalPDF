@@ -52,7 +52,11 @@ npm run test:packaged
 ```
 
 Application dépaquetée, portable et installée (installation et désinstallation silencieuses dans un dossier temporaire, association
-« Ouvrir avec », registre et raccourcis revenus à l'état initial, profil réel inchangé). Un plantage de l'installeur est signalé par
+« Ouvrir avec », registre et raccourcis revenus à l'état initial, profil réel inchangé). Contrôle « zéro trace » de l'ancien nom du
+produit (`scripts/zero-trace.js`, motif de `test/test-rename.js`) : application dépaquetée, installeur extrait par 7za, dossier installé
+(noms, contenus, app.asar), informations de version des exécutables, clés de registre, valeurs et raccourcis créés par l'installation.
+Tampons techniques vérifiés sur le build : `test-tech-stamps-ui` (dépaqueté et installé) et `test-tech-stamps` sur les sources extraites
+de app.asar ; fermeture / relance (`test-quit`) sur la version installée. Un plantage de l'installeur est signalé par
 « AVERTISSEMENT : relance après plantage » : le noter dans les notes internes, ne pas l'ignorer.
 
 ```bash

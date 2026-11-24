@@ -2,9 +2,12 @@
 // échelle conservée), écriture PDF relue avec pdf.js sur page portrait, paysage et /Rotate 90 à 3 tailles (chaque extrémité de tracé encrée,
 // aucune encre hors du cadre de l'objet, libellés à leur place), aperçu = écriture (mêmes primitives), plein / contour, aller-retour PDF
 // modifiable, symbole inconnu, anciens tampons inchangés. Usage : node test/test-tech-stamps.js
+// ORICALPDF_SRC=<dossier src> : modules testés lus ailleurs (test:packaged : sources extraites de app.asar du build).
 const path = require('path');
 const PDFLib = require('@cantoo/pdf-lib');
-const Shapes = require('../src/shapes.js');
+const SRC = process.env.ORICALPDF_SRC || path.join(__dirname, '..', 'src');
+if (process.env.ORICALPDF_SRC) console.log('Modules lus dans : ' + SRC);
+const Shapes = require(path.join(SRC, 'shapes.js'));
 
 const failures = [];
 let passed = 0;
@@ -16,10 +19,10 @@ const OLD = Shapes.STAMPS.map((s, i) => { const o = Object.assign(Shapes.default
 const OLD_PRIMS = JSON.stringify(OLD.map((o) => Shapes.primitives(o, measure)));
 const OLD_DEF = JSON.stringify(Shapes.defaultsFor('stamp'));
 
-const T = require('../src/tech-stamps.js');
-const PdfEdit = require('../src/pdf-edit.js');
-const ES = require('../src/editable-state.js');
-const EP = require('../src/editable-pdf.js');
+const T = require(path.join(SRC, 'tech-stamps.js'));
+const PdfEdit = require(path.join(SRC, 'pdf-edit.js'));
+const ES = require(path.join(SRC, 'editable-state.js'));
+const EP = require(path.join(SRC, 'editable-pdf.js'));
 const FONTS = path.join(__dirname, '..', 'node_modules', 'pdfjs-dist', 'standard_fonts').split('\\').join('/') + '/';
 const finite = (v) => typeof v === 'number' && Number.isFinite(v);
 

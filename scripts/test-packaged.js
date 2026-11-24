@@ -47,7 +47,38 @@ exeIcon('l\'application', unpacked); exeIcon('la version portable', portable); e
   }
 }
 
-run('app dépaquetée', unpacked, ['test-home-ui.js', 'test-about-ui.js', 'test-layout-ui.js', 'test-stamps-ui.js', 'test-ocr-ui.js']);
+// Contrôle « zéro trace » de l'ancien nom (scripts/zero-trace.js, motif de test-rename) : application dépaquetée, installeur extrait par
+// 7za, métadonnées des exécutables ; puis, après l'installation de test, dossier installé, registre et raccourcis créés.
+const ZT = require('./zero-trace.js');
+const ztFail = (label, hits) => { console.log('Zéro trace (' + label + ') : ' + (hits.length ? hits.length + ' occurrence(s)\n' + ZT.show(hits) : 'aucune occurrence')); if (hits.length) failed++; };
+{
+  const u = ZT.scanDir(path.dirname(unpacked));
+  console.log('Zéro trace : application dépaquetée = ' + u.files + ' fichiers, ' + u.asarFiles + ' entrées de app.asar');
+  ztFail('application dépaquetée : noms, contenus, app.asar', u.hits);
+  for (const [label, exe] of [['application', unpacked], ['portable', portable], ['installeur', setup]]) {
+    const r = ZT.exeInfo(exe);
+    console.log('Informations de version (' + label + ') : ' + JSON.stringify(r.info));
+    ztFail('informations de version : ' + label, r.hits);
+  }
+  const x = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-extract-'));
+  const z = spawnSync(path.join(root, 'node_modules', '7zip-bin', 'win', 'x64', '7za.exe'), ['x', '-y', '-o' + x, setup], { encoding: 'utf8' });
+  const e = ZT.scanDir(x);
+  console.log('Zéro trace : installeur extrait par 7za (code ' + z.status + ') = ' + e.files + ' fichiers, ' + e.asarFiles + ' entrées de app.asar');
+  if (z.status !== 0 || e.files < 10 || !e.asarFiles) { console.log('Extraction de l\'installeur incomplète'); failed++; }
+  ztFail('installeur extrait : noms, contenus, app.asar', e.hits);
+  fs.rmSync(x, { recursive: true, force: true });
+}
+
+run('app dépaquetée', unpacked, ['test-home-ui.js', 'test-about-ui.js', 'test-layout-ui.js', 'test-stamps-ui.js', 'test-tech-stamps-ui.js', 'test-ocr-ui.js']);
+// Tampons techniques, test logique sur le code EMPAQUETÉ : sources extraites de app.asar du build (et non celles de l'arbre de travail).
+{
+  const x = fs.mkdtempSync(path.join(os.tmpdir(), 'oricalpdf-asar-'));
+  require('@electron/asar').extractAll(path.join(path.dirname(unpacked), 'resources', 'app.asar'), x);
+  console.log('\n===== app.asar du build — test-tech-stamps.js (ORICALPDF_SRC=' + path.join(x, 'src') + ') =====');
+  const r = spawnSync(node, [path.join(root, 'test', 'test-tech-stamps.js')], { stdio: 'inherit', env: Object.assign({}, process.env, { ORICALPDF_SRC: path.join(x, 'src') }) });
+  if (r.status !== 0) failed++;
+  fs.rmSync(x, { recursive: true, force: true });
+}
 run('portable', portable, ['test-home-ui.js']);
 
 // Version installée : installation silencieuse (NSIS /S, /D= en dernier argument) dans un dossier temporaire, deux cycles :
@@ -140,6 +171,17 @@ function systemTrace(label) {
 }
 const before = snapshot();
 const sysBefore = systemTrace('avant installation');
+// Inventaire avant / après (lecture seule) : sous-clés de HKCU\Software, HKCU\Software\Classes, désinstallation ; valeurs de
+// RegisteredApplications et OpenWithProgids ; raccourcis du Bureau et du menu Démarrer. Les éléments NOUVEAUX sont scannés.
+const UNINST = key('HKCU', 'Software', 'Microsoft', 'Windows', 'CurrentVersion', 'Uninstall');
+const subkeys = (k) => { const r = spawnSync('reg', ['query', k], { encoding: 'utf8' }); return new Set((r.stdout || '').split(/\r?\n/).filter((l) => /^HKEY_/.test(l)).map((l) => l.trim().replace(/^HKEY_CURRENT_USER/, 'HKCU'))); };
+const valueLines = (k) => { const r = spawnSync('reg', ['query', k], { encoding: 'utf8' }); return new Set((r.stdout || '').split(/\r?\n/).filter((l) => /REG_/.test(l)).map((l) => l.trim())); };
+const lnkDirs = [path.join(process.env.USERPROFILE || '', 'Desktop'), path.join(process.env.APPDATA || '', 'Microsoft', 'Windows', 'Start Menu', 'Programs')];
+const lnkList = () => { const out = []; const walk = (d) => { if (!fs.existsSync(d)) return; for (const n of fs.readdirSync(d)) { const p = path.join(d, n); try { if (fs.statSync(p).isDirectory()) walk(p); else if (/\.lnk$/i.test(n)) out.push(p); } catch { /* */ } } }; lnkDirs.forEach(walk); return out; };
+const ROOTS = [key('HKCU', 'Software'), key('HKCU', 'Software', 'Classes'), UNINST];
+const VALS = [key('HKCU', 'Software', 'RegisteredApplications'), key('HKCU', 'Software', 'Classes', '.pdf', 'OpenWithProgids')];
+const inv = () => ({ keys: ROOTS.map(subkeys), vals: VALS.map(valueLines), lnk: new Set(lnkList()) });
+const invBefore = inv();
 let home = install();
 if (home) {
   // Association 0.12.1 : « Ouvrir avec » seulement ; la valeur par défaut de HKCU\Software\Classes\.pdf ne doit PAS changer.
@@ -155,10 +197,27 @@ if (home) {
   ];
   for (const [n, ok] of assoc) { console.log('Association : ' + n + ' : ' + ok); if (!ok) failed++; }
   exeIcon('le désinstalleur', path.join(home, 'Uninstall Orical PDF.exe'));
+  const ins = ZT.scanDir(home);
+  console.log('Zéro trace : installation de test = ' + ins.files + ' fichiers, ' + ins.asarFiles + ' entrées de app.asar');
+  ztFail('dossier installé : noms, contenus, app.asar', ins.hits);
+  for (const exe of [path.join(home, 'Orical PDF.exe'), path.join(home, 'Uninstall Orical PDF.exe')]) {
+    const r = ZT.exeInfo(exe);
+    console.log('Informations de version (' + path.basename(exe) + ', installé) : ' + JSON.stringify(r.info));
+    ztFail('informations de version : ' + path.basename(exe), r.hits);
+  }
+  const now = inv();
+  const newKeys = now.keys.flatMap((s, i) => [...s].filter((k) => !invBefore.keys[i].has(k))).concat([key('HKCU', 'Software', 'Classes', 'Applications', 'Orical PDF.exe')]);
+  const newVals = now.vals.flatMap((s, i) => [...s].filter((v) => !invBefore.vals[i].has(v)));
+  const newLnk = [...now.lnk].filter((p) => !invBefore.lnk.has(p));
+  console.log('Créés par l\'installation : clés ' + JSON.stringify(newKeys) + ' ; valeurs ' + JSON.stringify(newVals) + ' ; raccourcis ' + JSON.stringify(newLnk.map((p) => path.basename(p))));
+  const fromInstall = newKeys.length >= 3 && newVals.length >= 2 && newLnk.length === 2;
+  console.log('Inventaire de l\'installation (≥ 3 clés, 2 valeurs, 2 raccourcis) : ' + fromInstall);
+  if (!fromInstall) failed++;
+  ztFail('registre créé (clés, valeurs) et raccourcis', [...ZT.scanReg(newKeys), ...newVals.filter((v) => ZT.OLD.test(v)).map((v) => ({ where: 'valeur', what: v })), ...ZT.scanLnks(newLnk)]);
 }
 if (!home) { console.error('Installation échouée : Orical PDF.exe absent de ' + dir); failed++; }
 else {
-  run('installée', path.join(home, 'Orical PDF.exe'), ['test-home-ui.js', 'test-about-ui.js', 'test-ocr-ui.js']);
+  run('installée', path.join(home, 'Orical PDF.exe'), ['test-home-ui.js', 'test-about-ui.js', 'test-tech-stamps-ui.js', 'test-quit.js', 'test-ocr-ui.js']);
   const keep = fakeData('garde');
   uninstall(home, ['/DATADIR=' + keep]);
   const kept = fs.existsSync(path.join(keep, 'settings.json'));
