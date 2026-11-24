@@ -198,12 +198,12 @@ function drawHard(p, s, cr, br) {
   band(0, 0, cr.width, hy); band(0, cr.height - hy, cr.width, hy); band(0, hy, hx, cr.height - 2 * hy); band(cr.width - hx, hy, hx, cr.height - 2 * hy);
 }
 
-// Réglages par imprimante (marge, échelle, orientation, centrage) : userData/settings.json → printPrinters[nom].
+// Réglages par imprimante (marge, orientation, centrage, réglages d'envoi ; l'échelle n'est plus mémorisée) : userData/settings.json → printPrinters[nom].
 function savePrinterSettings() {
   const name = val('pr-printer');
   if (!name) return;
   const all = Object.assign({}, Settings.get('printPrinters'));
-  all[name] = { margin: L.normMargin(val('pr-margin'), st.margin), mode: val('pr-scale'), percent: Number(val('pr-percent')) || 100, orientation: val('pr-orient'), center: chk('pr-center'), sendOrient: val('pr-sendorient'), sendPaper: val('pr-sendpaper') };
+  all[name] = { margin: L.normMargin(val('pr-margin'), st.margin), orientation: val('pr-orient'), center: chk('pr-center'), sendOrient: val('pr-sendorient'), sendPaper: val('pr-sendpaper') };
   Settings.set('printPrinters', all);
 }
 function applyPrinterSettings(name) {
@@ -211,8 +211,6 @@ function applyPrinterSettings(name) {
   const margin = L.normMargin(s.margin, L.defaultMargin(st.hard)); // défaut : 2 mm, jamais sous la marge matérielle connue
   st.margin = margin;
   $('pr-margin').value = String(margin);
-  $('pr-scale').value = s.mode || 'fit';
-  $('pr-percent').value = String(s.percent || 100);
   $('pr-orient').value = s.orientation || 'auto';
   $('pr-center').checked = s.center !== false;
   $('pr-sendorient').value = ['portrait', 'landscape'].includes(s.sendOrient) ? s.sendOrient : 'auto'; // réglages avancés, par imprimante
@@ -229,8 +227,8 @@ async function print(dialog) {
   if (!p || p.error || !p.sheets.length) return;
   const o = p.o;
   savePrinterSettings();
-  // Le nombre de copies n'est JAMAIS mémorisé (risque de gaspillage : 6 copies d'un document reproposées pour le suivant).
-  Settings.set('print', { printer: o.device, collate: o.collate, duplex: o.duplex, nup: o.nup, paper: o.paper, orientation: o.orientation, mode: o.mode, percent: o.percent, margin: o.margin, center: o.center, color: o.color, thin: o.thin, dpi: o.dpi, annots: o.annots, meas: o.meas });
+  // JAMAIS mémorisés (risque de gaspillage ou de mauvaise surprise sur le document suivant) : copies, papier, pages par feuille, échelle.
+  Settings.set('print', { printer: o.device, collate: o.collate, duplex: o.duplex, orientation: o.orientation, margin: o.margin, center: o.center, color: o.color, thin: o.thin, dpi: o.dpi, annots: o.annots, meas: o.meas });
   const task = {
     name: st.doc.name,
     edBytes: p.ed.bytes,
@@ -284,8 +282,12 @@ function onPrintProgress(d) {
 function restore(saved) {
   const s = saved || {};
   const set = (id, v) => { if (v !== undefined && v !== null) $(id).value = String(v); };
-  $('pr-copies').value = '1'; // toujours 1 à l'ouverture ; une ancienne valeur « copies » de settings.json est ignorée
-  set('pr-duplex', s.duplex); set('pr-nup', s.nup);
+  // Valeurs par défaut à CHAQUE ouverture ; les anciennes valeurs copies / nup / paper / mode / percent de settings.json sont ignorées.
+  $('pr-copies').value = '1';
+  $('pr-nup').value = '1';
+  $('pr-scale').value = 'fit';
+  $('pr-percent').value = '100';
+  set('pr-duplex', s.duplex);
   set('pr-color', s.color); set('pr-thin', s.thin); set('pr-dpi', s.dpi);
   if (s.collate !== undefined) $('pr-collate').checked = !!s.collate;
   if (s.annots !== undefined) $('pr-annots').checked = !!s.annots;
@@ -316,7 +318,7 @@ export async function openPrint(doc) {
   if (want) sel.value = want;
   $('pr-warn').textContent = list.length ? '' : 'Aucune imprimante installée.';
   if (want) { await loadCaps(want); applyPrinterSettings(want); } else fillPapers(null);
-  if (saved && saved.paper && [...$('pr-paper').options].some((o) => o.value === saved.paper)) $('pr-paper').value = saved.paper;
+  $('pr-paper').value = 'page'; // papier : « Format de la page » à chaque ouverture (un choix manuel ne vaut que pour cette ouverture)
   refresh();
   $('pr-ok').focus();
 }

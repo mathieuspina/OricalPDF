@@ -74,10 +74,10 @@ function check(name, cond, detail) {
     await pick('Imprimante Exemple');
     await setv('pr-margin', '7'); await setv('pr-scale', 'actual'); await setv('pr-orient', 'landscape'); await settle();
     await pick('PDFCreator');
-    check('autre imprimante : ses propres réglages par défaut (2 mm, ajusté, automatique)', (await val('pr-margin')) === '2' && (await val('pr-scale')) === 'fit' && (await val('pr-orient')) === 'auto', { m: await val('pr-margin'), s: await val('pr-scale'), o: await val('pr-orient') });
+    check('autre imprimante : ses propres réglages par défaut (2 mm, automatique) ; échelle choisie dans cette boîte gardée (plus mémorisée par imprimante)', (await val('pr-margin')) === '2' && (await val('pr-scale')) === 'actual' && (await val('pr-orient')) === 'auto', { m: await val('pr-margin'), s: await val('pr-scale'), o: await val('pr-orient') });
     await setv('pr-margin', '3');
     await pick('Imprimante Exemple');
-    check('retour : marge, échelle et orientation mémorisées pour « Imprimante Exemple »', (await val('pr-margin')) === '7' && (await val('pr-scale')) === 'actual' && (await val('pr-orient')) === 'landscape', { m: await val('pr-margin'), s: await val('pr-scale'), o: await val('pr-orient') });
+    check('retour : marge et orientation mémorisées pour « Imprimante Exemple » (échelle : celle de la boîte)', (await val('pr-margin')) === '7' && (await val('pr-scale')) === 'actual' && (await val('pr-orient')) === 'landscape', { m: await val('pr-margin'), s: await val('pr-scale'), o: await val('pr-orient') });
     await pick('PDFCreator');
     check('« PDFCreator » : 3 mm mémorisés', (await val('pr-margin')) === '3');
 
@@ -228,15 +228,55 @@ function check(name, cond, detail) {
     check('autre document : copies = 1', (await val('pr-copies')) === '1' && (await c.ev(`!document.getElementById('printdlg').hidden`)), await val('pr-copies'));
     await c.click('#pr-cancel'); await sleep(300);
     check('aucune erreur JavaScript', c.logs.length === 0, c.logs);
+
+    console.log('10. Papier, pages par feuille, échelle : valeurs par défaut à chaque ouverture (décision du 24/11) ; autres réglages conservés');
+    const defaults = async (cc) => ({ paper: await cc.ev("document.getElementById('pr-paper').value"), nup: await cc.ev("document.getElementById('pr-nup').value"), scale: await cc.ev("document.getElementById('pr-scale').value"), percent: await cc.ev("document.getElementById('pr-percent').value") });
+    const isDefault = (d) => d.paper === 'page' && d.nup === '1' && d.scale === 'fit' && d.percent === '100';
+    clearOut();
+    await openDlg();
+    await pick('Autre imprimante');
+    await c.ev(`document.querySelector('input[name=pr-pages][value=current]').click()`);
+    await setv('pr-paper', '297x420'); await settle();
+    check('choix manuel A3 gardé pendant la boîte (pas ramené à « Format de la page » par l\'aperçu)', (await val('pr-paper')) === '297x420', await val('pr-paper'));
+    await pick('Imprimante Exemple');
+    check('choix manuel A3 gardé après un changement d\'imprimante dans la même boîte', (await val('pr-paper')) === '297x420', await val('pr-paper'));
+    await pick('Autre imprimante');
+    await setv('pr-nup', '4'); await setv('pr-scale', 'percent'); await setv('pr-percent', '50');
+    await setv('pr-duplex', 'longEdge'); await setv('pr-color', 'gray'); await setv('pr-margin', '5'); await setv('pr-orient', 'landscape'); await settle();
+    await c.click('#pr-ok');
+    const j10 = await waitPrint();
+    check('tâche imprimée en A3 (code 8 envoyé), 4 pages par feuille, 50 %', !!(j10 && j10.jobs[0].send && j10.jobs[0].send.args.mediaSize && j10.jobs[0].send.args.mediaSize.vendor_id === '8'), j10 && j10.jobs[0].send);
+    const s10 = JSON.parse(fs.readFileSync(path.join(c.userData, 'settings.json'), 'utf8'));
+    const pp10 = (s10.printPrinters || {})['Autre imprimante'] || {};
+    check('settings.json : ni papier, ni pages par feuille, ni échelle écrits (global et par imprimante)', !['paper', 'nup', 'mode', 'percent', 'copies'].some((k) => k in s10.print) && !('mode' in pp10) && !('percent' in pp10), { print: s10.print, pp10 });
+    check('settings.json : réglages conservés écrits (imprimante, recto-verso, couleur ; marge et orientation par imprimante)', s10.print.printer === 'Autre imprimante' && s10.print.duplex === 'longEdge' && s10.print.color === 'gray' && pp10.margin === 5 && pp10.orientation === 'landscape', { print: s10.print, pp10 });
+    await openDlg();
+    let d10 = await defaults(c);
+    check('même document, rouverte : Format de la page, 1 page par feuille, ajusté, 100 %', isDefault(d10), d10);
+    check('même document : imprimante, recto-verso, couleur, marge et orientation conservés', (await val('pr-printer')) === 'Autre imprimante' && (await val('pr-duplex')) === 'longEdge' && (await val('pr-color')) === 'gray' && (await val('pr-margin')) === '5' && (await val('pr-orient')) === 'landscape',
+      [await val('pr-printer'), await val('pr-duplex'), await val('pr-color'), await val('pr-margin'), await val('pr-orient')]);
+    await c.click('#pr-cancel'); await sleep(300);
+    await c.ev(`document.querySelectorAll('.doctab')[0].click()`); await sleep(1200);
+    await openDlg();
+    d10 = await defaults(c);
+    check('autre document : valeurs par défaut', isDefault(d10) && (await c.ev(`!document.getElementById('printdlg').hidden`)), d10);
+    await c.click('#pr-cancel'); await sleep(300);
+    check('section 10 : aucune erreur JavaScript', c.logs.length === 0, c.logs);
     // Nouvelle session avec le même profil (settings.json recopié) ; on y ajoute une ANCIENNE valeur « copies: 6 », qui doit être ignorée.
     const profile = JSON.parse(fs.readFileSync(path.join(c.userData, 'settings.json'), 'utf8'));
-    profile.print = Object.assign({}, profile.print, { copies: 6 });
+    // anciennes valeurs (versions précédentes) : papier A3, 4 pages par feuille, 50 % (global et par imprimante) → ignorées
+    profile.print = Object.assign({}, profile.print, { copies: 6, paper: '297x420', nup: 4, mode: 'percent', percent: 50 });
+    profile.printPrinters['Autre imprimante'] = Object.assign({}, profile.printPrinters['Autre imprimante'], { mode: 'percent', percent: 50 });
     c2 = await launchApp({ files: [f.a], userDataFiles: { 'settings.json': profile }, env: { ORICALPDF_TEST_PRINT_DIR: out, ORICALPDF_TEST_PRINTERS: JSON.stringify(printers) } });
     await c2.waitFor(`document.querySelectorAll('.docview.active canvas').length>0`); await sleep(800);
     await c2.ev(`document.body.click()`); await c2.key('p', { code: 'KeyP', windowsVirtualKeyCode: 80, modifiers: 2 }); await sleep(1800);
     const v2 = await c2.ev(`document.getElementById('pr-copies').value`);
     const p2 = await c2.ev(`document.getElementById('pr-printer').value`);
     check('nouvelle session, même profil, ancienne valeur « copies: 6 » dans settings.json : copies = 1 (autres réglages relus : imprimante)', v2 === '1' && p2 === 'Autre imprimante', { v2, p2 });
+    const d2 = await defaults(c2);
+    check('nouvelle session, anciennes valeurs papier / pages par feuille / échelle dans settings.json : ignorées', isDefault(d2), d2);
+    const k2 = await c2.ev("['pr-duplex','pr-color','pr-margin','pr-orient'].map((i)=>document.getElementById(i).value).join(',')");
+    check('nouvelle session : recto-verso, couleur, marge et orientation conservés', k2 === 'longEdge,gray,5,landscape', k2);
     check('nouvelle session : aucune erreur JavaScript', c2.logs.length === 0, c2.logs);
   } catch (e) {
     check('exécution sans exception', false, String(e && e.stack || e));

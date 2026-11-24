@@ -70,7 +70,8 @@ ${traps('Liens internes et formulaires des sources ne sont pas repris.')}` },
 s'il est imprimé en A1 « taille réelle ».</p>
 ${steps('Choisir l\'imprimante et le papier (« format de la page » ou un format fixe).', 'Taille réelle ou ajustée à la feuille ; marges ; orientation automatique.',
     'Couleur, niveaux de gris ou noir et blanc ; traits fins renforcés pour les plans.', 'Pages : toutes, courante, sélection ou plage. La file d\'attente s\'affiche en bas ; on peut annuler.')}
-${traps('Une imprimante a des marges matérielles : sur un traceur, choisissez un format de papier qui les inclut.', 'Les annotations sont imprimées comme à l\'enregistrement.')}
+${traps('Une imprimante a des marges matérielles : sur un traceur, choisissez un format de papier qui les inclut.', 'Les annotations sont imprimées comme à l\'enregistrement.',
+    'À chaque ouverture, la boîte repart de 1 copie, du papier « Format de la page », d\'1 page par feuille et de l\'échelle « Ajuster » ; l\'imprimante, le recto-verso, la couleur et les marges sont repris.')}
 <p><b>Feuille tournée ou coupée par l'imprimante</b> : l'option avancée « Orientation envoyée à l'imprimante » (Automatique par défaut, Portrait ou
 Paysage) change seulement l'orientation annoncée au pilote, ni l'aperçu ni la mise en page ; elle est mémorisée pour chaque imprimante.</p>
 <p><b>Feuille sortie dans un autre format</b> (A4 au lieu d'A3, dessin coupé) : la ligne « Envoi » sous l'aperçu indique ce qui part vers
