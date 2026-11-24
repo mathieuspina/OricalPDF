@@ -47,19 +47,26 @@ const testPrinters = () => {
 // Capacités d'une imprimante (formats de papier, recto-verso, couleur annoncée, marge matérielle) via .NET (PowerShell, hors ligne). null si indisponible.
 // NB : « color » vient de PrinterSettings.SupportsColor, c'est-à-dire de ce que le PILOTE annonce. Des pilotes d'imprimante PDF virtuelle (PDFCreator)
 // annoncent « pas de couleur » alors qu'ils enregistrent la couleur : c'est une information, pas un interdit (voir print-ui.js).
-function capabilities(name) {
-  return new Promise((resolve) => {
+// capabilitiesEx → { caps, status: 'ok' | 'invalide' | 'expiré' | 'échec', ms } ; papers[].kind = code de papier du pilote (RawKind, dmPaperSize),
+// defaultPaper = papier par défaut du pilote. Une imprimante réseau injoignable peut bloquer la lecture .NET bien au-delà de 15 s (mesuré : 114 s
+// pour un serveur absent) : PowerShell est alors arrêté au bout de 15 s et le résultat est « expiré » (journalisé).
+const CAPS_TIMEOUT = () => Number(process.env.SPINADOC_CAPS_TIMEOUT_MS) || 15000; // délai réglable pour les tests
+function capabilitiesEx(name) {
+  const t0 = Date.now();
+  return new Promise((resolve0) => {
+    const resolve = (caps, status) => resolve0({ caps, status, ms: Date.now() - t0 });
     const script = [
       'Add-Type -AssemblyName System.Drawing;',
       '$p = New-Object System.Drawing.Printing.PrinterSettings; $p.PrinterName = $env:SPIN_PRN;',
       'if (-not $p.IsValid) { "null"; exit }',
       '$d = $p.DefaultPageSettings;',
       '[pscustomobject]@{ duplex = $p.CanDuplex; color = $p.SupportsColor; maxCopies = $p.MaximumCopies; hx = $d.HardMarginX; hy = $d.HardMarginY;',
-      'papers = @($p.PaperSizes | ForEach-Object { [pscustomobject]@{ name = $_.PaperName; w = $_.Width; h = $_.Height } }) } | ConvertTo-Json -Compress -Depth 4',
+      'def = [pscustomobject]@{ name = $d.PaperSize.PaperName; w = $d.PaperSize.Width; h = $d.PaperSize.Height; kind = $d.PaperSize.RawKind };',
+      'papers = @($p.PaperSizes | ForEach-Object { [pscustomobject]@{ name = $_.PaperName; w = $_.Width; h = $_.Height; kind = $_.RawKind } }) } | ConvertTo-Json -Compress -Depth 4',
     ].join(' ');
     let out = '';
     let done = false;
-    const finish = (v) => { if (!done) { done = true; resolve(v); } };
+    const finish = (v, status) => { if (!done) { done = true; resolve(v, status || (v ? 'ok' : 'échec')); } };
     try {
       const ps = spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script], { env: Object.assign({}, process.env, { SPIN_PRN: name }), windowsHide: true });
       ps.stdout.on('data', (d) => { out += d; });
@@ -67,13 +74,15 @@ function capabilities(name) {
       ps.on('close', () => {
         try {
           const j = JSON.parse(out.trim());
-          if (!j) return finish(null);
-          const papers = (Array.isArray(j.papers) ? j.papers : []).filter((q) => q.w > 0 && q.h > 0).map((q) => ({ name: q.name, w: Math.round((q.w / 100) * 254) / 10, h: Math.round((q.h / 100) * 254) / 10 }));
+          if (!j) return finish(null, 'invalide');
+          const paper = (q) => ({ name: q.name, w: Math.round((q.w / 100) * 254) / 10, h: Math.round((q.h / 100) * 254) / 10, kind: Number.isInteger(q.kind) ? q.kind : null });
+          const papers = (Array.isArray(j.papers) ? j.papers : []).filter((q) => q.w > 0 && q.h > 0).map(paper);
+          const defaultPaper = j.def && j.def.w > 0 && j.def.h > 0 ? paper(j.def) : null;
           const hard = Math.max(Number(j.hx) || 0, Number(j.hy) || 0);
-          finish({ duplex: !!j.duplex, color: j.color !== false, maxCopies: j.maxCopies || 1, papers, hardMarginMm: hard > 0 ? Math.round((hard / 100) * 254) / 10 : null });
+          finish({ duplex: !!j.duplex, color: j.color !== false, maxCopies: j.maxCopies || 1, papers, defaultPaper, hardMarginMm: hard > 0 ? Math.round((hard / 100) * 254) / 10 : null });
         } catch { finish(null); }
       });
-      setTimeout(() => { try { ps.kill(); } catch { /* */ } finish(null); }, 15000);
+      setTimeout(() => { try { ps.kill(); } catch { /* */ } finish(null, 'expiré'); }, CAPS_TIMEOUT());
     } catch { finish(null); }
   });
 }
@@ -81,7 +90,12 @@ function capabilities(name) {
 // Une tâche : fichier PDF dont toutes les pages ont la taille du papier. Résout { ok, message }.
 // Le nom du travail vu par le spouleur vient du titre du document : nom du fichier temporaire, /Title du PDF et titre de la fenêtre sont tous trois
 // le nom du document (voir print-layout.js jobTitle / jobFileName).
-async function printOne(file, o, title) {
+// Appel natif d'Electron 33 : webContents.print(o) remplace pageSize par un mediaSize SANS code de papier puis appelle this._print(o, cb).
+// Passer par _print avec notre mediaSize (vendor_id) est le seul moyen de faire écrire dmPaperSize par Chromium (voir print-layout.js).
+// Sans _print (autre version d'Electron) : API publique, taille personnalisée (journalisé « API publique »).
+const hasInternalPrint = (wc) => !!wc && typeof wc._print === 'function';
+async function printOne(file, plan, title) {
+  let send = PrintLayout.sendArgs(plan, false);
   const win = track(new BrowserWindow({ show: false, title, webPreferences: { plugins: true, backgroundThrottling: false } }));
   let keepAlive = false;
   try {
@@ -89,9 +103,15 @@ async function printOne(file, o, title) {
     await win.loadURL('file:///' + file.replace(/\\/g, '/'));
     win.setTitle(title);
     await sleep(2000); // le lecteur PDF a besoin d'un court instant pour charger le document
+    send = PrintLayout.sendArgs(plan, hasInternalPrint(win.webContents));
+    const o = send.args;
     if (ALLOW() && o.deviceName !== ALLOW()) throw new Error('Imprimante refusée par le garde-fou de test : ' + o.deviceName);
     let finished = false;
-    const cb = new Promise((res) => win.webContents.print(o, (success, reason) => { finished = true; res({ success, reason }); }));
+    const done = (success, reason) => { finished = true; return { success, reason }; };
+    const cb = new Promise((res) => {
+      if (send.api === 'interne') win.webContents._print(o, (success, reason) => res(done(success, reason)));
+      else win.webContents.print(o, (success, reason) => res(done(success, reason)));
+    });
     // Certains pilotes (imprimantes virtuelles à port fichier) ne rappellent pas : après 8 s la tâche est considérée comme envoyée ; la fenêtre
     // reste vivante (jusqu'au rappel, ou 10 min) pour ne pas interrompre un gros travail en cours d'envoi.
     const r = await Promise.race([cb, sleep(!o.silent ? 600000 : 8000).then(() => ({ success: true, reason: '', pending: true }))]);
@@ -101,8 +121,8 @@ async function printOne(file, o, title) {
       cb.then(kill);
       setTimeout(kill, 600000);
     }
-    return r.success ? { ok: true, pending: !!(r.pending && !finished) } : { ok: false, message: r.reason || 'Échec de l\'impression' };
-  } catch (e) { return { ok: false, message: String((e && e.message) || e) };
+    return r.success ? { ok: true, pending: !!(r.pending && !finished), send } : { ok: false, message: r.reason || 'Échec de l\'impression', send };
+  } catch (e) { return { ok: false, message: String((e && e.message) || e), send };
   } finally { if (!keepAlive) { try { win.destroy(); } catch { /* */ } } }
 }
 
@@ -162,12 +182,19 @@ async function pump() {
 }
 
 // Capacités par imprimante (formats annoncés) : lues une fois, gardées pour calculer les options d'envoi.
+// → { caps, status, ms } ; un échec ou un délai dépassé n'est gardé qu'une minute (nouvel essai ensuite).
 const capsCache = new Map();
 async function capsOf(name) {
   const tp = testPrinters();
-  if (tp) { const p = tp.find((x) => x.name === name); return (p && p.caps) || null; }
-  if (!capsCache.has(name)) capsCache.set(name, capabilities(String(name)));
-  return capsCache.get(name);
+  if (tp) { const p = tp.find((x) => x.name === name); return { caps: (p && p.caps) || null, status: 'test', ms: 0 }; }
+  const c = capsCache.get(name);
+  if (!c || (c.failed && Date.now() - c.at > 60000)) {
+    const e = { at: Date.now(), failed: false, p: capabilitiesEx(String(name)) };
+    e.p.then((r) => { e.failed = r.status !== 'ok'; e.at = Date.now(); });
+    capsCache.set(name, e);
+    return e.p;
+  }
+  return c.p;
 }
 
 // ---------------------------------------------------------------- journal d'impression (userData/print-log.txt)
@@ -176,14 +203,16 @@ let userName = '';
 try { userName = os.userInfo().username || ''; } catch { /* */ }
 const mask = (name) => AppInfo.maskPrinter(name, userName);
 // Rien d'identifiant : imprimante masquée (aussi dans deviceName et dans un message d'erreur), titre et nom du fichier remplacés par <document>.
-function logJob(t, j, plan, result) {
+function logJob(t, j, plan, result, send, capsRec) {
   try {
     const dev = String(t.opts.device || '');
     let msg = String(result || '');
     for (const s of [j.title, j.fileName, t.name]) if (s && String(s).length > 2) msg = msg.split(String(s)).join('<document>');
     if (dev) msg = msg.split(dev).join(mask(dev));
     const p = Object.assign({}, plan, { options: Object.assign({}, plan.options, { deviceName: mask(dev) }) });
-    const l = PrintLog.line({ date: new Date(), printer: mask(dev), wMm: j.wMm, hMm: j.hMm, plan: p, result: msg });
+    const sent = send ? Object.assign({}, send, { args: Object.assign({}, send.args, { deviceName: mask(dev) }) }) : undefined;
+    const caps = capsRec ? { status: capsRec.status, ms: capsRec.ms, papers: (capsRec.caps && capsRec.caps.papers) || [] } : undefined;
+    const l = PrintLog.line({ date: new Date(), printer: mask(dev), wMm: j.wMm, hMm: j.hMm, plan: p, sent, send: send ? PrintLayout.sendText(plan, send.applied) : undefined, caps, result: msg });
     const f = logPath();
     let prev = '';
     try { prev = fs.readFileSync(f, 'utf8'); } catch { /* premier journal */ }
@@ -201,9 +230,13 @@ function onJob(t, j) {
     const job = { wMm: j.wMm, hMm: j.hMm, title: j.title, fileName: j.fileName };
     t.jobs.push(job);
     t.chain = t.chain.then(async () => { // options qui AURAIENT été passées à webContents.print (tests) + ligne de journal
-      const plan = PrintLayout.printOptions(j, t.opts, await capsOf(t.opts.device));
+      const capsRec = await capsOf(t.opts.device);
+      const plan = PrintLayout.printOptions(j, t.opts, capsRec.caps);
+      const main = getMain();
+      const send = PrintLayout.sendArgs(plan, hasInternalPrint(main && !main.isDestroyed() ? main.webContents : null));
       job.print = plan;
-      logJob(t, j, plan, 'test : non imprimé (dossier de test)');
+      job.send = Object.assign({ text: PrintLayout.sendText(plan, send.applied) }, send);
+      logJob(t, j, plan, 'test : non imprimé (dossier de test)', send, capsRec);
       fs.writeFileSync(path.join(dir, 'jobs.json'), JSON.stringify({ opts: t.opts, name: t.name, jobs: t.jobs, pendingTmp: t.pendingTmp || [] }));
     });
     if (process.env.SPINADOC_TEST_PRINT_PENDING) { // simulation d'un pilote qui ne rappelle pas : fenêtre cachée gardée jusqu'à 10 min
@@ -227,9 +260,10 @@ function onJob(t, j) {
     if (t.cancelled || t.error) return;
     t.label = 'Envoi'; t.sheet = t.total; notify(t);
     if (ALLOW() && t.opts.device !== ALLOW()) { t.error = 'Imprimante refusée par le garde-fou de test.'; t.message = t.error; return; }
-    const plan = PrintLayout.printOptions(j, t.opts, await capsOf(t.opts.device));
-    const r = await printOne(f, plan.options, j.title);
-    logJob(t, j, plan, r.ok ? (r.pending ? "envoyé (le pilote n'a pas répondu en 8 s : considéré comme envoyé)" : 'envoyé') : 'échec : ' + r.message);
+    const capsRec = await capsOf(t.opts.device);
+    const plan = PrintLayout.printOptions(j, t.opts, capsRec.caps);
+    const r = await printOne(f, plan, j.title);
+    logJob(t, j, plan, r.ok ? (r.pending ? "envoyé (le pilote n'a pas répondu en 8 s : considéré comme envoyé)" : 'envoyé') : 'échec : ' + r.message, r.send, capsRec);
     if (!r.ok) { t.error = r.message; t.message = r.message; }
   }).finally(() => { setTimeout(() => rmTmp(tmp), 120000).unref(); });
 }
@@ -252,9 +286,7 @@ function register(ipcMain, mainGetter) {
   ipcMain.handle('print:caps', async (_e, name) => {
     const tp = testPrinters();
     if (tp) { const p = tp.find((x) => x.name === name); return (p && p.caps) || null; }
-    const c = await capabilities(String(name));
-    if (c) capsCache.set(name, Promise.resolve(c));
-    return c;
+    return (await capsOf(name)).caps;
   });
 
   // task : { name, edBytes, groups: [{ w, h, sheets }], raster: null | { mode, dpi, thin }, opts: { device, copies, collate, duplex, color, dialog } }
@@ -315,4 +347,4 @@ function shutdown() {
   for (const d of [...tmpDirs]) rmTmp(d);
 }
 
-module.exports = { register, active, shutdown, readLog, _windows: () => windows.size };
+module.exports = { register, active, shutdown, readLog, capabilitiesEx, _windows: () => windows.size };

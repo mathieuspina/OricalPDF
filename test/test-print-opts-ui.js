@@ -20,10 +20,12 @@ function check(name, cond, detail) {
   const f = await makeAll(path.join(os.tmpdir(), 'spinadoc-ui-pdfs'));
   const out = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-print-opts-'));
   const papers = [{ name: 'A4', w: 210, h: 297 }, { name: 'A3', w: 297, h: 420 }];
+  // avec codes de papier du pilote (RawKind) et papier par défaut, comme les lit print-main.js depuis 1.3.1 (correctif du 24/11)
+  const papersK = [{ name: 'A4', w: 210, h: 297, kind: 9 }, { name: 'A3', w: 297, h: 420, kind: 8 }];
   const printers = [
     { name: 'Imprimante Exemple', isDefault: true, caps: { duplex: true, color: true, maxCopies: 99, hardMarginMm: 4.2, papers } },
     { name: 'PDFCreator', caps: { duplex: false, color: false, maxCopies: 1, hardMarginMm: null, papers } },
-    { name: 'Autre imprimante', caps: { duplex: true, color: true, maxCopies: 99, hardMarginMm: null, papers } },
+    { name: 'Autre imprimante', caps: { duplex: true, color: true, maxCopies: 99, hardMarginMm: null, papers: papersK, defaultPaper: papersK[0] } },
   ];
   const c = await launchApp({ files: [f.a], env: { SPINADOC_TEST_PRINT_DIR: out, SPINADOC_TEST_PRINTERS: JSON.stringify(printers) } });
   const key = (k, code, vk, mods = 0) => c.key(k, { code, windowsVirtualKeyCode: vk, modifiers: mods });
@@ -154,6 +156,40 @@ function check(name, cond, detail) {
     await pick('PDFCreator');
     check('autre imprimante : Automatique', (await val('pr-sendorient')) === 'auto', await val('pr-sendorient'));
     await pick('Autre imprimante'); await setv('pr-sendorient', 'auto');
+    await c.click('#pr-cancel'); await sleep(300);
+
+    console.log('8. Méthode d\'envoi du format (1.3.1, correctif du 24/11) : code de papier, taille personnalisée, papier par défaut du pilote');
+    const printMethod = async (paper, orient, method) => {
+      clearOut();
+      await c.ev(`document.body.click()`); await key('p', 'KeyP', 80, 2); await sleep(1500);
+      await pick('Autre imprimante');
+      await c.ev(`document.querySelector('input[name=pr-pages][value=current]').click()`);
+      await setv('pr-paper', paper); await setv('pr-orient', orient); await setv('pr-sendpaper', method); await settle();
+      await c.click('#pr-ok');
+      const x = await waitPrint();
+      return { job: x && x.jobs[0] };
+    };
+    await c.ev(`document.body.click()`); await key('p', 'KeyP', 80, 2); await sleep(1500);
+    check('réglage avancé « Méthode d\'envoi du format » : Automatique par défaut', await c.ev(`(()=>{const e=document.getElementById('pr-sendpaper');return e.value==='auto' && [...e.options].map(o=>o.textContent).join('|')==='Automatique (défaut)|Taille personnalisée|Papier par défaut du pilote'})()`) === true);
+    await c.click('#pr-cancel'); await sleep(300);
+    let r8 = await printMethod('297x420', 'landscape', 'auto');
+    let sd = r8.job && r8.job.send;
+    check('automatique : appel interne d\'Electron disponible (Electron 33 : _print) — le code de papier peut partir', sd && sd.api === 'interne' && sd.applied === 'code', sd && { api: sd.api, applied: sd.applied });
+    check('automatique : mediaSize avec vendor_id 8, dimensions du papier annoncé, landscape, sans pageSize', sd && sd.args.mediaSize.vendor_id === '8' && sd.args.mediaSize.width_microns === 297000 && sd.args.mediaSize.height_microns === 420000 && sd.args.landscape === true && !('pageSize' in sd.args), sd && sd.args);
+    r8 = await printMethod('297x420', 'landscape', 'custom');
+    sd = r8.job && r8.job.send;
+    check('taille personnalisée : aucun code', sd && !('vendor_id' in sd.args.mediaSize) && sd.applied === 'custom' && r8.job.print.method === 'custom', { line: r8.line, ms: sd && sd.args.mediaSize });
+    r8 = await printMethod('297x420', 'landscape', 'driver');
+    sd = r8.job && r8.job.send;
+    check('papier par défaut du pilote : code 9 et dimensions A4 envoyés', sd && sd.args.mediaSize.vendor_id === '9' && sd.args.mediaSize.width_microns === 210000 && sd.applied === 'driver', { line: r8.line, ms: sd && sd.args.mediaSize });
+    await c.ev(`document.body.click()`); await key('p', 'KeyP', 80, 2); await sleep(1500);
+    await pick('Autre imprimante');
+    check('méthode mémorisée pour cette imprimante', (await val('pr-sendpaper')) === 'driver', await val('pr-sendpaper'));
+    await pick('PDFCreator');
+    check('autre imprimante : Automatique ; PDF A3 sans code annoncé → code standard', (await val('pr-sendpaper')) === 'auto', await val('pr-sendpaper'));
+    await setv('pr-paper', '297x420'); await setv('pr-orient', 'landscape'); await settle();
+    await setv('pr-sendorient', 'auto');
+    await pick('Autre imprimante'); await setv('pr-sendpaper', 'auto');
     await c.click('#pr-cancel'); await sleep(300);
     const logFile = path.join(c.userData, 'print-log.txt');
     const log = fs.existsSync(logFile) ? fs.readFileSync(logFile, 'utf8') : '';

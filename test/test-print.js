@@ -294,3 +294,83 @@ async function check(label, srcBytes, o, expect) {
   assert.ok(!/\n/.test(PL.append('', 'a\nb').trim()), 'une entrée = une ligne');
   console.log(`  ok   options d'impression : matrice ${n} cas (A4/A3/A2 × portrait/paysage × /Rotate 90 × envoi auto/portrait/paysage × 1/2 p.), formats mélangés, ±1 mm, journal`);
 })().catch((e) => { console.error('ÉCHEC (options d\'impression) :', e); process.exit(1); });
+
+// ------------------------------------------------------------ 1.3.1 (correctif du 24/11) : méthode d'envoi du format au pilote
+// Electron 33 / Chromium 130 n'écrivent le code de papier Windows (dmPaperSize) que si mediaSize.vendor_id est un code < 256 ; sinon largeur /
+// longueur seulement, que beaucoup de pilotes de copieurs ignorent (papier par défaut, A4). Matrice : formats A5 … A0, Letter, Legal, Tabloid ×
+// portrait / paysage × méthode auto / custom / driver × orientation envoyée auto / portrait / paysage × imprimante type copieur (codes < 256,
+// pas d'A2-A0) / capacités inconnues / traceur (codes du pilote ≥ 256). La sortie est un objet d'options : aucune impression.
+(function paperMethodMatrix() {
+  const PL = require('../src/print-log.js');
+  const copier = { papers: [{ name: 'Lettre', w: 215.9, h: 279.4, kind: 1 }, { name: '11x17', w: 279.4, h: 431.8, kind: 17 }, { name: 'Légal', w: 215.9, h: 355.6, kind: 5 },
+    { name: 'A5', w: 148.1, h: 210.1, kind: 11 }, { name: 'Personnalisé [Nom fixe]', w: 210.1, h: 296.9, kind: 256 }, { name: 'A4', w: 210.1, h: 296.9, kind: 9 },
+    { name: 'A3', w: 296.9, h: 420.1, kind: 8 }], defaultPaper: { name: 'A4', w: 210.1, h: 296.9, kind: 9 } };
+  const plotter = { papers: [['A0', 841, 1189, 261], ['A1', 594.1, 841, 262], ['A2', 420.1, 594.1, 263], ['A3', 296.9, 420.1, 264], ['A4', 210.1, 296.9, 265]].map(([name, w, h, kind]) => ({ name, w, h, kind })),
+    defaultPaper: { name: 'A0', w: 841, h: 1189, kind: 261 } };
+  const profiles = { copieur: copier, inconnues: null, traceur: plotter };
+  const copierCode = { A3: 8, A4: 9, A5: 11, Letter: 1, Legal: 5, Tabloid: 17 };
+  const copierDims = { A3: [296.9, 420.1], A4: [210.1, 296.9], A5: [148.1, 210.1], Letter: [215.9, 279.4], Legal: [215.9, 355.6], Tabloid: [279.4, 431.8] };
+  const plotDims = { A0: [841, 1189], A1: [594.1, 841], A2: [420.1, 594.1], A3: [296.9, 420.1], A4: [210.1, 296.9] };
+  let n = 0;
+  for (const f of L.STD_FORMATS) {
+    const [fw, fh] = L.PAPERS[f];
+    for (const land of [false, true]) {
+      const job = land ? { wMm: fh, hMm: fw } : { wMm: fw, hMm: fh };
+      for (const [prof, caps] of Object.entries(profiles)) {
+        for (const method of L.PAPER_METHODS) {
+          for (const orient of ['auto', 'portrait', 'landscape']) {
+            const label = `${f} ${land ? 'paysage' : 'portrait'}, ${prof}, ${method}, envoi ${orient}`;
+            const r = L.printOptions(job, { device: 'SpinADoc Test PDF', copies: 2, collate: true, color: true, duplex: 'simplex', orient, paperMethod: method }, caps);
+            assert.strictEqual(r.landscape, orient === 'auto' ? land : orient === 'landscape', label + ' : landscape');
+            assert.strictEqual(r.method, method, label + ' : méthode demandée');
+            assert.strictEqual(r.format, f, label + ' : format reconnu');
+            // attendu
+            let applied = 'custom', code = null;
+            let dims = prof === 'copieur' && copierDims[f] ? copierDims[f] : prof === 'traceur' && plotDims[f] ? plotDims[f] : [fw, fh];
+            if (method === 'auto') {
+              if (prof === 'copieur' && copierCode[f]) { applied = 'code'; code = copierCode[f]; }
+              if (prof === 'inconnues' && L.DMPAPER[f]) { applied = 'code'; code = L.DMPAPER[f]; }
+            } else if (method === 'driver' && caps) { applied = 'driver'; code = prof === 'copieur' ? 9 : null; dims = prof === 'copieur' ? [210.1, 296.9] : [841, 1189]; }
+            assert.strictEqual(r.applied, applied, label + ' : méthode appliquée');
+            assert.strictEqual(r.code, code, label + ' : code de papier');
+            const W = Math.round(dims[0] * 1000), H = Math.round(dims[1] * 1000);
+            assert.deepStrictEqual([r.options.pageSize.width, r.options.pageSize.height], [W, H], label + ' : pageSize (repli, portrait)');
+            assert.deepStrictEqual([r.media.width_microns, r.media.height_microns, r.media.imageable_area_right_microns, r.media.imageable_area_top_microns, r.media.imageable_area_left_microns], [W, H, W, H, 0], label + ' : mediaSize');
+            assert.strictEqual(r.media.vendor_id, code ? String(code) : undefined, label + ' : vendor_id');
+            const si = L.sendArgs(r, true);
+            assert.strictEqual(si.api, 'interne');
+            assert.ok(!('pageSize' in si.args) && si.args.mediaSize.vendor_id === r.media.vendor_id && si.args.landscape === r.landscape, label + ' : appel interne (mediaSize avec code, sans pageSize)');
+            assert.deepStrictEqual([si.args.silent, si.args.deviceName, si.args.copies, si.args.collate, si.args.color, si.args.duplexMode, si.args.margins.marginType], [true, 'SpinADoc Test PDF', 2, true, true, 'simplex', 'none'], label + ' : options conservées');
+            assert.notStrictEqual(si.args.mediaSize, r.media, 'mediaSize copié (Electron ne modifie pas le plan)');
+            const sp = L.sendArgs(r, false);
+            assert.ok(sp.api === 'publique' && !('mediaSize' in sp.args) && sp.args.pageSize.width === W, label + ' : repli API publique');
+            assert.strictEqual(sp.applied, applied === 'code' ? 'custom' : applied, label + ' : repli = code perdu');
+            const t = L.sendText(r);
+            const o = r.landscape ? 'paysage' : 'portrait';
+            if (applied === 'code') assert.ok(t.startsWith('Envoi : ') && t.includes(`code ${code}), ${o}`), label + ' : ' + t);
+            else if (applied === 'driver') assert.ok(t.startsWith('Envoi : papier par défaut du pilote (') && t.endsWith(o), label + ' : ' + t);
+            else assert.ok(/^Envoi : taille personnalisée [\d,]+ × [\d,]+ mm, (portrait|paysage)$/.test(t) && t.endsWith(o), label + ' : ' + t);
+            n++;
+          }
+        }
+      }
+    }
+  }
+  assert.strictEqual(n, 9 * 2 * 3 * 3 * 3);
+  // cas du 24/11 : A3 paysage sur le copieur → code 8, paysage ; dimensions exactes du papier annoncé
+  const a3 = L.printOptions({ wMm: 420, hMm: 297 }, { device: 'copieur' }, copier);
+  assert.deepStrictEqual([a3.applied, a3.code, a3.codeFrom, a3.landscape, a3.media.vendor_id, a3.media.width_microns, a3.media.height_microns], ['code', 8, 'imprimante', true, '8', 296900, 420100]);
+  assert.strictEqual(L.sendText(a3), "Envoi : A3 (papier de l'imprimante, code 8), paysage");
+  assert.strictEqual(L.sendText(L.printOptions({ wMm: 420, hMm: 297 }, { paperMethod: 'custom' }, null)), 'Envoi : taille personnalisée 420 × 297 mm, paysage');
+  assert.strictEqual(L.sendText(L.printOptions({ wMm: 420, hMm: 297 }, {}, null)), 'Envoi : A3 (format standard, code 8), paysage');
+  // préférence : parmi les papiers de mêmes dimensions, celui dont le code est transmissible (« Personnalisé » #256 avant A4 #9 dans la liste)
+  assert.strictEqual(L.announcedPaper(copier, 210, 297).kind, 9);
+  // papier annoncé sans code (capacités d'une ancienne version, imprimantes simulées) → code standard
+  const nok = L.printOptions({ wMm: 297, hMm: 420 }, {}, { papers: [{ name: 'A3', w: 297, h: 420 }] });
+  assert.deepStrictEqual([nok.applied, nok.code, nok.codeFrom], ['code', 8, 'standard']);
+  // méthode inconnue → auto ; taille libre → personnalisée ; codes hors bornes refusés
+  assert.strictEqual(L.printOptions({ wMm: 300, hMm: 500 }, { paperMethod: 'xyz' }, copier).method, 'auto');
+  assert.strictEqual(L.printOptions({ wMm: 300, hMm: 500 }, {}, null).applied, 'custom');
+  assert.deepStrictEqual([0, 256, -3, 8.5, '8', 255].map(L.paperCode), [null, null, null, null, null, 255]);
+  console.log(`  ok   méthode d'envoi du format : matrice ${n} cas (9 formats × portrait/paysage × copieur/inconnues/traceur × auto/custom/driver × envoi auto/portrait/paysage), API interne / publique, texte « Envoi »`);
+})();

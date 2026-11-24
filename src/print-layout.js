@@ -170,43 +170,99 @@
   }
 
   // ---- options passées à webContents.print (1.3.1) ----
-  // Une feuille plus large que haute était envoyée telle quelle (pageSize largeur > hauteur, sans « landscape ») : certains pilotes refusaient
-  // ou tournaient mal le paysage. Désormais : pageSize toujours en PORTRAIT (petit côté = largeur, en micromètres, comme l'attend Electron) et
-  // « landscape: true » pour une feuille paysage. Format standard reconnu à ±1 mm ; si l'imprimante annonce un papier de ces dimensions
-  // (caps.papers, ±1 mm, quel que soit son nom localisé), on prend SES dimensions exactes ; sinon taille personnalisée = feuille.
-  //   job : { wMm, hMm } (feuille composée) ; opts : { device, dialog, copies, collate, color, duplex, orient: 'auto' | 'portrait' | 'landscape' }
-  //   opts.orient ne change QUE l'orientation annoncée au pilote (ni l'aperçu, ni la mise en page, ni pageSize).
-  // → { options, landscape, sheet: 'portrait' | 'paysage' (feuille composée), forced, format (nom standard | null), paper (nom annoncé | null) }
+  // ORIENTATION (1.3.1, étape B) : pageSize toujours en PORTRAIT (petit côté = largeur, micromètres) et « landscape: true » pour une feuille
+  // paysage. opts.orient ('auto' | 'portrait' | 'landscape') ne change QUE l'orientation annoncée au pilote.
+  // FORMAT ANNONCÉ AU PILOTE (1.3.1, correctif du 24/11) : Electron 33 convertit pageSize (objet en micromètres OU nom 'A3') en mediaSize SANS
+  // code de papier ; Chromium 130 écrit alors dmPaperWidth / dmPaperLength et laisse dmPaperSize au papier par défaut du pilote (A4). Beaucoup
+  // de pilotes de copieurs (vérifié : Canon Generic Plus PCL6, Canon UFR II, Konica Minolta, par DocumentProperties + CreateDC) ignorent ces
+  // dimensions et gardent A4 ; le pilote « Microsoft Print To PDF » les convertit, lui, en formulaire A3 (d'où des tests verts). Chromium
+  // n'écrit dmPaperSize que si mediaSize.vendor_id est un code numérique < 256 (DMPAPER_USER) : c'est ce que fait la méthode « auto ».
+  // opts.paperMethod :
+  //   'auto'   (défaut) : code de papier (dmPaperSize) = code annoncé par l'imprimante pour un papier de ces dimensions (caps.papers[].kind,
+  //            ±1 mm, préféré à tout autre papier de mêmes dimensions) ; si l'imprimante n'annonce rien (capacités inconnues) ou un papier
+  //            sans code connu, code Windows standard du format (DMPAPER) ; sinon (A1, A0, tailles libres, code du pilote ≥ 256) taille
+  //            personnalisée comme 'custom'.
+  //   'custom' : taille personnalisée en micromètres, sans code (comportement de la 1.3.1 avant le correctif).
+  //   'driver' : papier par défaut du pilote (caps.defaultPaper : code et dimensions) ; Chromium refuse une impression SANS taille (« page
+  //            size is empty », vérifié) : « ne rien envoyer » est impossible, on envoie donc le papier par défaut annoncé. Inconnu → 'custom'.
+  // → { options (API publique webContents.print : pageSize en micromètres, repli), media (mediaSize de l'appel interne, avec vendor_id),
+  //     landscape, sheet, forced, format, paper, method (demandée), applied ('code' | 'custom' | 'driver'), code, codeFrom, sentW, sentH (mm) }
   const STD_FORMATS = ['A5', 'A4', 'A3', 'A2', 'A1', 'A0', 'Letter', 'Legal', 'Tabloid'];
+  const DMPAPER = { Letter: 1, Tabloid: 3, Legal: 5, A3: 8, A4: 9, A5: 11, A2: 66 }; // wingdi.h ; A1 et A0 n'ont pas de code Windows
+  const PAPER_METHODS = ['auto', 'custom', 'driver'];
   const near = (a, b, tol) => Math.abs(a - b) <= tol;
+  const paperCode = (k) => (Number.isInteger(k) && k > 0 && k < 256 ? k : null); // Chromium : 0 < code < DMPAPER_USER
   function standardFormat(wMm, hMm, tol) {
     const t = tol == null ? 1 : tol, a = Math.min(wMm, hMm), b = Math.max(wMm, hMm);
     return STD_FORMATS.find((n) => near(a, PAPERS[n][0], t) && near(b, PAPERS[n][1], t)) || null;
   }
+  // papier annoncé de mêmes dimensions (±1 mm, quel que soit son nom localisé) ; parmi plusieurs, celui qui a un code transmissible
   function announcedPaper(caps, wMm, hMm, tol) {
     const t = tol == null ? 1 : tol, a = Math.min(wMm, hMm), b = Math.max(wMm, hMm);
-    const list = caps && Array.isArray(caps.papers) ? caps.papers : [];
-    return list.find((p) => p && p.w > 0 && p.h > 0 && near(Math.min(p.w, p.h), a, t) && near(Math.max(p.w, p.h), b, t)) || null;
+    const list = (caps && Array.isArray(caps.papers) ? caps.papers : []).filter((p) => p && p.w > 0 && p.h > 0 && near(Math.min(p.w, p.h), a, t) && near(Math.max(p.w, p.h), b, t));
+    return list.find((p) => paperCode(p.kind)) || list.find((p) => p.kind == null) || list[0] || null;
   }
+  const capsKnown = (caps) => !!(caps && Array.isArray(caps.papers) && caps.papers.length);
   function printOptions(job, opts, caps) {
     const o = opts || {};
     const sheetLand = isLandscape(job.wMm, job.hMm);
     const forced = o.orient === 'portrait' || o.orient === 'landscape' ? o.orient : 'auto';
     const landscape = forced === 'auto' ? sheetLand : forced === 'landscape';
+    const method = PAPER_METHODS.includes(o.paperMethod) ? o.paperMethod : 'auto';
     const format = standardFormat(job.wMm, job.hMm);
     const paper = announcedPaper(caps, job.wMm, job.hMm);
     let pw = Math.min(job.wMm, job.hMm), ph = Math.max(job.wMm, job.hMm);
     if (paper) { pw = Math.min(paper.w, paper.h); ph = Math.max(paper.w, paper.h); }
     else if (format) { pw = PAPERS[format][0]; ph = PAPERS[format][1]; }
+    let applied = 'custom', code = null, codeFrom = null, name = paper ? String(paper.name || '') : format;
+    if (method === 'driver') {
+      const d = caps && caps.defaultPaper;
+      if (d && d.w > 0 && d.h > 0) {
+        applied = 'driver'; pw = Math.min(d.w, d.h); ph = Math.max(d.w, d.h); name = String(d.name || '');
+        code = paperCode(d.kind); codeFrom = code ? 'pilote' : null;
+      }
+    } else if (method === 'auto') {
+      if (paper && paperCode(paper.kind)) { code = paper.kind; codeFrom = 'imprimante'; }
+      else if (format && DMPAPER[format] && (!capsKnown(caps) || (paper && paper.kind == null))) { code = DMPAPER[format]; codeFrom = 'standard'; }
+      if (code) applied = 'code';
+    }
+    const W = Math.round(pw * 1000), H = Math.round(ph * 1000);
     const options = {
       silent: !o.dialog, deviceName: o.device, printBackground: true, margins: { marginType: 'none' },
       copies: Math.max(1, Math.min(999, o.copies || 1)), collate: !!o.collate,
       color: o.color !== false, duplexMode: o.duplex || 'simplex',
       landscape,
-      pageSize: { width: Math.round(pw * 1000), height: Math.round(ph * 1000) },
+      pageSize: { width: W, height: H },
     };
-    return { options, landscape, sheet: sheetLand ? 'paysage' : 'portrait', forced, format, paper: paper ? String(paper.name || '') : null };
+    const media = { name: 'CUSTOM', custom_display_name: name || 'Custom', width_microns: W, height_microns: H,
+      imageable_area_left_microns: 0, imageable_area_bottom_microns: 0, imageable_area_right_microns: W, imageable_area_top_microns: H };
+    if (code) media.vendor_id = String(code);
+    return { options, media, landscape, sheet: sheetLand ? 'paysage' : 'portrait', forced, format, paper: paper ? String(paper.name || '') : null,
+      method, applied, code, codeFrom, sentName: name || null, sentW: pw, sentH: ph };
+  }
+  // Arguments réellement passés à Electron. internal = webContents._print existe (Electron 33 : c'est la fonction native que webContents.print
+  // appelle après avoir remplacé pageSize par un mediaSize SANS code) : on lui passe directement mediaSize avec vendor_id. Sans elle (autre
+  // version d'Electron) : API publique, pageSize en micromètres, donc taille personnalisée (le code est perdu, journalisé).
+  // → { api: 'interne' | 'publique', args, applied }
+  function sendArgs(plan, internal) {
+    if (internal) {
+      const args = Object.assign({}, plan.options, { mediaSize: Object.assign({}, plan.media) });
+      delete args.pageSize;
+      return { api: 'interne', args, applied: plan.applied };
+    }
+    return { api: 'publique', args: Object.assign({}, plan.options), applied: plan.applied === 'code' ? 'custom' : plan.applied };
+  }
+  // « Envoi : A3 (format standard, code 8), paysage » — ce qui part vers le pilote (boîte d'impression et journal).
+  function sendText(plan, applied) {
+    const a = applied || plan.applied;
+    const r = (v) => String(Math.round(v * 10) / 10).replace('.', ',');
+    const dims = plan.landscape ? `${r(plan.sentH)} × ${r(plan.sentW)} mm` : `${r(plan.sentW)} × ${r(plan.sentH)} mm`;
+    const orient = plan.landscape ? 'paysage' : 'portrait';
+    const nm = plan.sentName || plan.format || '';
+    if (a === 'code') return `Envoi : ${nm || dims} (${plan.codeFrom === 'standard' ? 'format standard' : 'papier de l\'imprimante'}, code ${plan.code}), ${orient}`;
+    if (a === 'driver') return `Envoi : papier par défaut du pilote (${nm ? nm + ', ' : ''}${plan.code ? 'code ' + plan.code : 'sans code'}), ${orient}`;
+    return `Envoi : taille personnalisée ${dims}, ${orient}`;
   }
 
-  return { printOptions, standardFormat, announcedPaper, STD_FORMATS, PT_PER_MM, PAPERS, mm, toMm, parseRanges, sheetSize, placeInArea, nupCells, planSheet, groupBySize, isLandscape, cleanName, jobTitle, jobFileName, isPdfPrinter, normMargin, defaultMargin, DEFAULT_MARGIN, hardwareCut };
+  return { printOptions, sendArgs, sendText, paperCode, standardFormat, announcedPaper, STD_FORMATS, DMPAPER, PAPER_METHODS, PT_PER_MM, PAPERS, mm, toMm, parseRanges, sheetSize, placeInArea, nupCells, planSheet, groupBySize, isLandscape, cleanName, jobTitle, jobFileName, isPdfPrinter, normMargin, defaultMargin, DEFAULT_MARGIN, hardwareCut };
 });

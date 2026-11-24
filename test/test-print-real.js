@@ -68,7 +68,7 @@ async function waitSortie(t0, timeoutMs) {
   if (printers !== PRINTER) { console.log('SKIP : imprimante virtuelle « ' + PRINTER + ' » absente.'); process.exit(0); }
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'spinadoc-real-'));
   const skipA1 = process.argv.includes('--sans-a1');
-  const src = { A4: [210, 297], A3: [297, 420], A1: [594, 841] };
+  const src = { A4: [210, 297], A3: [297, 420], A3L: [420, 297], A1: [594, 841] };
   for (const [n, [w, h]] of Object.entries(src)) await mkSource(path.join(dir, n + '.pdf'), w, h);
 
   const c = await launchApp({ files: [path.join(dir, 'A4.pdf')], env: { SPINADOC_PRINT_ALLOW: PRINTER } });
@@ -93,6 +93,7 @@ async function waitSortie(t0, timeoutMs) {
       if (!pv) throw new Error('papier introuvable : ' + o.paper);
       await setv('pr-paper', pv); await setv('pr-scale', o.mode || 'actual'); if (o.percent) await setv('pr-percent', String(o.percent));
       await setv('pr-color', o.color || 'color'); await setv('pr-dpi', String(o.dpi || 300)); await setv('pr-margin', '0');
+      await setv('pr-sendpaper', o.method || 'auto'); // méthode d'envoi du format (1.3.1)
       await sleep(900);
       try { fs.unlinkSync(SORTIE); } catch { /* absent */ }
       const t0 = Date.now() - 500;
@@ -129,6 +130,13 @@ async function waitSortie(t0, timeoutMs) {
       });
       await run('A1 sur A1, noir et blanc 600 dpi (rasterisé)', 'A1', { paper: 'page', color: 'bw', dpi: 600, measureDpi: 300 }, () => ({ pw: 594, ph: 841, w: sq.w, h: sq.h, x: sq.x, y: sq.y }));
     }
+    // Méthode d'envoi du format (1.3.1, correctif du 24/11) : A3 paysage par l'application. Ce pilote (Microsoft Print To PDF) honore aussi
+    // une taille personnalisée : ces cas prouvent que les trois méthodes partent sans erreur et ce que produit CE pilote, pas le comportement
+    // d'un copieur. « Papier par défaut du pilote » = A4 ici : la feuille sort en A4 paysage.
+    const asMeasured = (pw, ph) => (r) => ({ pw, ph, w: r.w, h: r.h, x: r.x, y: r.y });
+    await run('A3 paysage, méthode automatique (code de papier 8)', 'A3L', { paper: 'page', method: 'auto' }, () => ({ pw: 420, ph: 297, w: sq.w, h: sq.h, x: sq.x, y: sq.y }));
+    await run('A3 paysage, taille personnalisée', 'A3L', { paper: 'page', method: 'custom' }, () => ({ pw: 420, ph: 297, w: sq.w, h: sq.h, x: sq.x, y: sq.y }));
+    await run('A3 paysage, papier par défaut du pilote (A4)', 'A3L', { paper: 'page', method: 'driver' }, asMeasured(297, 210));
     if (process.argv.includes('--dense')) { // A1 dense (40 000 traits fins + 600 libellés) : durée, mémoire et taille uniquement
       const d = await PDFLib.PDFDocument.create();
       const p = d.addPage([594 * MM, 841 * MM]);

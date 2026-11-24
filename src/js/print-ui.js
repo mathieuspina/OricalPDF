@@ -199,7 +199,7 @@ function savePrinterSettings() {
   const name = val('pr-printer');
   if (!name) return;
   const all = Object.assign({}, Settings.get('printPrinters'));
-  all[name] = { margin: L.normMargin(val('pr-margin'), st.margin), mode: val('pr-scale'), percent: Number(val('pr-percent')) || 100, orientation: val('pr-orient'), center: chk('pr-center'), sendOrient: val('pr-sendorient') };
+  all[name] = { margin: L.normMargin(val('pr-margin'), st.margin), mode: val('pr-scale'), percent: Number(val('pr-percent')) || 100, orientation: val('pr-orient'), center: chk('pr-center'), sendOrient: val('pr-sendorient'), sendPaper: val('pr-sendpaper') };
   Settings.set('printPrinters', all);
 }
 function applyPrinterSettings(name) {
@@ -211,7 +211,8 @@ function applyPrinterSettings(name) {
   $('pr-percent').value = String(s.percent || 100);
   $('pr-orient').value = s.orientation || 'auto';
   $('pr-center').checked = s.center !== false;
-  $('pr-sendorient').value = ['portrait', 'landscape'].includes(s.sendOrient) ? s.sendOrient : 'auto'; // réglage avancé, par imprimante
+  $('pr-sendorient').value = ['portrait', 'landscape'].includes(s.sendOrient) ? s.sendOrient : 'auto'; // réglages avancés, par imprimante
+  $('pr-sendpaper').value = L.PAPER_METHODS.includes(s.sendPaper) ? s.sendPaper : 'auto';
 }
 
 const later = () => { clearTimeout(st.timer); st.timer = setTimeout(refresh, 120); };
@@ -230,7 +231,7 @@ async function print(dialog) {
     edBytes: p.ed.bytes,
     groups: p.groups.map((g) => ({ w: g.w, h: g.h, sheets: g.sheets.map(sheetOf) })),
     raster: needsRaster(o) ? { mode: o.color, dpi: o.dpi, thin: o.thin } : null,
-    opts: { device: o.device, copies: o.copies, collate: o.collate, duplex: o.duplex, color: o.color === 'color', dialog: !!dialog, orient: val('pr-sendorient') },
+    opts: { device: o.device, copies: o.copies, collate: o.collate, duplex: o.duplex, color: o.color === 'color', dialog: !!dialog, orient: val('pr-sendorient'), paperMethod: val('pr-sendpaper') },
   };
   let r;
   try { r = await api.printSubmit(task); } catch (e) { r = { ok: false, message: e && e.message || String(e) }; }
@@ -316,7 +317,7 @@ export async function openPrint(doc) {
 function close() { $('printdlg').hidden = true; st.cache = null; }
 
 export function initPrint() {
-  const watch = ['pr-copies', 'pr-collate', 'pr-duplex', 'pr-range', 'pr-nup', 'pr-paper', 'pr-orient', 'pr-scale', 'pr-percent', 'pr-margin', 'pr-center', 'pr-color', 'pr-thin', 'pr-dpi', 'pr-annots', 'pr-meas'];
+  const watch = ['pr-copies', 'pr-collate', 'pr-duplex', 'pr-range', 'pr-nup', 'pr-paper', 'pr-orient', 'pr-scale', 'pr-percent', 'pr-margin', 'pr-center', 'pr-color', 'pr-thin', 'pr-dpi', 'pr-annots', 'pr-meas', 'pr-sendorient', 'pr-sendpaper'];
   for (const id of watch) { $(id).addEventListener('change', () => { st.previewIdx = 0; later(); }); $(id).addEventListener('input', later); }
   for (const r of document.querySelectorAll('input[name=pr-pages]')) r.addEventListener('change', () => { st.previewIdx = 0; later(); });
   $('pr-printer').addEventListener('change', async () => { const n = val('pr-printer'); await loadCaps(n); applyPrinterSettings(n); st.previewIdx = 0; later(); });
@@ -324,7 +325,7 @@ export function initPrint() {
   $('pr-margin').addEventListener('input', () => { const v = L.normMargin(val('pr-margin'), null); if (v !== null) st.margin = v; });
   $('pr-margin').addEventListener('change', () => { const v = L.normMargin(val('pr-margin'), st.margin); st.margin = v; $('pr-margin').value = String(v); savePrinterSettings(); });
   $('pr-margin').addEventListener('blur', () => { $('pr-margin').value = String(L.normMargin(val('pr-margin'), st.margin)); });
-  for (const id of ['pr-scale', 'pr-percent', 'pr-orient', 'pr-center']) $(id).addEventListener('change', savePrinterSettings);
+  for (const id of ['pr-scale', 'pr-percent', 'pr-orient', 'pr-center', 'pr-sendorient', 'pr-sendpaper']) $(id).addEventListener('change', savePrinterSettings);
   api.onPrintProgress(onPrintProgress);
   $('pr-prev').addEventListener('click', () => { if (st.previewIdx > 0) { st.previewIdx--; refresh(); } });
   $('pr-next').addEventListener('click', () => { if (st.plan && st.plan.sheets && st.previewIdx < st.plan.sheets.length - 1) { st.previewIdx++; refresh(); } });
