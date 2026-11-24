@@ -25,6 +25,7 @@ const dist = path.join(root, 'dist');
 const version = require('../package.json').version;
 const setup = path.join(dist, `OricalPDF-Setup-${version}.exe`);
 const failures = [];
+const crashes = []; // plantages de l'installeur (relance), rappelés en fin de rapport
 let passed = 0;
 const check = (name, cond, detail) => { if (cond) { passed++; console.log('  ok   ', name); } else { failures.push(name); console.log('  ECHEC', name, detail !== undefined ? '→ ' + JSON.stringify(detail) : ''); } };
 const BS = String.fromCharCode(92);
@@ -76,10 +77,21 @@ const assoc = (exe) => ({
   let id = null;
   try {
     // 1. Installation
-    const t0 = Date.now();
-    const r = spawnSync(setup, ['/S', '/D=' + dir], { stdio: 'inherit' });
-    console.log(`     installeur : code ${r.status}, ${((Date.now() - t0) / 1000).toFixed(1)} s`);
-    check('installation : code 0 (aucune relance)', r.status === 0, r.status);
+    // Plantage connu de l'installeur au démarrage (0xC0000005 dans le greffon NSIS System.dll, voir CLAUDE.md « PLANTAGE DE L'INSTALLEUR ») :
+    // UNE relance, comme test:packaged, notée dans test-logs/installer-crashes.log et rappelée en fin de rapport (jamais masquée).
+    let r = null;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      const t0 = Date.now();
+      r = spawnSync(setup, ['/S', '/D=' + dir], { stdio: 'inherit' });
+      const s = ((Date.now() - t0) / 1000).toFixed(1);
+      console.log(`     installeur : code ${r.status}, ${s} s (essai ${attempt})`);
+      if (r.status === 0) break;
+      const hx = '0x' + ((r.status >>> 0).toString(16).toUpperCase());
+      fs.mkdirSync(path.join(__dirname, '..', 'test-logs'), { recursive: true });
+      fs.appendFileSync(path.join(__dirname, '..', 'test-logs', 'installer-crashes.log'), `${new Date().toISOString()}\ntest:update : INSTALLEUR ${hx} à l'essai ${attempt}, ${s} s\n`);
+      crashes.push(`INSTALLEUR : ${hx} à l'essai ${attempt}`);
+    }
+    check('installation : code 0 (au plus une relance après plantage, signalée)', r.status === 0, r.status);
     let v = '';
     for (let i = 0; i < 60 && !v.startsWith(version); i++) { await sleep(1000); v = fs.existsSync(exe) ? fileVersion(exe) : ''; }
     check(`programme ${version} installé (version du fichier)`, v.startsWith(version), v);
@@ -140,5 +152,6 @@ const assoc = (exe) => ({
     rmRetry(profile);
   }
   console.log(failures.length ? `\n${failures.length} échec(s) / ${passed + failures.length}` : `\nOK : installation et désinstallation propres (${passed} vérifications).`);
+  if (crashes.length) console.log('\n!!!!! AVERTISSEMENT : relance après plantage (NON masqué) :\n' + crashes.map((w) => '  - ' + w).join('\n'));
   process.exit(failures.length ? 1 : 0);
 })();

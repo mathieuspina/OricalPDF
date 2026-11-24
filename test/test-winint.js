@@ -51,6 +51,14 @@ check('main.js / preload.js : plus d\'IPC vprinter ni de dossier « Impressions 
 // 3. Processus principal : deuxième lancement et page « Applications par défaut »
 check('main.js : instance unique, fichiers d\'un deuxième lancement ouverts (ou mis en attente si la fenêtre n\'est pas prête)', /requestSingleInstanceLock/.test(main) && /'second-instance'/.test(main) && /pending\.push\(\.\.\.files\)/.test(main));
 check('main.js : app:default-apps → ms-settings:defaultapps?registeredAppUser=Orical PDF', /'app:default-apps'/.test(main) && /ms-settings:defaultapps\?registeredAppUser=' \+ encodeURIComponent\('Orical PDF'\)/.test(main));
+{
+  // 1.4.0 : le modèle d'electron-builder fait « SetOutPath $INSTDIR » dans un.onInit : le dossier d'installation, vide, restait après la
+  // désinstallation (dossier courant du désinstalleur). customUnInstall en sort puis RMDir SANS /r (seulement si vide), en dernier.
+  const un = (ins.split('!macro customUnInstall')[1] || '').split('!macroend')[0];
+  const tail = un.trim().split('\n').map((l) => l.trim()).filter((l) => l && !l.startsWith(';')).slice(-2);
+  check('installer.nsh : désinstallation → dossier d\'installation vide retiré (SetOutPath "$TEMP" puis RMDir "$INSTDIR" sans /r, en dernier)',
+    tail[0] === 'SetOutPath "$TEMP"' && tail[1] === 'RMDir "$INSTDIR"' && !/RMDir\s+\/r\s+"?\$INSTDIR/.test(un.split('\n').filter((l) => !l.trim().startsWith(';')).join('\n')), tail);
+}
 
 console.log(failures.length ? `\n${failures.length} échec(s) / ${passed + failures.length}` : `\nOK : ${passed} vérifications.`);
 process.exit(failures.length ? 1 : 0);

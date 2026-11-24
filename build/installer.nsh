@@ -108,6 +108,11 @@ FunctionEnd
       ${EndIf}
     ${EndIf}
   ${EndIf}
+  ; Dossier d'installation resté VIDE : le modèle d'electron-builder fait « SetOutPath $INSTDIR » dans un.onInit, le dossier est donc le
+  ; dossier courant du désinstalleur et son « RMDir /r $INSTDIR » ne peut pas le supprimer (vérifié : 4 désinstallations sur 4). On en sort,
+  ; puis RMDir SANS /r : ne supprime le dossier que s'il est vide (jamais de fichier de l'utilisateur ; sans effet si des fichiers restent).
+  SetOutPath "$TEMP"
+  RMDir "$INSTDIR"
 !macroend
 
 !endif
