@@ -3,7 +3,7 @@
 Une ligne par fonction importante. Les dates sont celles du dépôt. Les versions 0.x sont des versions de travail.
 Pour la mise à jour d'un poste, voir [RELEASING.md](RELEASING.md#mettre-à-jour-un-poste).
 
-## 1.4.0 — en préparation
+## 1.4.0 — 2026-11-24
 - Tampons techniques pour les plans : 33 symboles de charpente, bardage, couverture et repères (onglet Annoter).
 - Impression sur copieur : le format A3 / A4… est annoncé par son code de papier Windows ; plus de feuille A3 sortie en A4 coupée.
 - Boîte d'impression : copies, papier, pages par feuille et échelle reviennent aux valeurs par défaut à chaque ouverture.
