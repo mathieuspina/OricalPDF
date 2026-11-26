@@ -246,7 +246,7 @@
       const box = [Math.max(cb.x, mb.x), Math.max(cb.y, mb.y), Math.min(cb.x + cb.width, mb.x + mb.width), Math.min(cb.y + cb.height, mb.y + mb.height)];
       numPrims.push([i, Numbering.primitives(items, { box, rot: pg.getRotation().angle, index: i }, measure)]);
     });
-    for (const [, prims] of numPrims) for (const p of prims) if (!fonts[p.fontName]) fonts[p.fontName] = await doc.embedFont(p.fontName);
+    for (const [, prims] of numPrims) for (const p of prims) if (p.kind === 'text' && !fonts[p.fontName]) fonts[p.fontName] = await doc.embedFont(p.fontName); // fond blanc = chemin, sans police
     // rotation de la page écrite (/Rotate d'origine + rotation de l'onglet Pages, appliquée par buildPages) = celle de l'aperçu (render.js)
     const rotOf = (pg) => (pg ? (((pg.getRotation().angle % 360) + 360) % 360) : 0);
     const ctxFor = (e) => ({ doc, page: pages[e.page], fonts, images, measure, mctx: Object.assign({}, mctx, { pageRot: rotOf(pages[e.page]) }), PDFLib, rgb });

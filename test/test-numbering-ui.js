@@ -111,6 +111,18 @@ function check(name, cond, detail) {
     await sleep(500);
     pt = await pdfTexts(fs.readFileSync(path.join(out, 'job-1.pdf')).toString('base64'));
     check('PDF d\'impression : numéros présents (page 2 : « Page 1 / 7 »)', pt.length === 8 && pt[1].includes('Page 1 / 7') && pt[3].includes('A-A'), pt.map((p) => p.join('|')));
+
+    console.log('8. Fond blanc (1.5.0)');
+    const bgPaths = () => c.ev(`document.querySelectorAll('.docview.active .annot .num path').length`);
+    check('sans fond : aucun rectangle sous les numéros', (await bgPaths()) === 0);
+    await c.click('#rtab-pages'); await sleep(250);
+    await c.click('#rpanel-pages [data-cmd=pg-number]'); await settle();
+    check('case « Fond blanc » décochée pour une règle existante', (await c.ev(`document.getElementById('num-bg').checked`)) === false);
+    await setc('num-bg', true); await setv('num-ppage', '3'); await settle();
+    check('fond blanc coché : rectangle blanc dans l\'aperçu de la boîte', (await c.ev(`(()=>{const p=document.querySelector('#num-svg path');return !!p && p.getAttribute('fill')==='rgb(255,255,255)' && p.nextElementSibling && p.nextElementSibling.tagName==='text'})()`)) === true);
+    await c.click('#num-ok'); await settle();
+    check('appliqué : règle bg = true, rectangles sous les numéros des pages', (await doc('d.numbering[0].bg')) === true && (await bgPaths()) >= 7, await bgPaths());
+    check('choix mémorisé (réglage numberingBg)', (await c.ev(`import('./js/settings.js').then((m)=>m.get('numberingBg'))`)) === true);
     check('aucune erreur JavaScript', c.logs.length === 0, c.logs.slice(0, 3));
   } catch (e) {
     check('exécution sans exception', false, String(e && e.stack || e));

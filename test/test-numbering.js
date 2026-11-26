@@ -162,6 +162,38 @@ const texts = (rules, pages) => N.resolve(rules, pages).map((l) => l.map((x) => 
   const t0 = (await (await pdf3.getPage(1)).getTextContent()).items.map((x) => x.str).filter(Boolean).sort();
   assert.deepStrictEqual(t0, ['A-B', 'Page 3 / 4'], 'la page 3 du document garde ses étiquettes (« Page 3 / 4 », « A-B »)');
 
+  // 1.5.0 : fond blanc (rule.bg) : rectangle blanc opaque AVANT le texte, qui contient le texte (toutes rotations) ; règle sans `bg` = sans fond
+  assert.strictEqual(N.newRule().bg, false, 'par défaut : pas de fond');
+  const bgRule = N.newRule({ text: 'Page {n}', pos: 'bc', size: 12, bg: true });
+  for (const rot of [0, 90, 180, 270]) {
+    const prims = N.primitives([{ text: 'Page 7', rule: bgRule }], { box: [0, 0, 595, 842], rot, index: 0 }, measure);
+    assert.deepStrictEqual(prims.map((p) => p.kind), ['path', 'text'], 'fond puis texte (rot ' + rot + ')');
+    assert.deepStrictEqual([prims[0].fill.color, prims[0].fill.opacity, prims[0].stroke], [[1, 1, 1], 1, null], 'fond blanc opaque sans bordure');
+    const t = prims[1], tw = measure(t.fontName, t.text, t.size), a = (t.rot * Math.PI) / 180;
+    const pts = prims[0].segs.filter((s) => s[0] !== 'Z').map((s) => [s[1], s[2]]);
+    const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
+    // coins du texte (ligne de base → hauteur des capitales) : dans le rectangle
+    for (const [u, v] of [[0, -0.2 * t.size], [tw, -0.2 * t.size], [tw, 0.72 * t.size], [0, 0.72 * t.size]]) {
+      const x = t.x + u * Math.cos(a) - v * Math.sin(a), y = t.y + u * Math.sin(a) + v * Math.cos(a);
+      assert(x > Math.min(...xs) && x < Math.max(...xs) && y > Math.min(...ys) && y < Math.max(...ys), `texte dans le fond (rot ${rot})`);
+    }
+  }
+  assert.deepStrictEqual(N.primitives([{ text: '1', rule: Object.assign({}, bgRule, { bg: undefined }) }], { box: [0, 0, 595, 842], rot: 0, index: 0 }, measure).map((p) => p.kind), ['text'], 'ancienne règle (sans bg) : texte seul');
+  const outBg = await applyEdits(PDFLib, bytes, [], { images: {}, measure: { scales: {} }, pages: { list: idn.pages, sources: {} }, numbering: N.resolve([bgRule], idn.pages) });
+  const pdfBg = await pdfjs.getDocument({ data: new Uint8Array(outBg), verbosity: 0 }).promise;
+  for (const pi of [1, 3]) { // portrait et /Rotate 90
+    const pg = await pdfBg.getPage(pi);
+    assert((await pg.getTextContent()).items.some((x) => x.str === 'Page ' + pi), 'fond blanc : le numéro reste lisible (texte présent) page ' + pi);
+    const ops = await pg.getOperatorList();
+    const OPS = pdfjs.OPS;
+    const rgbAt = (k) => Array.from(ops.argsArray[k] || []).slice(0, 3).join();
+    const white = ops.fnArray.some((fn, k) => fn === OPS.setFillRGBColor && rgbAt(k) === '255,255,255');
+    const fillIdx = ops.fnArray.findIndex((fn) => fn === OPS.fill || fn === OPS.eoFill);
+    const textIdx = ops.fnArray.findIndex((fn) => fn === OPS.showText);
+    assert(white, 'fond blanc : couleur de remplissage blanche écrite page ' + pi);
+    assert(fillIdx >= 0 && textIdx > fillIdx, 'fond blanc : dessiné avant le texte page ' + pi);
+  }
+
   // sans numérotation : fichier inchangé quant au texte
   const plain = await applyEdits(PDFLib, bytes, [], { images: {}, measure: { scales: {} }, pages: { list: idn.pages, sources: {} }, numbering: [] });
   const pdf4 = await pdfjs.getDocument({ data: new Uint8Array(plain), verbosity: 0 }).promise;

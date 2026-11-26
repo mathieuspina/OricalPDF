@@ -38,6 +38,7 @@
       start: 1, format: '1', text: '{n}', totalMode: 'rule', // totalMode : 'rule' (pages concernées) | 'doc' (pages du document)
       font: 'Helvetica', bold: false, italic: false, size: 10, color: [0, 0, 0], opacity: 1,
       pos: 'bc', mx: 12, my: 10, mirror: false, // marges en mm
+      bg: false, // fond blanc opaque sous le numéro (lisibilité) ; absent des anciennes règles = pas de fond
     }, over || {});
   }
 
@@ -110,7 +111,25 @@
     else { x = x1 - v; y = y1 - u; }
     return { kind: 'text', text: item.text, x, y, size, fontName, color: r.color || [0, 0, 0], rot: R, opacity: r.opacity === undefined ? 1 : r.opacity };
   }
-  const primitives = (items, info, measure) => (items || []).map((it) => place(it, info, measure));
+  // Fond blanc (rule.bg) : rectangle opaque sous le texte, dans le repère du texte (même rotation), un peu plus grand que le texte
+  // (hampes et jambages compris). Mêmes primitives pour l'aperçu et l'écriture : le fond est dessiné AVANT le texte.
+  function background(t) {
+    const s = t.size;
+    const w = t.width;
+    const padX = 0.25 * s, lo = -0.3 * s, hi = 0.85 * s;
+    const a = ((t.rot || 0) * Math.PI) / 180, c = Math.cos(a), sn = Math.sin(a);
+    const P = (u, v) => [t.x + u * c - v * sn, t.y + u * sn + v * c];
+    return { kind: 'path', segs: Shapes.polySegs([P(-padX, lo), P(w + padX, lo), P(w + padX, hi), P(-padX, hi)], true), fill: { color: [1, 1, 1], opacity: 1 }, stroke: null, blend: null };
+  }
+  function primitives(items, info, measure) {
+    const out = [];
+    for (const it of items || []) {
+      const t = place(it, info, measure);
+      if (it.rule && it.rule.bg) out.push(background(Object.assign({ width: measure(t.fontName, t.text, t.size) }, t)));
+      out.push(t);
+    }
+    return out;
+  }
 
   // Après une opération de pages : ramène les ancres sur des pages qui existent encore. Une ancre de début passe à la page suivante conservée,
   // une ancre de fin à la page précédente conservée ; une règle sans page restante est marquée `dead`.
@@ -141,5 +160,5 @@
     return scope + (rule.parity === 'odd' ? ', impaires' : rule.parity === 'even' ? ', paires' : '') + (rule.skipFirst ? ', sauf la première' : '');
   }
 
-  return { FORMATS, POSITIONS, formatNumber, newRule, concerned, render, resolve, place, primitives, remap, summary };
+  return { FORMATS, POSITIONS, formatNumber, newRule, concerned, render, resolve, place, background, primitives, remap, summary };
 });

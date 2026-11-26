@@ -6,6 +6,10 @@ const values = {
   userName: '', stampDate: false, stampUser: false, stampTilt: false, sigDate: false,
   favorites: [], // favoris du ruban (identifiants de commandes, voir favorites.js)
   saveMode: 'ask', // annotations à l'enregistrement : ask | editable | flat (editable-ui.js)
+  // 1.5.0 (clés absentes des anciens settings.json = valeurs ci-dessous)
+  numberingBg: false, // numérotation : fond blanc des nouvelles règles (dernier choix)
+  sidebarOpen: false, // panneau latéral ouvert au démarrage (dernier état)
+  annotAngle: 0, // angle (degrés, sens anti-horaire, par rapport à l'affichage) des nouveaux textes, notes et légendes
 };
 
 export async function loadSettings() {

@@ -3,6 +3,7 @@
 import { $, bus, store } from './ui.js';
 import * as V from './viewer.js';
 import * as A from './annotate.js';
+import * as Settings from './settings.js';
 
 const { DocModel, Numbering: N } = window;
 
@@ -13,7 +14,8 @@ const st = { doc: null, work: [], sel: -1, token: 0, prevKey: '', timer: 0 };
 
 function nextId() { return st.work.reduce((m, r) => Math.max(m, r.id || 0), 0) + 1; }
 function addRule(over) {
-  const r = N.newRule(Object.assign({ id: nextId() }, over || {}));
+  // fond blanc : le dernier choix de l'utilisateur (réglage numberingBg) vaut pour les nouvelles règles
+  const r = N.newRule(Object.assign({ id: nextId(), bg: Settings.get('numberingBg') === true }, over || {}));
   st.work.push(r);
   st.sel = st.work.length - 1;
 }
@@ -64,7 +66,7 @@ function loadForm() {
   $('num-parity').value = r.parity; $('num-skip').checked = !!r.skipFirst;
   $('num-start').value = r.start; $('num-format').value = r.format; $('num-text').value = r.text; $('num-total').value = r.totalMode;
   $('num-font').value = r.font; $('num-bold').checked = !!r.bold; $('num-italic').checked = !!r.italic;
-  $('num-size').value = r.size; $('num-color').value = hex(r.color); $('num-opacity').value = r.opacity;
+  $('num-size').value = r.size; $('num-color').value = hex(r.color); $('num-opacity').value = r.opacity; $('num-bg').checked = !!r.bg;
   $('num-pos').value = r.pos; $('num-mx').value = r.mx; $('num-my').value = r.my; $('num-mirror').checked = !!r.mirror;
   scopeVisibility();
 }
@@ -89,6 +91,7 @@ function readForm() {
   r.start = Math.round(num('num-start', 1)); r.format = $('num-format').value; r.text = $('num-text').value; r.totalMode = $('num-total').value;
   r.font = $('num-font').value; r.bold = $('num-bold').checked; r.italic = $('num-italic').checked;
   r.size = Math.max(4, Math.min(72, num('num-size', 10))); r.color = unhex($('num-color').value); r.opacity = Math.max(0.1, Math.min(1, num('num-opacity', 1)));
+  r.bg = $('num-bg').checked;
   r.pos = $('num-pos').value; r.mx = Math.max(0, num('num-mx', 0)); r.my = Math.max(0, num('num-my', 0)); r.mirror = $('num-mirror').checked;
 }
 
@@ -170,6 +173,7 @@ export function init() {
   $('num-form').addEventListener('change', onForm);
   $('num-ppage').addEventListener('input', () => { st.prevKey = ''; schedulePreview(); });
   $('num-showall').addEventListener('change', () => { livePreview(); });
+  $('num-bg').addEventListener('change', () => Settings.set('numberingBg', $('num-bg').checked));
   $('num-add').addEventListener('click', () => { addRule(); drawList(); loadForm(); changed(); $('num-text').focus(); });
   $('num-dup').addEventListener('click', () => {
     const r = st.work[st.sel];
