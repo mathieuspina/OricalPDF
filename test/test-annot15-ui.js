@@ -76,6 +76,27 @@ function check(name, cond, detail) {
     check('angle remis à 0 : texte horizontal (rot 0) ; objets existants inchangés', e.rot === 0 && (await edits()).filter((x) => x.rot === 90).length === 3, await edits());
     await escape(); await sleep(100);
 
+    // ------------------------------------------------------------ 4. édition d'une note de plusieurs lignes
+    console.log('4. Note de plusieurs lignes : zone d\'édition entière');
+    const edBox = () => J(`(()=>{const t=document.querySelector('.docview.active textarea.editor'); if(!t) return 'null'; const lh=parseFloat(t.style.lineHeight); return JSON.stringify({ch:t.clientHeight, sh:t.scrollHeight, lh, lines:t.value.split('\\n').length})})()`);
+    await tool('note'); await sleep(150);
+    { const [px, py] = await P(330, 120); await c.clickXY(px, py); await sleep(300); }
+    await c.type('ligne 1\nligne 2\nligne 3\nligne 4'); await sleep(200); // = Maj+Entrée entre les lignes
+    let b = await edBox();
+    check('saisie : 4 lignes visibles (hauteur ≥ 4 lignes, rien de masqué)', b && b.lines === 4 && b.ch >= b.sh - 1 && b.ch >= 4 * b.lh - 2, b);
+    await key('Enter', 'Enter', 13); await sleep(300);
+    e = await lastEdit();
+    check('note de 4 lignes créée', e.type === 'note' && e.text.split('\n').length === 4, e);
+    await escape(); await sleep(100); await tool('select'); await sleep(150);
+    { const [px, py] = await P(345, 140); await c.clickXY(px, py); await sleep(300); await c.clickXY(px, py); await sleep(400); } // 1er clic : sélection ; 2e : édition
+    b = await edBox();
+    check('rouverte (clic sur la note sélectionnée) : les 4 lignes sont visibles, aucune troncature à 2 lignes', b && b.lines === 4 && b.ch >= b.sh - 1 && b.ch >= 4 * b.lh - 2, b);
+    await c.ev(`(()=>{const t=document.querySelector('.docview.active textarea.editor'); t.setSelectionRange(t.value.length, t.value.length)})()`); await c.type(' fin\nligne 5'); await sleep(150);
+    b = await edBox();
+    check('la zone grandit pendant la saisie (5e ligne visible)', b && b.lines === 5 && b.ch >= b.sh - 1 && b.ch >= 5 * b.lh - 2, b);
+    await escape(); await sleep(200); // Échap : abandon de la modification
+    await escape(); await sleep(100);
+
     check('aucune erreur JavaScript', c.logs.length === 0, c.logs.slice(0, 3));
   } catch (err) {
     check('exécution sans exception', false, String(err && err.stack || err));

@@ -30,12 +30,25 @@ export function styleEditor(ta, rec, ctx) {
   ta.style.fontStyle = f.italic ? 'italic' : 'normal';
   ta.style.color = rgb(o.color || [0, 0, 0]);
   ta.style.textAlign = o.align || 'left';
+  // Largeur fixe (notes : 170 pt par défaut) : largeur imposée, retour à la ligne, HAUTEUR ajustée au contenu par fitHeight (sans elle, un
+  // textarea « field-sizing: fixed » garde sa hauteur par défaut de 2 lignes et, en overflow hidden, n'affiche que 2 lignes : corrigé en 1.5.0).
   if (o.width > 0) { ta.style.width = o.width * s + 'px'; ta.style.whiteSpace = 'pre-wrap'; ta.style.fieldSizing = 'fixed'; }
+  else { ta.style.width = ''; ta.style.whiteSpace = ''; ta.style.fieldSizing = ''; ta.style.height = ''; }
+  fitHeight(ta);
   if (o.cover) ta.style.minWidth = o.cover.w * s + 'px';
   const screenRot = (rec.vp.rotation || 0) - (o.rot || 0); // angle d'écran du texte (horaire)
   if (Math.abs(screenRot) > 0.01) { ta.style.transformOrigin = `0 ${Shapes.K_BASE * size * s}px`; ta.style.transform = `rotate(${screenRot}deg)`; }
   if (ctx.type === 'replace' && o.cover) ta.style.background = rgb(Shapes.coverColor(o));
   if ((ctx.type === 'note' || ctx.type === 'callout') && o.fill) ta.style.background = rgb(o.fill);
+}
+
+// Hauteur de la zone de saisie à largeur fixe = hauteur de tout son contenu (lignes saisies et retours automatiques), jamais moins d'une
+// ligne. Sans effet en largeur libre (field-sizing: content s'en charge). À rappeler après insertion dans le DOM et à chaque saisie.
+export function fitHeight(ta) {
+  if (ta.style.fieldSizing !== 'fixed' || !ta.isConnected) return;
+  ta.style.height = '0px';
+  const line = parseFloat(ta.style.lineHeight) || 0;
+  ta.style.height = Math.ceil(Math.max(ta.scrollHeight, line)) + 'px';
 }
 
 export function openEditor(doc, rec, ctx) {
@@ -47,6 +60,8 @@ export function openEditor(doc, rec, ctx) {
   ta.spellcheck = false;
   styleEditor(ta, rec, ctx);
   rec.overlay.append(ta);
+  fitHeight(ta);
+  ta.addEventListener('input', () => fitHeight(ta));
   rt(doc).editor = { rec, ctx, ta };
   renderPage(doc, rec);
   bus.emit('doc-changed', doc); // le panneau de propriétés suit l'objet en cours d'édition
