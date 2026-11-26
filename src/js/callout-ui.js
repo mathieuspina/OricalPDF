@@ -29,12 +29,13 @@ function drawMark(rec, snap) {
   rec.gTmp.append(p);
 }
 
-// Légende dont la boîte a son coin haut-gauche (à l'écran) au point (lx, ly) de la page affichée ; texte droit dans l'orientation affichée.
+// Légende dont la boîte a son coin haut-gauche (à l'écran) au point (lx, ly) de la page affichée ; texte droit dans l'orientation affichée
+// (+ angle par défaut des Réglages, 0 par défaut).
 function calloutAt(rec, tip, lx, ly, text) {
   const d = clone(A.defaultsOf('callout'));
   const s = rec.vp.scale, pad = d.size * 0.4;
   const [px, py] = rec.vp.convertToPdfPoint(lx + pad * s, ly + (Shapes.K_BASE * d.size + pad) * s);
-  return Object.assign(d, { type: 'callout', page: rec.index, x: px, y: py, text, tip, rot: rec.vp.rotation || 0 });
+  return Object.assign(d, { type: 'callout', page: rec.index, x: px, y: py, text, tip, rot: A.textAngle(rec.vp.rotation) });
 }
 
 // Attente maximale de l'analyse des tracés pour un clic posé avant la fin (au-delà : pointe libre, rien n'est bloqué).

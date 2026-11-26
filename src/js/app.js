@@ -564,6 +564,7 @@ $('btn-settings').addEventListener('click', () => {
   $('opt-keeptool').checked = Settings.get('keepTool') !== false;
   $('opt-panmiddle').checked = Settings.get('panMiddle') !== false;
   $('opt-username').value = Settings.get('userName') || '';
+  $('opt-annotangle').value = String(normAngle(Settings.get('annotAngle')));
   EditUI.syncSettings();
   openDialog('settings');
 });
@@ -571,6 +572,9 @@ document.querySelectorAll('input[name=anim]').forEach((r) => r.addEventListener(
 $('opt-keeptool').addEventListener('change', (e) => Settings.set('keepTool', e.target.checked));
 $('opt-panmiddle').addEventListener('change', (e) => Settings.set('panMiddle', e.target.checked));
 $('opt-username').addEventListener('change', (e) => Settings.set('userName', e.target.value.trim()));
+// Angle des nouveaux textes / légendes : entier dans ]-180, 180] (champ vide ou illisible = 0) ; affiché tel qu'enregistré.
+const normAngle = (v) => { const n = Math.round(Number(String(v === undefined || v === null ? '' : v).replace(',', '.'))); if (!Number.isFinite(n)) return 0; const r = ((n % 360) + 360) % 360; return r > 180 ? r - 360 : r; };
+$('opt-annotangle').addEventListener('change', (e) => { const v = normAngle(e.target.value); e.target.value = String(v); Settings.set('annotAngle', v); });
 $('settings-close').addEventListener('click', () => closeDialog('settings'));
 $('btn-winint').addEventListener('click', () => { closeDialog('settings'); WinInt.open(); });
 $('btn-about').addEventListener('click', async () => {

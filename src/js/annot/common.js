@@ -34,6 +34,13 @@ export const scaleOf = (rec) => rec.vp.scale;
 export const defaultsByType = {};
 export const defaultsOf = (type) => defaultsByType[type] || (defaultsByType[type] = Shapes.defaultsFor(type));
 export const toolType = (tool) => (tool === 'edit' ? 'add' : tool === 'signature' ? 'sig' : tool);
+// Angle par défaut des NOUVEAUX textes, notes et légendes (Réglages > Annotations, réglage annotAngle, 1.5.0) : degrés, sens anti-horaire,
+// AJOUTÉ à la rotation d'affichage (0 = texte droit à l'écran, comme avant). Valeur illisible = 0. Résultat dans [0, 360).
+export function textAngle(viewRotation) {
+  const a = Number(Settings.get('annotAngle'));
+  const extra = Number.isFinite(a) ? Math.round(a) : 0;
+  return ((((viewRotation || 0) + extra) % 360) + 360) % 360;
+}
 export const isTextType = (t) => t === 'add' || t === 'note' || t === 'replace' || t === 'callout';
 // Crochets posés par d'autres modules (légende : aimantation de la pointe).
 export const hooks = { snapPoint: null, beforeAdd: [] }; // beforeAdd(doc, copies) : avant l'ajout de copies (Ctrl+D, collage)

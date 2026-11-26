@@ -5,7 +5,7 @@ import * as V from '../viewer.js';
 import * as Settings from '../settings.js';
 
 const { DocModel, PdfEdit, Shapes, PDFLib, TextInfo } = window;
-import { PLACE_TOOLS, POLY_TOOLS, SHAPE_TOOLS, TOOLS, clone, defaultsOf, extTools, isTextType, localXY, pdfPoint, rt, scaleOf } from './common.js';
+import { PLACE_TOOLS, POLY_TOOLS, SHAPE_TOOLS, TOOLS, clone, defaultsOf, extTools, isTextType, localXY, pdfPoint, rt, scaleOf, textAngle } from './common.js';
 import { polyClick, startBand, startCreateDrag, startErase, startHandleDrag, startMove, startPen } from './drag.js';
 import { clearPlacing, placeAt } from './place.js';
 import { renderAll, setTmp } from './render.js';
@@ -57,8 +57,9 @@ export function onPageMouseDown(doc, rec, ev) {
       const pad = tool === 'note' ? d.size * 0.55 : 0; // la note a une marge intérieure : le coin du cartouche est le point cliqué
       // Le point cliqué est le coin haut-gauche de la zone ; on en déduit la ligne de base.
       const [px, py] = rec.vp.convertToPdfPoint(lx + pad * scaleOf(rec), ly + (Shapes.K_BASE * d.size + pad) * scaleOf(rec));
-      // Le texte doit apparaître droit dans l'orientation affichée (page /Rotate, affichage pivoté) : rot = rotation d'affichage.
-      return openEditor(doc, rec, { type: tool, page: rec.index, obj: Object.assign(d, { x: px, y: py, text: '', rot: rec.vp.rotation || 0 }) });
+      // Le texte doit apparaître droit dans l'orientation affichée (page /Rotate, affichage pivoté) : rot = rotation d'affichage,
+      // + angle par défaut des Réglages (0 par défaut).
+      return openEditor(doc, rec, { type: tool, page: rec.index, obj: Object.assign(d, { x: px, y: py, text: '', rot: textAngle(rec.vp.rotation) }) });
     }
     case 'stamp': case 'tstamp': case 'image': case 'signature':
       ev.preventDefault();
