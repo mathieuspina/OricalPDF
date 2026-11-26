@@ -386,3 +386,70 @@ async function check(label, srcBytes, o, expect) {
   assert.ok(PL.capsText({ status: 'échec', ms: 40 }) === 'capacités : échec de la lecture en 40 ms' && PL.capsText(null) === 'capacités : non lues' && PL.capsText({ status: 'test' }) === 'capacités : imprimante de test');
   console.log(`  ok   méthode d'envoi du format : matrice ${n} cas (9 formats × portrait/paysage × copieur/inconnues/traceur × auto/custom/driver × envoi auto/portrait/paysage), API interne / publique, texte « Envoi », journal`);
 })();
+
+// ------------------------------------------------------------ 1.5.0 : UNE SEULE tâche d'impression par document
+// Cause du découpage (agrafage / recto-verso cassés) : une feuille par page à sa taille et à son orientation, puis groupBySize = une tâche
+// à chaque changement de taille ou d'orientation. Désormais : feuille commune (format le plus fréquent à ±2 mm, orientation majoritaire).
+(() => {
+  const PL = require('../src/print-log.js');
+  const A4P = { w: mm(210), h: mm(297) }, A4L = { w: mm(297), h: mm(210) }, A3L = { w: mm(420), h: mm(297) };
+  const A4Pdf = { w: 595.28, h: 841.89 }, A4Lpt = { w: 595, h: 842 }; // A4 « exact » et A4 arrondi (595 × 842 pt) : même format à ±2 mm
+  const base = { paperW: 0, paperH: 0, orientation: 'auto', mode: 'fit', margins: { top: 2, right: 2, bottom: 2, left: 2 }, center: true, nup: 1 };
+  const one = (pages, o, split) => L.planSheets(pages.map((p) => [p]), Object.assign({}, base, o || {}), split);
+  const sizesOf = (r) => new Set(r.plans.map((p) => Math.round(L.toMm(p.sheet.w) * 10) + 'x' + Math.round(L.toMm(p.sheet.h) * 10)));
+  let n = 0;
+  const cases = [
+    ['portrait / paysage / portrait (Format de la page)', [A4P, A4L, A4P], {}, 'A4', false],
+    ['majorité paysage', [A4L, A4P, A4L], {}, 'A4', true],
+    ['595 × 842 et 595,28 × 841,89 pt mélangés', [A4Pdf, A4Lpt, A4Pdf, A4Lpt], {}, 'A4', false],
+    ['A4 ×3 + A3 paysage (format dominant A4)', [A4P, A3L, A4P, A4P], {}, 'A4', false],
+    ['papier A4 choisi, orientation automatique, pages mélangées', [A4P, A4L, A4L, A4P, A4P], { paperW: 210, paperH: 297 }, 'A4', false],
+    ['papier A3, orientation imposée paysage', [A4P, A3L, A4L], { paperW: 297, paperH: 420, orientation: 'landscape' }, 'A3', true],
+    ['Format de la page, orientation imposée portrait', [A4P, A3L], { orientation: 'portrait' }, null, false],
+    ['nombre impair de pages, une seule page', [A4L], {}, 'A4', true],
+  ];
+  for (const [label, pages, o, fmt, land] of cases) {
+    const r = one(pages, o);
+    assert.strictEqual(sizesOf(r).size, 1, label + ' : toutes les feuilles de même taille');
+    const s = r.plans[0].sheet;
+    assert.strictEqual(L.isLandscape(s.w, s.h), land, label + ' : orientation commune');
+    if (fmt) assert.strictEqual(L.standardFormat(L.toMm(Math.min(s.w, s.h)), L.toMm(Math.max(s.w, s.h))), fmt, label + ' : format commun');
+    // pages d'une autre orientation : tournées de 90° ; aucune page coupée en mode Ajuster
+    r.plans.forEach((p, i) => {
+      const it = p.items[0];
+      assert.ok(!it.cropped, label + ' : page ' + (i + 1) + ' non coupée');
+      assert.strictEqual(it.rotate, L.isLandscape(pages[i].w, pages[i].h) !== land ? 90 : 0, label + ' : rotation de la page ' + (i + 1));
+    });
+    const groups = L.singleJob(r.plans.map((p) => ({ w: p.sheet.w, h: p.sheet.h, items: p.items })), {});
+    assert.strictEqual(groups.length, 1, label + ' : UNE tâche');
+    assert.strictEqual(groups[0].sheets.length, pages.length, label + ' : toutes les pages, dans l\'ordre');
+    n++;
+  }
+  // déjà uniforme : plans inchangés (aucune mise à l'échelle ajoutée)
+  const same = one([A4P, A4P, A4P]);
+  assert.strictEqual(same.unified, null); assert.ok(same.plans.every((p) => p.items[0].rotate === 0));
+  // pages de même orientation qu'une page majoritaire : échelle identique à l'ancien calcul (rien ne change pour un document homogène)
+  const mixed = one([A4P, A4L, A4P]);
+  assert.ok(Math.abs(mixed.plans[0].items[0].scale - L.planSheet([A4P], base).items[0].scale) < 1e-9, 'page portrait : même échelle qu\'avant');
+  assert.ok(Math.abs(mixed.plans[1].items[0].scale - mixed.plans[0].items[0].scale) < 1e-9, 'page paysage tournée : même échelle (même format)');
+  assert.ok(mixed.unified && mixed.unified.mixedOrient && mixed.unified.formats === 1);
+  // option « une tâche par format » : ancien comportement (une feuille par page, groupes consécutifs)
+  const split = one([A4P, A4L, A4P], {}, true);
+  assert.strictEqual(split.unified, null);
+  assert.deepStrictEqual(L.groupBySize(split.plans.map((p) => ({ sheet: p.sheet }))).map((g) => g.sheets.length), [1, 1, 1], 'une par format : 3 tâches (ancien comportement)');
+  // 2 pages par feuille, pages mélangées : feuilles de même taille
+  const nup2 = L.planSheets([[A4P, A4P], [A4L, A4L], [A4P]], Object.assign({}, base, { nup: 2 }));
+  assert.strictEqual(new Set(nup2.plans.map((p) => Math.round(p.sheet.w) + 'x' + Math.round(p.sheet.h))).size, 1, '2 pages par feuille : une seule taille de feuille');
+  // recto-verso + plusieurs copies + nombre impair de feuilles : feuille blanche ajoutée (chaque exemplaire commence sur une feuille neuve)
+  const sh = [1, 2, 3].map(() => ({ w: mm(210), h: mm(297), items: [{ page: 0 }] }));
+  assert.deepStrictEqual(L.singleJob(sh, { duplex: 'longEdge', copies: 2 }).map((g) => [g.sheets.length, g.padded, g.sheets[3] && g.sheets[3].items.length]), [[4, true, 0]]);
+  assert.strictEqual(L.singleJob(sh, { duplex: 'longEdge', copies: 1 })[0].sheets.length, 3, '1 copie : pas de feuille ajoutée');
+  assert.strictEqual(L.singleJob(sh, { duplex: 'simplex', copies: 3 })[0].sheets.length, 3, 'recto seul : pas de feuille ajoutée');
+  assert.strictEqual(L.singleJob(sh.slice(0, 2), { duplex: 'shortEdge', copies: 5 })[0].sheets.length, 2, 'nombre pair : pas de feuille ajoutée');
+  assert.deepStrictEqual(L.singleJob([], {}), [], 'rien à imprimer : aucune tâche');
+  // journal : numéro de tâche et nombre de feuilles
+  const plan = L.printOptions({ wMm: 210, hMm: 297 }, { device: 'x' }, null);
+  const ln = PL.line({ date: new Date(), printer: 'x', job: 'tâche 1 / 1, 4 feuille(s) dont 1 blanche (recto-verso, copies)', wMm: 210, hMm: 297, plan, result: 'envoyé' });
+  assert.ok(ln.includes('| x | tâche 1 / 1, 4 feuille(s) dont 1 blanche (recto-verso, copies) | 210 × 297 mm |'), ln);
+  console.log(`  ok   une seule tâche par document : ${n} cas (orientations / formats mélangés, papier choisi, orientation imposée), uniforme inchangé, option « une par format », 2 par feuille, recto-verso impair, journal`);
+})();

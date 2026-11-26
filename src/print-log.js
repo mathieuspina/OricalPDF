@@ -45,7 +45,7 @@
     const sent = e.sent || { api: 'publique', args: p.options, applied: null };
     const meth = e.sent && p.method ? `méthode ${METHOD[p.method] || p.method}, appliquée : ${APPLIED[sent.applied] || sent.applied} (API ${sent.api})` : null;
     const caps = e.caps ? [capsText(e.caps), papersText(e.caps.papers)] : [];
-    return [stamp(e.date || new Date()), oneLine(e.printer), `${r1(e.wMm)} × ${r1(e.hMm)} mm`, orient, `format ${fmt} (${ann})`]
+    return [stamp(e.date || new Date()), oneLine(e.printer)].concat(e.job ? [oneLine(e.job)] : [], [`${r1(e.wMm)} × ${r1(e.hMm)} mm`, orient, `format ${fmt} (${ann})`])
       .concat(meth ? [meth] : [], e.send ? [oneLine(e.send)] : [], ['options ' + JSON.stringify(sent.args)], caps, ['résultat : ' + oneLine(e.result)]).join(' | ');
   }
   function append(prev, l, max) {

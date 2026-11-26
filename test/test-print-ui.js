@@ -89,11 +89,46 @@ async function pdfInfo(file) {
     await c.click('#pr-ok'); await sleep(3500);
     check('boîte fermée après impression', await c.ev(`document.getElementById('printdlg').hidden`) === true);
     let j = jobs();
-    check('A4 automatique : les feuilles de même format sont groupées (A3L,A4,A5,A3L,Letter,A4 → paysage/portrait)', j.jobs.length === 4 && j.jobs.map((x) => Math.round(x.wMm) + 'x' + Math.round(x.hMm)).join(',') === '297x210,210x297,297x210,210x297', j.jobs);
-    check('plusieurs formats = plusieurs tâches nommées « nom (1/4).pdf »…', j.jobs.map((x) => x.title).join('|') === 'c-mixte (1/4).pdf|c-mixte (2/4).pdf|c-mixte (3/4).pdf|c-mixte (4/4).pdf' && j.jobs[0].fileName === 'c-mixte (1-4).pdf', j.jobs.map((x) => [x.title, x.fileName]));
+    // 1.5.0 : UNE seule tâche pour tout le document (agrafage, recto-verso) : feuille commune A4 portrait (orientation majoritaire :
+    // A4, A5, Letter, A4 en portrait contre 2 A3 paysage), pages paysage tournées et réduites.
+    check('A4 automatique, formats et orientations mélangés : UNE tâche de 6 feuilles A4 portrait', j.jobs.length === 1 && j.jobs[0].sheets === 6 && Math.round(j.jobs[0].wMm) === 210 && Math.round(j.jobs[0].hMm) === 297 && j.jobs[0].count === 1, j.jobs);
+    check('une tâche = nom du document, sans « (1/n) »', j.jobs[0].title === 'c-mixte.pdf' && j.jobs[0].fileName === 'c-mixte.pdf', j.jobs.map((x) => [x.title, x.fileName]));
     let info = await pdfInfo(path.join(out, 'job-1.pdf'));
-    check('job 1 : feuille A4 paysage exacte', info.pages === 1 && info.sizes[0][0] === 297 && info.sizes[0][1] === 210, info.sizes);
+    check('job 1 : 6 feuilles A4 portrait exactes, dans l’ordre', info.pages === 6 && info.sizes.every((z) => z[0] === 210 && z[1] === 297), info.sizes);
     check('annotation incluse dans la tâche (texte vectoriel présent)', info.text.includes('ANNOTATION-TEST'), info.text.slice(0, 80));
+
+    // option « Une par format de feuille (traceur) » : ancien comportement (une tâche par format, dans l'ordre des pages), mémorisée par imprimante
+    await c.ev(`document.body.click()`); await key('p', 'KeyP', 80, 2); await sleep(1500);
+    check('réglage « Tâches d’impression » : une seule par défaut', (await c.ev(`document.getElementById('pr-split').value`)) === 'one');
+    await setv('pr-paper', '210x297'); await setv('pr-split', 'format'); await settle();
+    check('aperçu : « 4 tâches d’impression (une par format… ) »', /4 tâches d'impression/.test(await txt('pr-info')), await txt('pr-info'));
+    clearOut();
+    await c.click('#pr-ok'); await sleep(3500);
+    j = jobs();
+    check('une par format : A3L,A4,A5,A3L,Letter,A4 → 4 tâches paysage / portrait', j.jobs.length === 4 && j.jobs.map((x) => Math.round(x.wMm) + 'x' + Math.round(x.hMm)).join(',') === '297x210,210x297,297x210,210x297', j.jobs);
+    check('une par format : tâches nommées « nom (1/4).pdf »…', j.jobs.map((x) => x.title).join('|') === 'c-mixte (1/4).pdf|c-mixte (2/4).pdf|c-mixte (3/4).pdf|c-mixte (4/4).pdf' && j.jobs[0].fileName === 'c-mixte (1-4).pdf', j.jobs.map((x) => [x.title, x.fileName]));
+    info = await pdfInfo(path.join(out, 'job-1.pdf'));
+    check('une par format, job 1 : feuille A4 paysage exacte', info.pages === 1 && info.sizes[0][0] === 297 && info.sizes[0][1] === 210, info.sizes);
+    await c.ev(`document.body.click()`); await key('p', 'KeyP', 80, 2); await sleep(1500);
+    check('option mémorisée pour cette imprimante', (await c.ev(`document.getElementById('pr-split').value`)) === 'format');
+    await setv('pr-split', 'one'); await settle();
+
+    // recto-verso + 2 copies + 3 feuilles (impair) : une feuille blanche en fin de tâche, copies / recto-verso / assemblage transmis
+    await c.ev(`document.querySelector('input[name=pr-pages][value=range]').click()`); await setv('pr-range', '2-4'); await setv('pr-duplex', 'longEdge'); await setv('pr-copies', '2'); await settle();
+    clearOut();
+    const pq0 = await c.ev(`document.querySelectorAll('#printq .pq-item').length`);
+    await c.ev(`(()=>{const b=document.getElementById('pr-ok'); b.click(); b.click(); document.getElementById('printdlg').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true})); return true})()`); await sleep(700); // double clic + Entrée : une seule soumission
+    const pq1 = await c.ev(`document.querySelectorAll('#printq .pq-item').length`);
+    check('double clic sur Imprimer (+ Entrée) : UNE seule tâche dans la file', pq1 - pq0 === 1, [pq0, pq1]);
+    await sleep(2800);
+    j = jobs();
+    check('recto-verso, 2 copies, 3 pages : UNE tâche de 4 feuilles (la 4e blanche)', j.jobs.length === 1 && j.jobs[0].sheets === 4 && j.jobs[0].padded === true, j.jobs);
+    check('options du pilote : copies 2, assemblage, recto-verso bord long', j.jobs[0].print.options.copies === 2 && j.jobs[0].print.options.collate === true && j.jobs[0].print.options.duplexMode === 'longEdge', j.jobs[0].print.options);
+    info = await pdfInfo(path.join(out, 'job-1.pdf'));
+    check('PDF de la tâche : 4 feuilles, la dernière vide', info.pages === 4, info);
+    await c.ev(`document.body.click()`); await key('p', 'KeyP', 80, 2); await sleep(1500);
+    await setv('pr-duplex', 'simplex'); await c.ev(`document.querySelector('input[name=pr-pages][value=all]').click()`); await settle();
+    await c.click('#pr-cancel'); await sleep(300);
 
     // annotations exclues
     await c.ev(`document.body.click()`); await key('p', 'KeyP', 80, 2); await sleep(1500);

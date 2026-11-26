@@ -41,6 +41,7 @@ function readOpts() {
     paper: val('pr-paper'), paperW: p.paperW, paperH: p.paperH, paperLabel: p.label, orientation: val('pr-orient'), mode: val('pr-scale'), percent: Number(val('pr-percent')) || 100,
     margins: { top: m, right: m, bottom: m, left: m }, margin: m, center: chk('pr-center'),
     color: val('pr-color'), thin: Math.max(0, Number(val('pr-thin')) || 0), dpi: Number(val('pr-dpi')), annots: chk('pr-annots'), meas: chk('pr-meas'),
+    split: val('pr-split') === 'format' ? 'format' : 'one',
   };
 }
 const needsRaster = (o) => o.color !== 'color' || o.thin > 0;
@@ -92,14 +93,15 @@ async function computePlan() {
   else if (o.pages === 'current') idx = [Math.min(doc.page, n - 1)];
   else if (o.pages === 'selected') { idx = selectedPages(doc).filter((k) => k < n); if (!idx.length) return { o, ed, error: 'Aucune miniature sélectionnée : sélectionnez des pages dans le panneau de miniatures (Ctrl ou Maj + clic).' }; }
   else { const r = L.parseRanges(o.range, n); if (r.error) return { o, ed, error: r.error }; idx = r.pages; }
-  const sheets = [];
   const per = o.nup;
-  for (let i = 0; i < idx.length; i += per) {
-    const group = idx.slice(i, i + per);
-    const plan = L.planSheet(group.map((p) => ed.infos[p]), Object.assign({}, o, { nup: per }));
-    sheets.push({ pages: group, sheet: plan.sheet, plan });
-  }
-  return { o, ed, idx, sheets, groups: L.groupBySize(sheets) };
+  const pageGroups = [];
+  for (let i = 0; i < idx.length; i += per) pageGroups.push(idx.slice(i, i + per));
+  // UNE tâche par document (1.5.0) : feuille commune (format le plus fréquent, orientation majoritaire), sauf option « une tâche par format »
+  const split = o.split === 'format';
+  const { plans, unified } = L.planSheets(pageGroups.map((g) => g.map((k) => ed.infos[k])), Object.assign({}, o, { nup: per }), split);
+  const sheets = pageGroups.map((g, i) => ({ pages: g, sheet: plans[i].sheet, plan: plans[i] }));
+  const groups = split ? L.groupBySize(sheets) : [{ w: sheets[0] ? sheets[0].sheet.w : 0, h: sheets[0] ? sheets[0].sheet.h : 0, sheets }];
+  return { o, ed, idx, sheets, groups, unified };
 }
 
 const sheetOf = (s) => ({
@@ -135,7 +137,8 @@ async function refresh() {
   const first = p.ed.infos[s.pages[0]];
   $('pr-sheet').textContent = `Feuille ${st.previewIdx + 1} / ${p.sheets.length}`;
   $('pr-info').textContent = `Papier : ${sz(s.sheet.w)} × ${sz(s.sheet.h)} mm · Page ${s.pages[0] + 1} : ${sz(first.w)} × ${sz(first.h)} mm · Échelle : ${it ? (it.scale * 100).toFixed(1).replace('.', ',') + ' %' : '–'}`
-    + (p.groups.length > 1 ? ` · ${p.groups.length} tâches (formats de feuille différents)` : '');
+    + (p.groups.length > 1 ? ` · ${p.groups.length} tâches d'impression (une par format : agrafage et recto-verso séparés)` : ' · 1 tâche d’impression')
+    + (p.unified ? ` · Pages de formats ou d'orientations différents : toutes sur ${sz(L.mm(p.unified.paperW))} × ${sz(L.mm(p.unified.paperH))} mm ${p.unified.orientation === 'landscape' ? 'paysage' : 'portrait'} (tournées ou mises à l'échelle)` : '');
   { // ce qui partira vers le pilote pour cette feuille (même calcul que print-main.js)
     const plan = L.printOptions({ wMm: L.toMm(s.sheet.w), hMm: L.toMm(s.sheet.h) }, { orient: val('pr-sendorient'), paperMethod: val('pr-sendpaper') }, st.caps[val('pr-printer')]);
     $('pr-send').textContent = L.sendText(plan, L.sendArgs(plan, st.nativePrint).applied);
@@ -203,7 +206,7 @@ function savePrinterSettings() {
   const name = val('pr-printer');
   if (!name) return;
   const all = Object.assign({}, Settings.get('printPrinters'));
-  all[name] = { margin: L.normMargin(val('pr-margin'), st.margin), orientation: val('pr-orient'), center: chk('pr-center'), sendOrient: val('pr-sendorient'), sendPaper: val('pr-sendpaper') };
+  all[name] = { margin: L.normMargin(val('pr-margin'), st.margin), orientation: val('pr-orient'), center: chk('pr-center'), sendOrient: val('pr-sendorient'), sendPaper: val('pr-sendpaper'), split: val('pr-split') === 'format' ? 'format' : 'one' };
   Settings.set('printPrinters', all);
 }
 function applyPrinterSettings(name) {
@@ -215,6 +218,7 @@ function applyPrinterSettings(name) {
   $('pr-center').checked = s.center !== false;
   $('pr-sendorient').value = ['portrait', 'landscape'].includes(s.sendOrient) ? s.sendOrient : 'auto'; // réglages avancés, par imprimante
   $('pr-sendpaper').value = L.PAPER_METHODS.includes(s.sendPaper) ? s.sendPaper : 'auto';
+  $('pr-split').value = s.split === 'format' ? 'format' : 'one'; // ancien réglage absent : une seule tâche
 }
 
 const later = () => { clearTimeout(st.timer); st.timer = setTimeout(refresh, 120); };
@@ -225,6 +229,7 @@ const later = () => { clearTimeout(st.timer); st.timer = setTimeout(refresh, 120
 async function print(dialog) {
   const p = st.plan;
   if (!p || p.error || !p.sheets.length) return;
+  if (st.submitting) return; // double clic / Entrée répétée : une seule soumission (sinon deux travaux à l'imprimante)
   const o = p.o;
   savePrinterSettings();
   // JAMAIS mémorisés (risque de gaspillage ou de mauvaise surprise sur le document suivant) : copies, papier, pages par feuille, échelle.
@@ -232,12 +237,16 @@ async function print(dialog) {
   const task = {
     name: st.doc.name,
     edBytes: p.ed.bytes,
-    groups: p.groups.map((g) => ({ w: g.w, h: g.h, sheets: g.sheets.map(sheetOf) })),
+    groups: o.split === 'format' ? p.groups.map((g) => ({ w: g.w, h: g.h, sheets: g.sheets.map(sheetOf) })) : L.singleJob(p.sheets.map(sheetOf), { duplex: o.duplex, copies: o.copies }),
     raster: needsRaster(o) ? { mode: o.color, dpi: o.dpi, thin: o.thin } : null,
-    opts: { device: o.device, copies: o.copies, collate: o.collate, duplex: o.duplex, color: o.color === 'color', dialog: !!dialog, orient: val('pr-sendorient'), paperMethod: val('pr-sendpaper') },
+    opts: { device: o.device, copies: o.copies, collate: o.collate, duplex: o.duplex, color: o.color === 'color', dialog: !!dialog, orient: val('pr-sendorient'), paperMethod: val('pr-sendpaper'), split: o.split },
   };
+  if (o.split !== 'format' && task.groups.length !== 1) { toast('Impression impossible : plan d’impression incohérent (plusieurs tâches).', 7000); return; } // garde-fou
   let r;
-  try { r = await api.printSubmit(task); } catch (e) { r = { ok: false, message: e && e.message || String(e) }; }
+  st.submitting = true;
+  $('pr-ok').disabled = true; $('pr-winprint').disabled = true;
+  try { r = await api.printSubmit(task); } catch (e) { r = { ok: false, message: e && e.message || String(e) }; } finally { st.submitting = false; }
+  if (!(r && r.ok)) { $('pr-ok').disabled = false; $('pr-winprint').disabled = false; }
   if (r && r.ok) close();
   else toast('Impression impossible : ' + ((r && r.message) || 'erreur inconnue'), 7000);
 }
@@ -326,7 +335,7 @@ export async function openPrint(doc) {
 function close() { $('printdlg').hidden = true; st.cache = null; }
 
 export function initPrint() {
-  const watch = ['pr-copies', 'pr-collate', 'pr-duplex', 'pr-range', 'pr-nup', 'pr-paper', 'pr-orient', 'pr-scale', 'pr-percent', 'pr-margin', 'pr-center', 'pr-color', 'pr-thin', 'pr-dpi', 'pr-annots', 'pr-meas', 'pr-sendorient', 'pr-sendpaper'];
+  const watch = ['pr-copies', 'pr-collate', 'pr-duplex', 'pr-range', 'pr-nup', 'pr-paper', 'pr-orient', 'pr-scale', 'pr-percent', 'pr-margin', 'pr-center', 'pr-color', 'pr-thin', 'pr-dpi', 'pr-annots', 'pr-meas', 'pr-sendorient', 'pr-sendpaper', 'pr-split'];
   for (const id of watch) { $(id).addEventListener('change', () => { st.previewIdx = 0; later(); }); $(id).addEventListener('input', later); }
   for (const r of document.querySelectorAll('input[name=pr-pages]')) r.addEventListener('change', () => { st.previewIdx = 0; later(); });
   $('pr-printer').addEventListener('change', async () => { const n = val('pr-printer'); await loadCaps(n); applyPrinterSettings(n); st.previewIdx = 0; later(); });
@@ -334,7 +343,7 @@ export function initPrint() {
   $('pr-margin').addEventListener('input', () => { const v = L.normMargin(val('pr-margin'), null); if (v !== null) st.margin = v; });
   $('pr-margin').addEventListener('change', () => { const v = L.normMargin(val('pr-margin'), st.margin); st.margin = v; $('pr-margin').value = String(v); savePrinterSettings(); });
   $('pr-margin').addEventListener('blur', () => { $('pr-margin').value = String(L.normMargin(val('pr-margin'), st.margin)); });
-  for (const id of ['pr-scale', 'pr-percent', 'pr-orient', 'pr-center', 'pr-sendorient', 'pr-sendpaper']) $(id).addEventListener('change', savePrinterSettings);
+  for (const id of ['pr-scale', 'pr-percent', 'pr-orient', 'pr-center', 'pr-sendorient', 'pr-sendpaper', 'pr-split']) $(id).addEventListener('change', savePrinterSettings);
   api.onPrintProgress(onPrintProgress);
   $('pr-prev').addEventListener('click', () => { if (st.previewIdx > 0) { st.previewIdx--; refresh(); } });
   $('pr-next').addEventListener('click', () => { if (st.plan && st.plan.sheets && st.previewIdx < st.plan.sheets.length - 1) { st.previewIdx++; refresh(); } });

@@ -94,6 +94,8 @@ function capabilitiesEx(name) {
 // Passer par _print avec notre mediaSize (vendor_id) est le seul moyen de faire écrire dmPaperSize par Chromium (voir print-layout.js).
 // Sans _print (autre version d'Electron) : API publique, taille personnalisée (journalisé « API publique »).
 const hasInternalPrint = (wc) => !!wc && typeof wc._print === 'function';
+// Attente avant l'envoi : 2 s, + 1 s par 4 Mo de PDF d'impression, 15 s au plus (1.5.0 ; avant : 2 s fixes quel que soit le document).
+function loadWait(file) { let size = 0; try { size = fs.statSync(file).size; } catch { /* */ } return Math.min(15000, 2000 + Math.ceil(size / (4 * 1024 * 1024)) * 1000); }
 async function printOne(file, plan, title) {
   let send = PrintLayout.sendArgs(plan, false);
   const win = track(new BrowserWindow({ show: false, title, webPreferences: { plugins: true, backgroundThrottling: false } }));
@@ -102,7 +104,7 @@ async function printOne(file, plan, title) {
     win.on('page-title-updated', (e) => { e.preventDefault(); win.setTitle(title); });
     await win.loadURL('file:///' + file.replace(/\\/g, '/'));
     win.setTitle(title);
-    await sleep(2000); // le lecteur PDF a besoin d'un court instant pour charger le document
+    await sleep(loadWait(file)); // le lecteur PDF doit avoir chargé TOUT le document avant l'envoi (gros PDF : attente plus longue)
     send = PrintLayout.sendArgs(plan, hasInternalPrint(win.webContents));
     const o = send.args;
     if (ALLOW() && o.deviceName !== ALLOW()) throw new Error('Imprimante refusée par le garde-fou de test : ' + o.deviceName);
@@ -212,7 +214,8 @@ function logJob(t, j, plan, result, send, capsRec) {
     const p = Object.assign({}, plan, { options: Object.assign({}, plan.options, { deviceName: mask(dev) }) });
     const sent = send ? Object.assign({}, send, { args: Object.assign({}, send.args, { deviceName: mask(dev) }) }) : undefined;
     const caps = capsRec ? { status: capsRec.status, ms: capsRec.ms, papers: (capsRec.caps && capsRec.caps.papers) || [] } : undefined;
-    const l = PrintLog.line({ date: new Date(), printer: mask(dev), wMm: j.wMm, hMm: j.hMm, plan: p, sent, send: send ? PrintLayout.sendText(plan, send.applied) : undefined, caps, result: msg });
+    const job = `tâche ${j.index + 1} / ${j.count}` + (j.sheets ? `, ${j.sheets} feuille(s)` : '') + (j.padded ? ' dont 1 blanche (recto-verso, copies)' : '') + (j.count > 1 ? ' (option « une par format »)' : '');
+    const l = PrintLog.line({ date: new Date(), printer: mask(dev), job, wMm: j.wMm, hMm: j.hMm, plan: p, sent, send: send ? PrintLayout.sendText(plan, send.applied) : undefined, caps, result: msg });
     const f = logPath();
     let prev = '';
     try { prev = fs.readFileSync(f, 'utf8'); } catch { /* premier journal */ }
@@ -227,7 +230,7 @@ function onJob(t, j) {
   if (dir) { // test : aucune impression, le PDF d'impression est écrit dans le dossier
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, `job-${j.index + 1}.pdf`), toBuffer(j.bytes));
-    const job = { wMm: j.wMm, hMm: j.hMm, title: j.title, fileName: j.fileName };
+    const job = { wMm: j.wMm, hMm: j.hMm, title: j.title, fileName: j.fileName, index: j.index, count: j.count, sheets: j.sheets, padded: !!j.padded };
     t.jobs.push(job);
     t.chain = t.chain.then(async () => { // options qui AURAIENT été passées à webContents.print (tests) + ligne de journal
       const capsRec = await capsOf(t.opts.device);
@@ -295,6 +298,9 @@ function register(ipcMain, mainGetter) {
   // task : { name, edBytes, groups: [{ w, h, sheets }], raster: null | { mode, dpi, thin }, opts: { device, copies, collate, duplex, color, dialog } }
   // Retour immédiat : { id }. La tâche travaille sur la copie figée reçue ici (fermer l'onglet ou modifier le document ne change rien).
   ipcMain.handle('print:submit', (_e, task) => {
+    // Garde-fou (1.5.0) : un document = UNE tâche, sauf option « une tâche par format » (sinon agrafage / recto-verso cassés).
+    if (!task || !Array.isArray(task.groups) || !task.groups.length) return { ok: false, message: 'Rien à imprimer.' };
+    if (!(task.opts && task.opts.split === 'format') && task.groups.length !== 1) return { ok: false, message: 'Plan d’impression incohérent : plusieurs tâches demandées pour un seul document.' };
     if (ALLOW() && !process.env.ORICALPDF_TEST_PRINT_DIR && task.opts.device !== ALLOW()) return { ok: false, message: 'Imprimante refusée par le garde-fou de test.' };
     const t = { id: ++seq, name: task.name || 'Sans titre', edBytes: task.edBytes, groups: task.groups, raster: task.raster || null, opts: task.opts, state: 'queued', label: 'En attente', fraction: 0 };
     queue.push(t);

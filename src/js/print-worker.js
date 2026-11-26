@@ -30,7 +30,7 @@ api.onWorkerRun(async (task) => {
       }
       done += g.sheets.length;
       progress(done, 'Envoi');
-      await api.workerJob({ id, index: gi, count: task.groups.length, bytes, wMm: L.toMm(g.w), hMm: L.toMm(g.h), title, fileName: L.jobFileName(task.name, gi, task.groups.length) });
+      await api.workerJob({ id, index: gi, count: task.groups.length, sheets: g.sheets.length, padded: !!g.padded, bytes, wMm: L.toMm(g.w), hMm: L.toMm(g.h), title, fileName: L.jobFileName(task.name, gi, task.groups.length) });
     }
     api.workerDone({ id });
   } catch (e) {

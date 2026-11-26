@@ -114,7 +114,59 @@
     return { sheet, items, warnings, area, cells };
   }
 
-  // Regroupe les feuilles de même taille consécutives (une tâche d'impression par taille de feuille ; arrondi au 0,1 mm).
+  // ---- UNE SEULE TÂCHE D'IMPRESSION PAR DOCUMENT (1.5.0) ----
+  // Cause des impressions coupées en plusieurs travaux (agrafage et recto-verso cassés) : chaque feuille prenait la taille ET l'orientation de
+  // sa page (« Format de la page », défaut) ou de son orientation (papier choisi, orientation automatique), puis groupBySize ouvrait une
+  // NOUVELLE tâche à chaque changement de taille ou d'orientation (page paysage au milieu de pages portrait, 595 × 842 pt contre
+  // 595,28 × 841,89 pt, A3 + A4…). Désormais : feuille commune à tout le document = format le plus fréquent (à ±2 mm près, orientation
+  // ignorée) dans l'orientation majoritaire ; les autres pages sont tournées de 90° et / ou mises à l'échelle (réglage « Échelle »).
+  // Tâches séparées par format seulement sur demande (option par imprimante « Une tâche par format », traceurs à rouleaux).
+  // sizes : [{ w, h }] (pt) → { paperW, paperH (mm, portrait), orientation 'portrait' | 'landscape', uniform (toutes les feuilles
+  // identiques à 0,1 mm près), formats (nombre de formats distincts), mixedOrient }.
+  const FORMAT_TOL_MM = 2;
+  function dominantSheet(sizes) {
+    const clusters = [];
+    let land = 0, port = 0;
+    const keys = new Set();
+    for (const s of sizes) {
+      const a = Math.min(toMm(s.w), toMm(s.h)), b = Math.max(toMm(s.w), toMm(s.h));
+      keys.add(Math.round(toMm(s.w) * 10) + 'x' + Math.round(toMm(s.h) * 10));
+      if (isLandscape(s.w, s.h)) land++; else port++;
+      const c = clusters.find((x) => Math.abs(x.a - a) <= FORMAT_TOL_MM && Math.abs(x.b - b) <= FORMAT_TOL_MM);
+      if (c) c.n++; else clusters.push({ a, b, n: 1 });
+    }
+    const best = clusters.reduce((m, c) => (!m || c.n > m.n ? c : m), null) || { a: 210, b: 297 }; // égalité : le premier format rencontré
+    const first = sizes[0];
+    const orientation = land > port ? 'landscape' : port > land ? 'portrait' : first && isLandscape(first.w, first.h) ? 'landscape' : 'portrait';
+    return { paperW: best.a, paperH: best.b, orientation, uniform: keys.size <= 1, formats: clusters.length, mixedOrient: land > 0 && port > 0 };
+  }
+
+  // Plans de toutes les feuilles d'une impression. groups : [[{ w, h }, …], …] (pages de chaque feuille) ; o : options de planSheet ;
+  // splitByFormat : ancien comportement (une feuille par page à sa taille, une tâche par format). → { plans, unified (null si rien à unifier) }.
+  function planSheets(groups, o, splitByFormat) {
+    let plans = groups.map((g) => planSheet(g, o));
+    if (splitByFormat || plans.length < 2) return { plans, unified: null };
+    const d = dominantSheet(plans.map((p) => p.sheet));
+    if (d.uniform) return { plans, unified: null };
+    const forced = o.orientation === 'portrait' || o.orientation === 'landscape';
+    const o2 = Object.assign({}, o, { paperW: d.paperW, paperH: d.paperH, orientation: forced ? o.orientation : d.orientation });
+    plans = groups.map((g) => planSheet(g, o2));
+    return { plans, unified: Object.assign({}, d, { orientation: o2.orientation }) };
+  }
+
+  // Une seule tâche pour toutes les feuilles (toutes de même taille après planSheets) ; recto-verso avec plusieurs copies et un nombre IMPAIR de
+  // feuilles : une feuille blanche est ajoutée à la fin pour que chaque exemplaire commence sur une nouvelle feuille même si le pilote enchaîne
+  // les copies (le verso de la dernière feuille reste blanc, aucune feuille de plus). sheets : feuilles composées { w, h, items }.
+  function singleJob(sheets, opts) {
+    const o = opts || {};
+    if (!sheets.length) return [];
+    const out = sheets.slice();
+    const pad = o.duplex && o.duplex !== 'simplex' && (o.copies || 1) > 1 && out.length % 2 === 1;
+    if (pad) out.push({ w: out[0].w, h: out[0].h, items: [], blank: true });
+    return [{ w: out[0].w, h: out[0].h, sheets: out, padded: pad }];
+  }
+
+  // Mode « Une tâche par format » : regroupe les feuilles de même taille consécutives (arrondi au 0,1 mm), dans l'ordre des pages.
   function groupBySize(sheets) {
     const key = (s) => Math.round(toMm(s.w) * 10) + 'x' + Math.round(toMm(s.h) * 10);
     const groups = [];
@@ -264,5 +316,5 @@
     return `Envoi : taille personnalisée ${dims}, ${orient}`;
   }
 
-  return { printOptions, sendArgs, sendText, paperCode, standardFormat, announcedPaper, STD_FORMATS, DMPAPER, PAPER_METHODS, PT_PER_MM, PAPERS, mm, toMm, parseRanges, sheetSize, placeInArea, nupCells, planSheet, groupBySize, isLandscape, cleanName, jobTitle, jobFileName, isPdfPrinter, normMargin, defaultMargin, DEFAULT_MARGIN, hardwareCut };
+  return { printOptions, sendArgs, sendText, paperCode, standardFormat, announcedPaper, STD_FORMATS, DMPAPER, PAPER_METHODS, PT_PER_MM, PAPERS, mm, toMm, parseRanges, sheetSize, placeInArea, nupCells, planSheet, dominantSheet, planSheets, singleJob, FORMAT_TOL_MM, groupBySize, isLandscape, cleanName, jobTitle, jobFileName, isPdfPrinter, normMargin, defaultMargin, DEFAULT_MARGIN, hardwareCut };
 });
