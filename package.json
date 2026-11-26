@@ -72,7 +72,9 @@
       "allowToChangeInstallationDirectory": true,
       "artifactName": "OricalPDF-Setup-${version}.${ext}",
       "shortcutName": "Orical PDF",
-      "license": "build/eula.txt"
+      "license": "build/eula.txt",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico"
     },
     "portable": {
       "artifactName": "OricalPDF-Portable-${version}.${ext}"

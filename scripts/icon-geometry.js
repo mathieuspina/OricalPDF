@@ -2,14 +2,14 @@
 // Source de vérité : build/logo-orical-pdf.svg (80 × 80) = halo rouge flou + disque au dégradé radial (centre 44, 40, r 22), disque sombre
 // #121214 (centre 35, 39.4, r 19.6), pictogramme « page + plus » en trait rose #FFB9B9 de 2. Fond transparent, recadré sur le dessin.
 // Chaque taille est DESSINÉE à sa taille :
-//   - 40 à 256 px : logo complet (halo flou + dégradé radial), fidèle ;
+//   - 40 à 256 px : logo complet (dégradé radial ; halo flou retiré en 1.5.0 pour que le dessin remplisse l'image) ;
 //   - 32 px : halo simplifié = cercle rouge plat décalé, sans flou ; trait un peu épaissi ;
 //   - 16 à 24 px : halo plat, trait rose épaissi, pictogramme simplifié et agrandi dans le disque (24 : page + plus ; 16 et 20 : page seule).
 // Pur (Node seul) : utilisé par scripts/make-icon.js (génération, sous Electron) et test/test-icon.js (contrôle de build/icon.ico).
 // L'icône des FICHIERS PDF (build/pdf-file.ico) est décrite dans scripts/pdf-icon-geometry.js (mêmes outils ICO / PNG).
 const zlib = require('zlib');
 
-const SIZES = [16, 20, 24, 32, 40, 48, 64, 256];
+const SIZES = [16, 20, 24, 32, 40, 48, 64, 128, 256]; // 128 ajouté en 1.5.0 (écrans à 200 % et plus)
 const COLORS = { halo: '#F23A3A', disc: '#121214', stroke: '#FFB9B9', grad: ['#FFD0D0', '#F64E4E', '#F02C2C', '#E31414'] };
 const HALO = { cx: 44, cy: 40, r: 22 };
 const DISC = { cx: 35, cy: 39.4, r: 19.6 };
@@ -27,11 +27,13 @@ function tierOf(n) { return n >= 40 ? 'full' : n >= 32 ? 'mid' : 'small'; }
 // Géométrie de la taille n : cadrage (vb, en unités du logo), marge en pixels, épaisseur du trait, pictogramme, halo flou ou plat.
 function geometry(n) {
   const tier = tierOf(n);
-  const m = n >= 64 ? Math.round(n / 64) : 0.5;           // marge : le pourtour reste transparent malgré l'anticrénelage
-  // Avec flou : carré de 60 autour du dessin et de son halo (comme la barre de titre) ; sans flou : carré de 52 autour des deux disques.
-  const vb = tier === 'full' ? { x: 14, y: 10, s: 60 } : { x: 14.7, y: 14, s: 52 };
+  const m = n >= 40 ? 1 : 0.5;                            // marge : le pourtour reste transparent malgré l'anticrénelage (40 px et plus)
+  // 1.5.0 (icône trop petite dans la barre des tâches) : à TOUTES les tailles, carré de 52 centré sur les deux disques (le dessin occupe
+  // ~97 % de la largeur) ; plus de halo flou (avec lui, carré de 60 : dessin à 84 % de la largeur et décalé à gauche). Le dégradé radial
+  // reste à 40 px et plus ; halo plat en dessous.
+  const vb = { x: 14.7, y: 14, s: 52 };
   const k = (n - 2 * m) / vb.s;                           // pixels par unité du logo
-  const g = { n, tier, m, vb, k, blur: tier === 'full', iconScale: 1 };
+  const g = { n, tier, m, vb, k, blur: false, gradient: tier === 'full', iconScale: 1 };
   if (tier === 'full') { g.stroke = 2; g.icon = ICON_FULL; }
   else if (tier === 'mid') { g.stroke = 2.5; g.icon = ICON_FULL; }
   else { g.stroke = n >= 24 ? 2.9 : n >= 20 ? 3 : 2.9; g.icon = n >= 24 ? ICON_PAGE + ICON_PLUS : ICON_PAGE; g.iconScale = n >= 24 ? 1.1 : n >= 20 ? 1.2 : 1.3; }
@@ -50,10 +52,11 @@ function svg(n) {
   const blur = `<filter id="b" x="17.2" y="13.2" width="53.6" height="53.6" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="${BLUR}"/></filter>`;
   const halo = g.blur
     ? `<g opacity="0.9" filter="url(#b)"><circle cx="${HALO.cx}" cy="${HALO.cy}" r="${HALO.r}" fill="${COLORS.halo}"/></g><circle cx="${HALO.cx}" cy="${HALO.cy}" r="${HALO.r}" fill="url(#g)"/>`
+    : g.gradient ? `<circle cx="${HALO.cx}" cy="${HALO.cy}" r="${HALO.r}" fill="url(#g)"/>`
     : `<circle cx="${HALO.cx}" cy="${HALO.cy}" r="${HALO.r}" fill="${COLORS.halo}"/>`;
   const body = `<circle cx="${DISC.cx}" cy="${DISC.cy}" r="${DISC.r}" fill="${COLORS.disc}"/>` +
     `<path d="${g.icon}"${g.iconScale !== 1 ? ` transform="translate(${ICON_C.x} ${ICON_C.y}) scale(${g.iconScale}) translate(${-ICON_C.x} ${-ICON_C.y})"` : ''} fill="none" stroke="${COLORS.stroke}" stroke-width="${g.stroke}" stroke-linecap="round" stroke-linejoin="round"/>`;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n} ${n}" width="${n}" height="${n}"><defs>${g.blur ? grad + blur : ''}</defs>` +
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n} ${n}" width="${n}" height="${n}"><defs>${g.blur ? grad + blur : g.gradient ? grad : ''}</defs>` +
     `<g transform="matrix(${sc} 0 0 ${sc} ${tx} ${ty})">${halo}${body}</g></svg>`;
 }
 

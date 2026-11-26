@@ -12,6 +12,9 @@ const UpdateMain = require('./update-main.js');
 // Nom affiché dans toutes les boîtes natives, et dossier de données stable (dev et version installée) : %APPDATA%\Orical PDF
 // (src/user-data.js). ORICALPDF_USER_DATA : dossier alternatif des tests automatisés.
 app.setName('Orical PDF');
+// Identité Windows (AppUserModelID) = appId de l'installeur (raccourcis créés par NSIS) : la fenêtre se range sous le raccourci épinglé et
+// la barre des tâches affiche l'icône de l'exécutable (build/icon.ico) plutôt qu'un bouton à part (1.5.0).
+if (process.platform === 'win32') app.setAppUserModelId('com.orical.pdf');
 app.setPath('userData', UserData.resolve(process.env, app.getPath('appData'), path.join));
 
 const isDev = process.argv.includes('--dev');

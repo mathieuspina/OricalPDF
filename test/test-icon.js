@@ -1,6 +1,6 @@
 // Icône de l'application (build/icon.ico) = logo Orical PDF (build/logo-orical-pdf.svg), dessiné à chaque taille (scripts/icon-geometry.js).
 // Vérifie, à TOUTES les tailles : fond transparent (coins, pourtour), halo rouge à droite du disque, disque sombre, trait rose du
-// pictogramme, aucun pixel sombre hors du disque, aucun blanc (lignes blanches de l'ancien logo) ; flou seulement à 40 px et plus ;
+// pictogramme, aucun pixel sombre hors du disque, aucun blanc (lignes blanches de l'ancien logo) ; cadrage serré, sans flou (1.5.0) ;
 // logo source identique dans build/ et src/assets/, anciens logos absents ; références cohérentes (package.json, main.js, installeur).
 // Icône des fichiers PDF (build/pdf-file.ico, scripts/pdf-icon-geometry.js) : section 4.
 // Usage : node test/test-icon.js   (régénérer l'icône : npx electron scripts/make-icon.js)
@@ -25,8 +25,11 @@ check('interface : favicon, accueil, À propos, aide, chargement = logo-orical-p
   /rel="icon" href="assets\/logo-orical-pdf\.svg"/.test(html) && /id="brand-mark"[\s\S]{0,400}tb-blur[\s\S]{0,1200}class="halo"[\s\S]{0,600}#121214[\s\S]{0,900}#FFB9B9/.test(html) && /spinner\.src = 'assets\/logo-orical-pdf\.svg'/.test(read('src/js/viewer.js')));
 
 // 2. Géométrie
-check('tailles prévues : 16, 20, 24, 32, 40, 48, 64, 256', JSON.stringify(G.SIZES) === '[16,20,24,32,40,48,64,256]');
-check('niveaux de détail : flou à 40 px et plus seulement, halo plat en dessous ; trait épaissi en dessous de 40 px', G.SIZES.every((n) => G.geometry(n).blur === (n >= 40) && /feGaussianBlur/.test(G.svg(n)) === (n >= 40)) && G.SIZES.every((n) => n >= 40 || G.geometry(n).stroke > 2));
+check('tailles prévues : 16, 20, 24, 32, 40, 48, 64, 128, 256', JSON.stringify(G.SIZES) === '[16,20,24,32,40,48,64,128,256]');
+// 1.5.0 : le logo remplit l'image (barre des tâches) : même cadrage serré (carré de 52 centré sur les disques) à toutes les tailles,
+// le dessin occupe au moins 90 % de la largeur (avant : 82 % de 40 à 256 px) ; plus de halo flou (il imposait un carré de 60 : 84 % de la largeur, dessin décalé).
+check('cadrage serré : carré de 52 centré sur les deux disques, dessin ≥ 90 % de la largeur (avant : 82 % à 40 px et plus)', G.SIZES.every((n) => { const g = G.geometry(n); const x0 = G.DISC.cx - G.DISC.r, x1 = G.HALO.cx + G.HALO.r; return g.vb.s === 52 && (x1 - x0) * g.k / n >= 0.9 && Math.abs((g.vb.x + g.vb.s / 2) - (x0 + x1) / 2) < 0.1; }));
+check('niveaux de détail : aucun flou ; dégradé radial à 40 px et plus, halo plat en dessous ; trait épaissi en dessous de 40 px', G.SIZES.every((n) => !G.geometry(n).blur && !/feGaussianBlur/.test(G.svg(n)) && /radialGradient/.test(G.svg(n)) === (n >= 40)) && G.SIZES.every((n) => n >= 40 || G.geometry(n).stroke > 2));
 check('pictogramme : d\'origine à 32 px et plus, page + plus à 24 px, page seule à 16 / 20 px (agrandi dans le disque)', G.geometry(32).iconScale === 1 && /M35\.5 38V44/.test(G.svg(32)) && /M35\.5 38\.5V44/.test(G.svg(24)) && !/V44/.test(G.svg(20)) && !/V44/.test(G.svg(16)) && G.geometry(16).iconScale > 1);
 
 // 3. Images de build/icon.ico
@@ -78,7 +81,7 @@ check('toutes les tailles : halo rouge, disque sombre, trait rose ; rien de somb
 // 4. Icône des fichiers PDF (build/pdf-file.ico, scripts/pdf-icon-geometry.js) : mêmes tailles, fond transparent, page rouge unie à coin
 // rose, disque sombre et plus rose ; lettrage « PDF » en tracés à 32 px et plus, omis de 16 à 24 px.
 const P = require('../scripts/pdf-icon-geometry.js');
-check('icône PDF : lettrage en TRACÉS (aucun <text>, aucune police), omis à 16-24 px ; page unie retenue', G.SIZES.every((n) => !/<text|font/.test(P.svg(n)) && /M28\.2 25\.8V17\.2/.test(P.svg(n)) === (n >= 32)) && P.PAGE_FILL === 'flat' && /fill="#F23A3A"/.test(P.svg(64)));
+check('icône PDF : lettrage en TRACÉS (aucun <text>, aucune police), omis à 16-24 px ; page unie retenue', P.SIZES.every((n) => !/<text|font/.test(P.svg(n)) && /M28\.2 25\.8V17\.2/.test(P.svg(n)) === (n >= 32)) && P.PAGE_FILL === 'flat' && /fill="#F23A3A"/.test(P.svg(64)));
 const pdf = analyse('build/pdf-file.ico', (p, n) => {
   const g = P.geometry(n), miss = [];
   const at = (ux, uy) => { const q = P.toPx(g, ux, uy); return G.pixel(p, q.x, q.y); };
@@ -99,7 +102,7 @@ const pdf = analyse('build/pdf-file.ico', (p, n) => {
   if (white) miss.push(white + ' pixel(s) blanc(s)');
   return miss;
 }, true); // la page occupe toute la hauteur : seuls les côtés gauche et droit du pourtour sont contrôlés
-check('build/pdf-file.ico : exactement les 8 tailles, en PNG carrés', JSON.stringify(pdf.tailles) === JSON.stringify(G.SIZES) && pdf.carre, pdf.tailles);
+check('build/pdf-file.ico : exactement ses 8 tailles (16 à 256, sans 128), en PNG carrés', JSON.stringify(pdf.tailles) === JSON.stringify(P.SIZES) && JSON.stringify(P.SIZES) === '[16,20,24,32,40,48,64,256]' && pdf.carre, pdf.tailles);
 check('icône PDF, toutes les tailles : fond transparent (coins ; bords gauche et droit à 40 px et plus ; au moins 15 %)', !pdf.fond.length, pdf.fond);
 check('icône PDF, toutes les tailles : page rouge, coin rose, disque sombre, plus rose, lettrage seulement à 32 px et plus, aucun blanc', !pdf.details.length, pdf.details);
 
@@ -107,6 +110,8 @@ check('icône PDF, toutes les tailles : page rouge, coin rose, disque sombre, pl
 const pkg = require('../package.json');
 check('package.json : build.icon et build.win.icon = build/icon.ico (exécutable, installeur, désinstalleur)', pkg.build.icon === 'build/icon.ico' && pkg.build.win.icon === 'build/icon.ico' && pkg.build.files.includes('build/icon.ico'));
 check('main.js : icône de la fenêtre (barre des tâches) = build/icon.ico', read('main.js').includes("icon: path.join(__dirname, 'build', 'icon.ico')"));
+check('installeur / désinstalleur : nsis.installerIcon et nsis.uninstallerIcon = build/icon.ico (1.5.0, explicites)', pkg.build.nsis.installerIcon === 'build/icon.ico' && pkg.build.nsis.uninstallerIcon === 'build/icon.ico');
+check('main.js : AppUserModelID = appId (fenêtre rangée sous le raccourci, icône de l\'exécutable)', read('main.js').includes(`app.setAppUserModelId('${pkg.build.appId}')`));
 check('make-icon : chaque taille dessinée à sa taille par icon-geometry (pas de réduction d\'une grande image)', /rasterize\(svgOf\(n\), n\)/.test(read('scripts/make-icon.js')) && /AppIcon\.svg\(n\)/.test(read('scripts/make-icon.js')) && /PdfIcon\.svg\(n\)/.test(read('scripts/make-icon.js')));
 
 module.exports = { analyse, isRed, isDark, isPink, isWhite };
