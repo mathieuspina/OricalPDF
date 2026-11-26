@@ -30,6 +30,7 @@ export function styleEditor(ta, rec, ctx) {
   ta.style.fontStyle = f.italic ? 'italic' : 'normal';
   ta.style.color = rgb(o.color || [0, 0, 0]);
   ta.style.textAlign = o.align || 'left';
+  ta.style.textDecoration = o.underline ? 'underline' : 'none'; // soulignement (1.5.0) : visible pendant la saisie
   // Largeur fixe (notes : 170 pt par défaut) : largeur imposée, retour à la ligne, HAUTEUR ajustée au contenu par fitHeight (sans elle, un
   // textarea « field-sizing: fixed » garde sa hauteur par défaut de 2 lignes et, en overflow hidden, n'affiche que 2 lignes : corrigé en 1.5.0).
   if (o.width > 0) { ta.style.width = o.width * s + 'px'; ta.style.whiteSpace = 'pre-wrap'; ta.style.fieldSizing = 'fixed'; }

@@ -138,6 +138,23 @@
     return [ox + (px - ox) * c - (py - oy) * s, oy + (px - ox) * s + (py - oy) * c];
   };
 
+  // Soulignement (option `underline` des textes, 1.5.0) : un rectangle plein sous chaque ligne non vide, de la largeur de la ligne, centré à
+  // 0,1 × corps sous la ligne de base, épaisseur 0,05 × corps (au moins 0,5 pt) : valeurs UnderlinePosition / UnderlineThickness des polices
+  // standard (Helvetica, Times, Courier). Rectangle plein (et non trait) : aucune extrémité arrondie, identique à l'aperçu et dans le PDF.
+  // L = layoutText(t) ; tourné de `a` (radians) autour de (t.x, t.y) comme le texte.
+  function underlinePrims(t, L, a, measure, color, opacity) {
+    const out = [];
+    const th = Math.max(0.5, 0.05 * L.size), c = 0.1 * L.size;
+    for (const it of L.lines) {
+      if (!it.text || !it.text.trim()) continue;
+      const w = measure(L.fn, it.text, L.size);
+      const y0 = it.y - c - th / 2, y1 = it.y - c + th / 2;
+      const pts = [[it.x, y0], [it.x + w, y0], [it.x + w, y1], [it.x, y1]].map((p) => rotAbout(p[0], p[1], t.x, t.y, a));
+      out.push({ kind: 'path', segs: polySegs(pts, true), fill: { color: color || [0, 0, 0], opacity: opacity === undefined ? 1 : opacity }, stroke: null, blend: null });
+    }
+    return out;
+  }
+
   // Les 4 coins (tournés) de la boîte d'un texte.
   function textCorners(o, measure) {
     const L = layoutText(o, measure);
@@ -385,6 +402,7 @@
         const p = rotAbout(it.x, it.y, t.x, t.y, a);
         out.push({ kind: 'text', text: it.text, x: p[0], y: p[1], size: L.size, fontName: L.fn, color: t.color || [0, 0, 0], rot: t.rot || 0, opacity: 1 });
       }
+      if (t.underline) out.push(...underlinePrims(t, L, a, measure, t.color || [0, 0, 0], 1));
       return out;
     }
 
@@ -598,7 +616,7 @@
   });
 
   return {
-    coverPoly, coverColor, coverPrimitive, kindOf, sanitize, fontKey, cssFamily, makeMeasure, layoutText, textCorners, primitives, pathD, polySegs, smooth,
+    coverPoly, coverColor, coverPrimitive, kindOf, sanitize, fontKey, cssFamily, makeMeasure, layoutText, textCorners, underlinePrims, primitives, pathD, polySegs, smooth,
     register, arrowHead, rotAbout, distSeg, bounds, center, hitTest, canRotate, canResize, translate, rotateBy, resizePoints, rectCorners, defaultsFor, dashArray,
     STAMPS, formatDate, stampNatural, stampSize, ASPECT_LOCKED, SOLID,
     LABELS, DEG, K_BASE, LINE_H, FRAME, POINTS, MARKUP, CLOSED,

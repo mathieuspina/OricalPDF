@@ -97,6 +97,26 @@ function check(name, cond, detail) {
     await escape(); await sleep(200); // Échap : abandon de la modification
     await escape(); await sleep(100);
 
+    // ------------------------------------------------------------ 5. texte souligné
+    console.log('5. Texte ajouté souligné');
+    await addText(60, 300, 'Souligne moi');
+    e = await lastEdit();
+    const uid = e.id;
+    await escape(); await sleep(100); await tool('select'); await sleep(150);
+    { const [px, py] = await P(75, 306); await c.clickXY(px, py); await sleep(300); }
+    check('panneau Propriétés : case « Souligné » (rubrique Texte)', (await propLabels()).includes('Souligné'), await propLabels());
+    const gPaths = (id) => J(`JSON.stringify([...document.querySelectorAll('.docview.active .objs > g[data-id="${id}"] path')].map(p=>p.getAttribute('fill')))`);
+    const before5 = await gPaths(uid);
+    await setField('Souligné', `const cb=row.querySelector('input[type=checkbox]'); cb.checked=true; cb.dispatchEvent(new Event('change'))`); await sleep(300);
+    e = (await edits()).find((x) => x.id === uid);
+    const after5 = await gPaths(uid);
+    check('objet souligné (underline = true) et une barre ajoutée à l\'aperçu', e.underline === true && after5.length === before5.length + 1, { before5, after5, e });
+    await c.clickXY(...(await P(75, 306))); await sleep(400); // 2e clic : édition
+    check('édition : texte souligné dans la zone de saisie', (await c.ev(`(document.querySelector('.docview.active textarea.editor')||{style:{}}).style.textDecoration`)) === 'underline');
+    await escape(); await sleep(200); await escape(); await sleep(100);
+    const out5 = await J(`import('./js/ui.js').then(async (m)=>{const V=await import('./js/viewer.js'); const d=m.store.active; const pdfjs=await import('../vendor/pdfjs/pdf.mjs'); const fills=async (ed)=>{const b=await V.exportBytes(d, undefined, {edits:ed}); const pdf=await pdfjs.getDocument({data:b}).promise; const pg=await pdf.getPage(1); const ops=await pg.getOperatorList(); return ops.fnArray.filter(f=>f===pdfjs.OPS.fill||f===pdfjs.OPS.eoFill).length}; const n1=await fills(d.edits); const n0=await fills(d.edits.map(x=>Object.assign({},x,{underline:false}))); return JSON.stringify({n1,n0})})`).catch((err) => ({ err: String(err) }));
+    check('PDF exporté : une barre de soulignement (un remplissage de plus que sans soulignement)', out5 && out5.n1 === out5.n0 + 1, out5);
+
     check('aucune erreur JavaScript', c.logs.length === 0, c.logs.slice(0, 3));
   } catch (err) {
     check('exécution sans exception', false, String(err && err.stack || err));

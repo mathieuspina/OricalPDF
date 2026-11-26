@@ -163,6 +163,35 @@ async function save(edits, blackRect) {
   assert(items.length === 1 && Math.abs(items[0].transform[1]) > 15 && Math.abs(items[0].transform[0]) < 1, 'texte tourné de 90°');
   console.log('  ok   add (police, retour à la ligne, alignement, fond/bordure, rotation)');
 
+  // Soulignement (1.5.0) : un rectangle plein sous chaque ligne non vide, de la largeur de la ligne, couleur du texte ; aperçu = écriture.
+  {
+    const u = { type: 'add', x: 40, y: 150, text: 'Souligné\n\nsuite', size: 20, color: RED, font: 'Helvetica', align: 'left', rot: 0, underline: true };
+    const prims = Shapes.primitives(u, measure);
+    const bars = prims.filter((p) => p.kind === 'path' && p.fill && !p.stroke);
+    assert(bars.length === 2, 'soulignement : une barre par ligne non vide (' + bars.length + ')');
+    const xs = bars[0].segs.filter((s) => s[0] !== 'Z').map((s) => s[1]), ys = bars[0].segs.filter((s) => s[0] !== 'Z').map((s) => s[2]);
+    const wLine = measure('Helvetica', 'Souligné', 20);
+    assert(Math.abs(Math.min(...xs) - 40) < 0.01 && Math.abs(Math.max(...xs) - 40 - wLine) < 0.01, 'soulignement : largeur de la ligne');
+    assert(Math.max(...ys) < 150 && Math.min(...ys) > 150 - 4, 'soulignement : sous la ligne de base, à moins de 4 pt');
+    assert(near(bars[0].fill.color.map((v) => v * 255), to255(RED), 1), 'soulignement : couleur du texte');
+    assert(Shapes.primitives(Object.assign({}, u, { underline: false }), measure).filter((p) => p.kind === 'path').length === 0, 'sans soulignement : aucun tracé');
+    r = await save([u]);
+    const yb = 150 - 2; // centre de la barre (0,1 × 20 pt sous la ligne de base)
+    const red = [yb - 1, yb, yb + 1].map((y) => r.px(40 + wLine / 2, y)).sort((m, n) => m[1] - n[1])[0]; // barre de 1 pt : rangée la plus couverte
+    assert(red[0] > 200 && red[0] - red[1] > 80 && red[0] - red[2] > 80, 'PDF : barre rouge sous le texte (1 pt, anticrénelée) ' + red);
+    assert(isWhite(r.px(40 + wLine + 6, yb)), 'PDF : rien au-delà de la ligne');
+    // tourné de 90° : la barre suit le texte (verticale, à droite de la ligne de base)
+    const ur = Shapes.primitives(Object.assign({}, u, { text: 'Tourné', rot: 90 }), measure).filter((p) => p.kind === 'path');
+    const uxs = ur[0].segs.filter((s) => s[0] !== 'Z').map((s) => s[1]), uys = ur[0].segs.filter((s) => s[0] !== 'Z').map((s) => s[2]);
+    assert(Math.min(...uxs) > 40 && Math.max(...uxs) < 44 && Math.max(...uys) - Math.min(...uys) > 50, 'soulignement tourné de 90° avec le texte');
+    // légende soulignée
+    require('../src/callout.js');
+    const cp = Shapes.primitives({ type: 'callout', x: 100, y: 100, text: 'Légende', size: 12, tip: [20, 20], rot: 0, underline: true, fill: null, border: null }, measure);
+    const cw = measure('Helvetica', 'Légende', 12);
+    assert(cp.some((p) => p.kind === 'path' && p.fill && !p.stroke && p.segs.some((s) => s[0] !== 'Z' && Math.abs(s[1] - 100 - cw) < 0.01)), 'légende soulignée');
+    console.log('  ok   soulignement (largeur, position, couleur, PDF, rotation, légende)');
+  }
+
   // Ordre : le dernier objet est dessiné au-dessus
   r = await save([
     { type: 'rect', cx: 150, cy: 150, w: 100, h: 100, rot: 0, color: RED, fill: RED, width: 0, opacity: 1, radius: 0 },

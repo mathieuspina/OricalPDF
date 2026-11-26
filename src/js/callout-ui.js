@@ -100,7 +100,7 @@ export function initCallout() {
   // Propriétés : champs de texte partagés avec les autres textes, puis champs propres à la légende.
   for (const f of A.FIELDS) {
     if (f.types.includes('m-dist')) continue; // champs des mesures : leur liste de types est partagée avec Measure.TYPES, ne jamais la modifier
-    if (['font', 'bold', 'italic', 'size', 'align', 'opacity'].includes(f.k) || (f.k === 'width' && f.kind === 'optnum')) f.types = f.types.concat('callout');
+    if (['font', 'bold', 'italic', 'underline', 'size', 'align', 'opacity'].includes(f.k) || (f.k === 'width' && f.kind === 'optnum')) f.types = f.types.concat('callout');
   }
   A.FIELDS.push(
     { k: 'text', label: 'Texte', kind: 'textarea', types: ['callout'] },

@@ -125,7 +125,7 @@ function render(doc, ctx) {
   for (const f of A.FIELDS) {
     if (!f.types.some((t) => ctx.types.has(t))) continue;
     if (f.when) { const rel = ctx.objs.filter((o) => f.types.includes(o.type)); if (!rel.length || !rel.every(f.when)) continue; } // champ propre à un sous-type
-    const isText = ['text', 'font', 'bold', 'italic', 'size', 'align', 'bgMode', 'bgColor'].includes(f.k) || (f.k === 'width' && f.kind === 'optnum');
+    const isText = ['text', 'font', 'bold', 'italic', 'underline', 'size', 'align', 'bgMode', 'bgColor'].includes(f.k) || (f.k === 'width' && f.kind === 'optnum');
     const group = f.group || (isText ? 'Texte' : 'Aspect');
     if (!groups.has(group)) groups.set(group, []);
     groups.get(group).push(row(f.label, control(doc, f, valueOf(ctx, f)), f.kind === 'bool' ? 'inline' : ''));

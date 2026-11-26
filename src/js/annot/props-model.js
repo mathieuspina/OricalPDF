@@ -38,6 +38,7 @@ export const FIELDS = [
   { k: 'font', label: 'Police', kind: 'select', options: [['Helvetica', 'Helvetica'], ['Times', 'Times'], ['Courier', 'Courier']], types: ['add', 'note', 'replace'] },
   { k: 'bold', label: 'Gras', kind: 'bool', types: ['add', 'note', 'replace'] },
   { k: 'italic', label: 'Italique', kind: 'bool', types: ['add', 'note', 'replace'] },
+  { k: 'underline', label: 'Souligné', kind: 'bool', types: ['add', 'note', 'replace'] },
   { k: 'bgMode', label: 'Fond du texte remplacé', kind: 'select', options: [['auto', 'Auto (détecté)'], ['white', 'Blanc'], ['custom', 'Personnalisé']], types: ['replace'] },
   { k: 'bgColor', label: 'Couleur du fond', kind: 'color', types: ['replace'] },
   { k: 'size', label: 'Taille', kind: 'number', min: 4, max: 200, step: 1, types: ['add', 'note', 'replace'] },

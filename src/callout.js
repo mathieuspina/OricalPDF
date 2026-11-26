@@ -91,6 +91,7 @@
       const p = rotAbout(it.x, it.y, o.x, o.y, g.a);
       out.push({ kind: 'text', text: it.text, x: p[0], y: p[1], size: g.L.size, fontName: g.L.fn, color: o.color || [0, 0, 0], rot: o.rot || 0, opacity: op });
     }
+    if (o.underline) out.push(...Shapes.underlinePrims(o, g.L, g.a, measure, o.color || [0, 0, 0], op));
     return out;
   }
 
