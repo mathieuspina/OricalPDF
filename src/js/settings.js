@@ -9,6 +9,7 @@ const values = {
   // 1.5.0 (clés absentes des anciens settings.json = valeurs ci-dessous)
   numberingBg: false, // numérotation : fond blanc des nouvelles règles (dernier choix)
   sidebarOpen: false, // panneau latéral ouvert au démarrage (dernier état)
+  sidebarTab: null, // onglet du panneau latéral (identifiant sbtab-*, dernier affiché)
   annotAngle: 0, // angle (degrés, sens anti-horaire, par rapport à l'affichage) des nouveaux textes, notes et légendes
 };
 

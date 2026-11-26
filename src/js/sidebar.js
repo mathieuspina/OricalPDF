@@ -17,11 +17,18 @@ export function initSidebar() {
     $('sb-pin').setAttribute('aria-pressed', String(pinned));
   };
   applyPin();
+  // État mémorisé (1.5.0) : ouvert / fermé et onglet affiché, restaurés au lancement (affichés dès qu'un document est ouvert).
+  // Largeur : fixe (264 px, style.css), rien à mémoriser.
+  open = Settings.get('sidebarOpen') === true;
   $('sb-pin').addEventListener('click', () => { Settings.set('pinSidebar', !Settings.get('pinSidebar')); applyPin(); bus.emit('view', current); });
   enableTablist($('sb-tabs'), (tab) => {
     ['sb-thumbs', 'sb-outline', 'sb-search', 'sb-annots', 'sb-measures'].forEach((id) => { $(id).hidden = id !== tab.getAttribute('aria-controls'); });
-    if (tab.id === 'sbtab-search') $('search-input').focus();
+    if (tab.id === 'sbtab-search' && restored) $('search-input').focus();
+    if (restored && Settings.get('sidebarTab') !== tab.id) Settings.set('sidebarTab', tab.id);
   });
+  const savedTab = Settings.get('sidebarTab');
+  if (typeof savedTab === 'string' && /^sbtab-[a-z]+$/.test(savedTab) && $(savedTab) && $(savedTab).getAttribute('role') === 'tab') $(savedTab).click();
+  restored = true;
 
   let timer = 0;
   $('search-input').addEventListener('input', () => {
@@ -49,11 +56,13 @@ export function initSidebar() {
   });
 }
 
-let open = false;
+let open = false; // lu dans le réglage sidebarOpen par initSidebar
+let restored = false; // onglet mémorisé appliqué (avant : ni focus, ni écriture du réglage)
 const applyOpen = () => { $('sidebar').hidden = !(open && current); };
 export function isOpen() { return open; }
 export function setOpen(v) {
-  open = v;
+  open = !!v;
+  if (Settings.get('sidebarOpen') !== open) Settings.set('sidebarOpen', open);
   applyOpen();
   bus.emit('view', current);
 }
