@@ -150,6 +150,27 @@ function check(name, cond, detail) {
     const rots = await c.ev(`import('./js/ui.js').then(m=>m.store.active.pages[0].rot)`);
     check('page 1 pivotée 3 fois (rotation 270° dans l\'onglet Pages)', rots === 270, rots);
 
+    // ------------------------------------------------------------ 7. légende : une couleur pour le cadre et la flèche
+    console.log('7. Légende : couleur commune du cadre et de la flèche');
+    const cid = (await edits()).find((x) => x.type === 'callout').id;
+    const selectId = (id) => c.ev(`import('./js/ui.js').then(m=>{const d=m.store.active; d.selection=[${id}]; m.bus.emit('doc-changed', d); return true})`);
+    await selectId(cid); await sleep(300);
+    let labs = await propLabels();
+    check('panneau : « Couleur du cadre et de la flèche » et « Cadre », plus de « Bordure » ni de « Couleur du repère »', labs.includes('Couleur du cadre et de la flèche') && labs.includes('Cadre') && !labs.includes('Bordure') && !labs.includes('Couleur du repère'), labs);
+    await setField('Couleur du cadre et de la flèche', `const i=row.querySelector('input[type=color]'); i.value='#0000ff'; i.dispatchEvent(new Event('change'))`); await sleep(300);
+    e = (await edits()).find((x) => x.id === cid);
+    check('une couleur : cadre ET flèche en bleu', JSON.stringify(e.lineColor) === '[0,0,1]' && JSON.stringify(e.border) === '[0,0,1]', e);
+    const strokes = () => J(`JSON.stringify([...document.querySelectorAll('.docview.active .objs > g[data-id="${cid}"] path')].map(p=>[p.getAttribute('stroke'),p.getAttribute('fill')]))`);
+    const st7 = await strokes();
+    check('aperçu : repère, pointe et cadre de la même couleur', st7.filter(([s]) => /0,s?0,s?255|#0000ff/i.test(s || '')).length >= 2 && st7.filter(([s, fl]) => (s && s !== 'none') || (fl && fl !== 'none' && fl !== 'rgb(255,255,255)' && fl !== 'rgb(255, 255, 255)')).every(([s, fl]) => [s, fl].filter((v) => v && v !== 'none' && !/255,\s?255,\s?255/.test(v)).every((v) => /^(rgb\(0,\s?0,\s?255\)|#0000ff)$/i.test(v))), st7);
+    await setField('Cadre', `const cb=row.querySelector('input[type=checkbox]'); cb.checked=false; cb.dispatchEvent(new Event('change'))`); await sleep(300);
+    e = (await edits()).find((x) => x.id === cid);
+    check('« Cadre » décoché : plus de cadre, flèche toujours bleue', e.border === null && JSON.stringify(e.lineColor) === '[0,0,1]', e);
+    await setField('Cadre', `const cb=row.querySelector('input[type=checkbox]'); cb.checked=true; cb.dispatchEvent(new Event('change'))`); await sleep(300);
+    e = (await edits()).find((x) => x.id === cid);
+    check('« Cadre » recoché : cadre de la couleur de la flèche', JSON.stringify(e.border) === '[0,0,1]', e);
+    await c.ev(`import('./js/ui.js').then(m=>{const d=m.store.active; d.selection=[]; m.bus.emit('doc-changed', d); return true})`); await sleep(150);
+
     check('aucune erreur JavaScript', c.logs.length === 0, c.logs.slice(0, 3));
   } catch (err) {
     check('exécution sans exception', false, String(err && err.stack || err));

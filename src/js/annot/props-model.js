@@ -79,6 +79,10 @@ export function stampPatch(e, key, value) {
 
 // Réglage propre à un type (ex. champs : noms uniques, groupes radio) : propHooks[type](doc, objets, clé, valeur) → true si traité (une étape).
 export const propHooks = {};
+// Modification composée propre à un type : propPatch[type](objet, clé, valeur) → objet des clés à changer, ou null (réglage simple).
+// Appliquée aux objets sélectionnés ET aux valeurs par défaut de l'outil (ex. légende : une couleur commune au cadre et à la flèche).
+export const propPatch = {};
+const patchOf = (o, type, key, value) => (propPatch[type] && propPatch[type](o, key, value)) || { [key]: value };
 
 export function setProp(doc, key, value, fieldTypes) {
   const ctx = propsContext(doc);
@@ -95,9 +99,9 @@ export function setProp(doc, key, value, fieldTypes) {
   const applies = (type) => !fieldTypes || fieldTypes.includes(type);
   if (!ctx.virtual) {
     const ids = ctx.objs.filter((o) => applies(o.type)).map((o) => o.id);
-    if (ids.length) { DocModel.updateEdits(doc, ids, (e) => (e.type === 'stamp' && STAMP_KEYS.has(key) ? stampPatch(e, key, value) : e.type === 'tstamp' && key === 'label' ? TS().relabel(e, value, measure) : { [key]: value })); changed(doc); }
+    if (ids.length) { DocModel.updateEdits(doc, ids, (e) => (e.type === 'stamp' && STAMP_KEYS.has(key) ? stampPatch(e, key, value) : e.type === 'tstamp' && key === 'label' ? TS().relabel(e, value, measure) : patchOf(e, e.type, key, value))); changed(doc); }
   }
-  for (const t of ctx.types) if (applies(t)) defaultsOf(t)[key] = value; // la prochaine création reprend ce réglage
+  for (const t of ctx.types) if (applies(t)) Object.assign(defaultsOf(t), patchOf(defaultsOf(t), t, key, value)); // la prochaine création reprend ce réglage
   bus.emit('doc-changed', doc);
 }
 

@@ -40,6 +40,13 @@ const mk = (extra) => Object.assign({ id: 1, page: 0 }, Shapes.defaultsFor('call
   check('coude : pointe tout près de la boîte → ligne directe (2 points)', Callout.geometry(o, measure).points.length === 2);
   o = mk({ tip: [160, 205] });
   check('pointe dans la boîte : aucun repère tracé', Callout.geometry(o, measure).inside === true && !Shapes.primitives(o, measure).some((p) => p.kind === 'path' && p.stroke && p.stroke.color === o.lineColor && !p.fill));
+  // couleur commune (1.5.0) : border === true → cadre de la couleur du repère ; couleur explicite (anciens objets) conservée
+  {
+    const BL = [0, 0, 1];
+    const frameOf = (x) => Shapes.primitives(x, measure).find((p) => p.kind === 'path' && p.stroke && p.fill);
+    check('cadre « true » : couleur du repère', JSON.stringify(frameOf(mk({ border: true, lineColor: BL })).stroke.color) === JSON.stringify(BL));
+    check('cadre de couleur explicite (ancien objet) : inchangé', JSON.stringify(frameOf(mk({ border: [1, 0, 0], lineColor: BL })).stroke.color) === '[1,0,0]');
+  }
   // page tournée : la boîte est tournée de 90° autour de (x, y) ; l'accroche se fait dans le repère du texte
   o = mk({ rot: 90, tip: [100, 120] });
   g = Callout.geometry(o, measure);

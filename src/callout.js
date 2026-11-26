@@ -1,7 +1,9 @@
 // Légende fléchée : boîte de texte + ligne de repère jusqu'à une pointe (UMD, pur : aucune dépendance au DOM).
 // Objet : { type: 'callout', x, y (ligne de base de la 1re ligne, comme 'add'), text, size, font, bold, italic, align, width (largeur fixe | null), rot,
-//           color (texte), fill (fond | null), border (bordure | null), borderWidth, lineColor, lineWidth, tip: [x, y] (pointe), tipStyle 'arrow'|'dot'|'none',
+//           color (texte), fill (fond | null), border (couleur du cadre | null ; true = couleur du repère), borderWidth, lineColor, lineWidth, tip: [x, y] (pointe), tipStyle 'arrow'|'dot'|'none',
 //           elbow (ligne à coude), opacity }.
+// 1.5.0 : l'interface règle UNE couleur pour le cadre et la flèche (lineColor, recopiée dans border quand le cadre est présent) ; un
+// objet plus ancien à deux couleurs différentes reste dessiné tel quel.
 // La boîte est la boîte d'un texte (Shapes.layoutText) ; le repère part du CÔTÉ de la boîte le plus proche de la pointe (ligne droite) ou du côté
 // gauche / droit (ligne à coude : un segment horizontal près de la boîte, dans le sens du texte). Aperçu SVG et écriture PDF parcourent les mêmes
 // primitives (Shapes.primitives) : le rendu est identique.
@@ -83,7 +85,7 @@
       out.push({
         kind: 'path', segs: Shapes.polySegs(g.corners, true),
         fill: o.fill ? { color: o.fill, opacity: op } : null,
-        stroke: o.border ? { color: o.border, width: num(o.borderWidth, 1), opacity: op, dash: null } : null, blend: null,
+        stroke: o.border ? { color: Array.isArray(o.border) ? o.border : lc, width: num(o.borderWidth, 1), opacity: op, dash: null } : null, blend: null,
       });
     }
     for (const it of g.L.lines) {

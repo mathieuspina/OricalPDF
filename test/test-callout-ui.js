@@ -100,7 +100,7 @@ function check(name, cond, detail) {
     check('redimensionner la boîte (poignée droite) : largeur fixe définie', m3.width > 0, m3.width);
 
     console.log('4. Propriétés (panneau)');
-    for (const lab of ['Texte', 'Police', 'Taille', 'Couleur du texte', 'Fond', 'Bordure', 'Épaisseur de la bordure', 'Couleur du repère', 'Épaisseur du repère', 'Pointe', 'Repère à coude', 'Alignement']) {
+    for (const lab of ['Texte', 'Police', 'Taille', 'Couleur du texte', 'Fond', 'Cadre', 'Épaisseur du cadre', 'Couleur du cadre et de la flèche', 'Épaisseur du repère', 'Pointe', 'Repère à coude', 'Alignement']) {
       check(`champ « ${lab} »`, (await setField(lab, 'return 1')) === 1, lab);
     }
     await setField('Pointe', `const s=row.querySelector('select'); s.value='dot'; s.dispatchEvent(new Event('change'))`); await sleep(200);

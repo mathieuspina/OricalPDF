@@ -33,6 +33,7 @@ function drawMark(rec, snap) {
 // (+ angle par défaut des Réglages, 0 par défaut).
 function calloutAt(rec, tip, lx, ly, text) {
   const d = clone(A.defaultsOf('callout'));
+  d.border = d.border ? (d.lineColor || window.Callout.DEFAULTS.lineColor).slice() : null; // cadre = couleur de la flèche
   const s = rec.vp.scale, pad = d.size * 0.4;
   const [px, py] = rec.vp.convertToPdfPoint(lx + pad * s, ly + (Shapes.K_BASE * d.size + pad) * s);
   return Object.assign(d, { type: 'callout', page: rec.index, x: px, y: py, text, tip, rot: A.textAngle(rec.vp.rotation) });
@@ -102,13 +103,20 @@ export function initCallout() {
     if (f.types.includes('m-dist')) continue; // champs des mesures : leur liste de types est partagée avec Measure.TYPES, ne jamais la modifier
     if (['font', 'bold', 'italic', 'underline', 'size', 'align', 'opacity'].includes(f.k) || (f.k === 'width' && f.kind === 'optnum')) f.types = f.types.concat('callout');
   }
+  // Couleur commune : changer la couleur repeint le cadre (s'il existe) ; activer le cadre lui donne la couleur de la flèche.
+  A.propPatch.callout = (o, key, value) => {
+    if (key === 'lineColor') return { lineColor: value, border: o.border ? value.slice() : null };
+    if (key === 'border') return { border: value ? (o.lineColor || window.Callout.DEFAULTS.lineColor).slice() : null };
+    return null;
+  };
   A.FIELDS.push(
     { k: 'text', label: 'Texte', kind: 'textarea', types: ['callout'] },
     { k: 'color', label: 'Couleur du texte', kind: 'color', types: ['callout'] },
     { k: 'fill', label: 'Fond', kind: 'colorOrNone', types: ['callout'] },
-    { k: 'border', label: 'Bordure', kind: 'colorOrNone', types: ['callout'] },
-    { k: 'borderWidth', label: 'Épaisseur de la bordure', kind: 'number', min: 0.25, max: 10, step: 0.25, types: ['callout'] },
-    { k: 'lineColor', label: 'Couleur du repère', kind: 'color', types: ['callout'] },
+    // une seule couleur pour le cadre et la flèche (1.5.0) : « Cadre » l'active ou le retire
+    { k: 'lineColor', label: 'Couleur du cadre et de la flèche', kind: 'color', types: ['callout'] },
+    { k: 'border', label: 'Cadre', kind: 'bool', types: ['callout'], get: (o) => !!o.border },
+    { k: 'borderWidth', label: 'Épaisseur du cadre', kind: 'number', min: 0.25, max: 10, step: 0.25, types: ['callout'] },
     { k: 'lineWidth', label: 'Épaisseur du repère', kind: 'number', min: 0.25, max: 12, step: 0.25, types: ['callout'] },
     { k: 'tipStyle', label: 'Pointe', kind: 'select', options: [['arrow', 'Flèche'], ['dot', 'Point'], ['none', 'Aucune']], types: ['callout'] },
     { k: 'elbow', label: 'Repère à coude', kind: 'bool', types: ['callout'] },
