@@ -3,6 +3,47 @@
 Une ligne par fonction importante. Les dates sont celles du dépôt. Les versions 0.x sont des versions de travail.
 Pour la mise à jour d'un poste, voir [RELEASING.md](RELEASING.md#mettre-à-jour-un-poste).
 
+## 1.5.0 — 2026-11-26
+- Impression : un document part toujours en UNE seule tâche (agrafage, recto-verso et copies corrects, même avec des pages de formats ou d'orientations différents).
+- Numérotation des pages : option « Fond blanc » derrière le numéro.
+- Panneau latéral : ouvert ou fermé, et son onglet, retrouvés au lancement suivant.
+- Texte ajouté, note, légende : option « Souligné » ; angle par défaut des nouveaux textes dans les Réglages ; édition d'une note longue sans texte masqué.
+- Légende : une seule couleur pour le cadre et la flèche ; couleurs standard (noir, blanc, bleu, rouge, vert, jaune, magenta) sous chaque choix de couleur.
+- Flèches du clavier : l'objet sélectionné bouge dans le bon sens sur une page pivotée.
+- Tampons techniques posés sans libellé ; icône plus grande dans la barre des tâches.
+- Détail complet dans les notes de version, sur la page de téléchargement.
+
+Impression : une seule tâche par document.
+- Cause corrigée : une page d'un autre format ou d'une autre orientation (page paysage au milieu de pages portrait, A4 à 595 × 842 pt
+  mêlé à 595,28 × 841,89 pt, A3 + A4…) ouvrait un NOUVEAU travail d'impression ; l'imprimante recevait plusieurs travaux, donc
+  agrafage, recto-verso et assemblage des copies coupés en morceaux.
+- Désormais toutes les pages sont imprimées sur le format le plus fréquent du document (à 2 mm près), dans l'orientation majoritaire ;
+  les autres pages sont tournées ou mises à l'échelle (la ligne « Papier » sous l'aperçu l'indique, avec « 1 tâche d'impression »).
+- Traceurs et formats mélangés à imprimer chacun à sa taille : réglage « Tâches d'impression » = « Une par format de feuille (traceur) »,
+  mémorisé pour chaque imprimante.
+- Recto-verso avec plusieurs copies et un nombre impair de feuilles : une page blanche termine chaque exemplaire (chaque copie commence
+  sur une feuille neuve).
+- Un double clic sur « Imprimer » n'envoie qu'un travail ; un gros document a plus de temps pour se charger avant l'envoi ; le journal
+  d'impression indique « tâche 1 / 1, n feuille(s) ».
+
+Annotations.
+- Numérotation des pages : case « Fond blanc » (rectangle blanc sous le numéro, à l'aperçu et dans le PDF), retenue pour la règle suivante.
+- Texte ajouté, note, texte remplacé et légende : case « Souligné » (panneau Propriétés), aussi dans le PDF enregistré.
+- Réglages > Annotations : « Angle des nouveaux textes » (degrés, sens inverse des aiguilles d'une montre, 0 par défaut), ajouté à
+  l'orientation de l'affichage pour les nouveaux textes, notes et légendes ; les objets existants ne changent pas.
+- Note de 3 lignes ou plus : la zone de saisie s'agrandit avec le texte (avant : 2 lignes visibles seulement).
+- Page pivotée (90, 180, 270°) : les flèches du clavier déplacent l'objet sélectionné dans le sens de la flèche à l'écran.
+- Légende : « Couleur du cadre et de la flèche » (une seule couleur) et case « Cadre ».
+- Panneau Propriétés : 7 couleurs standard sous chaque choix de couleur, à côté du sélecteur habituel.
+- Tampons techniques : posés sans libellé (le champ « Libellé » est vide, à remplir au besoin) ; les tampons déjà posés gardent le leur.
+
+Interface et installation.
+- Panneau latéral : état ouvert / fermé et onglet (Miniatures, Signets, Recherche…) mémorisés.
+- Icône : le logo remplit l'image à toutes les tailles (16 à 256 px, 128 px ajouté) ; la fenêtre se range sous le raccourci de
+  l'installeur dans la barre des tâches.
+- Réglages : rubrique Annotations placée à côté d'Animations.
+- Réglages déjà enregistrés : repris tels quels ; les nouveaux réglages prennent leur valeur par défaut.
+
 ## 1.4.0 — 2026-11-24
 - Tampons techniques pour les plans : 33 symboles de charpente, bardage, couverture et repères (onglet Annoter).
 - Impression sur copieur : le format A3 / A4… est annoncé par son code de papier Windows ; plus de feuille A3 sortie en A4 coupée.

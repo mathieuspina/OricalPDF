@@ -1,6 +1,6 @@
 # Orical PDF — notes pour le service informatique
 
-Version de référence : 1.4.0. Tout ce qui suit est vérifié dans la configuration de construction (`package.json`, section `build`, et
+Version de référence : 1.5.0. Tout ce qui suit est vérifié dans la configuration de construction (`package.json`, section `build`, et
 `build/installer.nsh`) et par le test `npm run test:packaged` (installation et désinstallation silencieuses dans un dossier temporaire).
 
 ## Ce que fait l'installeur
@@ -42,8 +42,8 @@ Version de référence : 1.4.0. Tout ce qui suit est vérifié dans la configura
 ## Installation et désinstallation silencieuses
 
 ```bat
-OricalPDF-Setup-1.4.0.exe /S
-OricalPDF-Setup-1.4.0.exe /S /D=C:\Programmes\OricalPDF
+OricalPDF-Setup-1.5.0.exe /S
+OricalPDF-Setup-1.5.0.exe /S /D=C:\Programmes\OricalPDF
 ```
 
 `/D=` doit être le **dernier** argument, sans guillemets, même si le chemin contient des espaces.
@@ -68,7 +68,7 @@ l'ancien) ne supprime jamais les données.
 - **AppLocker / listes blanches** : autoriser par chemin (`%LOCALAPPDATA%\Programs\Orical PDF\*`) ou par empreinte du fichier :
 
 ```powershell
-Get-FileHash .\OricalPDF-Setup-1.4.0.exe -Algorithm SHA256
+Get-FileHash .\OricalPDF-Setup-1.5.0.exe -Algorithm SHA256
 Get-FileHash "$env:LOCALAPPDATA\Programs\Orical PDF\Orical PDF.exe" -Algorithm SHA256
 ```
 
