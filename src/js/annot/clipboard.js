@@ -86,9 +86,24 @@ export function reorder(doc, mode) {
   changed(doc);
 }
 
+// Déplacement au clavier : (dx, dy) dans le sens de l'ÉCRAN (dx vers la droite, dy vers le haut), en points. Converti dans le repère PDF de la
+// page de chaque objet par son viewport affiché (rotation /Rotate + onglet Pages + vue) : sur une page pivotée de 90 / 180 / 270°, « flèche
+// droite » déplace l'objet vers la droite À L'ÉCRAN (1.5.0 ; avant : vers +x du PDF, donc vers le bas, la gauche ou le haut de l'écran).
+export function screenToPdfDelta(rec, dx, dy) {
+  const vp = rec && rec.vp;
+  if (!vp || !vp.convertToPdfPoint) return [dx, dy];
+  const p0 = vp.convertToPdfPoint(0, 0), p1 = vp.convertToPdfPoint(dx, -dy); // écran : y vers le bas
+  const vx = p1[0] - p0[0], vy = p1[1] - p0[1], len = Math.hypot(vx, vy), want = Math.hypot(dx, dy);
+  if (!(len > 1e-9)) return [dx, dy];
+  const k = want / len; // longueur en points quel que soit le zoom
+  const snap = (v) => (Math.abs(v) < 1e-9 ? 0 : Math.round(v * 1e6) / 1e6);
+  return [snap(vx * k), snap(vy * k)];
+}
+
 export function nudge(doc, dx, dy) {
   if (!doc.selection.length) return;
-  DocModel.updateEdits(doc, doc.selection, (e) => Shapes.translate(clone(e), dx, dy));
+  const recs = V.getPages(doc) || [];
+  DocModel.updateEdits(doc, doc.selection, (e) => { const [px, py] = screenToPdfDelta(recs[e.page], dx, dy); return Shapes.translate(clone(e), px, py); });
   changed(doc);
 }
 

@@ -117,6 +117,39 @@ function check(name, cond, detail) {
     const out5 = await J(`import('./js/ui.js').then(async (m)=>{const V=await import('./js/viewer.js'); const d=m.store.active; const pdfjs=await import('../vendor/pdfjs/pdf.mjs'); const fills=async (ed)=>{const b=await V.exportBytes(d, undefined, {edits:ed}); const pdf=await pdfjs.getDocument({data:b}).promise; const pg=await pdf.getPage(1); const ops=await pg.getOperatorList(); return ops.fnArray.filter(f=>f===pdfjs.OPS.fill||f===pdfjs.OPS.eoFill).length}; const n1=await fills(d.edits); const n0=await fills(d.edits.map(x=>Object.assign({},x,{underline:false}))); return JSON.stringify({n1,n0})})`).catch((err) => ({ err: String(err) }));
     check('PDF exporté : une barre de soulignement (un remplissage de plus que sans soulignement)', out5 && out5.n1 === out5.n0 + 1, out5);
 
+    // ------------------------------------------------------------ 6. flèches du clavier sur page pivotée
+    console.log('6. Flèches du clavier sur une page pivotée (0 / 90 / 180 / 270°)');
+    await tool('rect'); await sleep(150);
+    { const [x1, y1] = await P(380, 150), [x2, y2] = await P(450, 200);
+      await c.mouse('mouseMoved', x1, y1); await c.mouse('mousePressed', x1, y1);
+      for (let i = 1; i <= 5; i++) { await c.mouse('mouseMoved', x1 + ((x2 - x1) * i) / 5, y1 + ((y2 - y1) * i) / 5); await sleep(15); }
+      await c.mouse('mouseReleased', x2, y2); await sleep(250); }
+    const rid = (await lastEdit()).id;
+    await escape(); await sleep(100); await tool('select'); await sleep(150);
+    // position À L'ÉCRAN du centre de l'objet (px du viewport de la page) et rotation affichée
+    const screenPos = () => J(`import('./js/ui.js').then(async (m)=>{const V=await import('./js/viewer.js'); const d=m.store.active; const e=d.edits.find(x=>x.id===${rid}); const rec=V.getPages(d)[e.page]; const p=rec.vp.convertToViewportPoint(e.cx, e.cy); return JSON.stringify({x:p[0], y:p[1], rot:rec.vp.rotation, s:rec.vp.scale})})`);
+    const press = async (k, code, vk, mods = 0) => {
+      await c.ev(`import('./js/ui.js').then(m=>{const d=m.store.active; d.selection=[${rid}]; document.activeElement && document.activeElement.blur && document.activeElement.blur(); return true})`);
+      await key(k, code, vk, mods); await sleep(250);
+    };
+    for (let turn = 0; turn < 4; turn++) {
+      if (turn) { await c.ev(`import('./js/ui.js').then(m=>{m.store.active.selection=[]; return true})`); await c.click('#rtab-home'); await sleep(150); await c.click('#rpanel-home [data-cmd=pg-rot-right]'); await sleep(900); await c.click('#rtab-annotate'); await sleep(150); }
+      const p0 = await screenPos();
+      await press('ArrowRight', 'ArrowRight', 39, 8); // Maj : 10 pt
+      const p1 = await screenPos();
+      await press('ArrowUp', 'ArrowUp', 38, 8);
+      const p2 = await screenPos();
+      await press('ArrowLeft', 'ArrowLeft', 37); await press('ArrowDown', 'ArrowDown', 40);
+      const p3 = await screenPos();
+      const d = 10 * p0.s;
+      check(`page à ${p0.rot}° : → déplace vers la droite à l'écran, ↑ vers le haut, ← et ↓ de 1 pt en sens inverse`,
+        Math.abs(p1.x - p0.x - d) < 0.05 && Math.abs(p1.y - p0.y) < 0.05 && Math.abs(p2.y - p1.y + d) < 0.05 && Math.abs(p2.x - p1.x) < 0.05
+        && Math.abs(p3.x - p2.x + p0.s) < 0.05 && Math.abs(p3.y - p2.y - p0.s) < 0.05, { p0, p1, p2, p3 });
+      if (turn === 0) check('rotation initiale 0°', p0.rot === 0, p0);
+    }
+    const rots = await c.ev(`import('./js/ui.js').then(m=>m.store.active.pages[0].rot)`);
+    check('page 1 pivotée 3 fois (rotation 270° dans l\'onglet Pages)', rots === 270, rots);
+
     check('aucune erreur JavaScript', c.logs.length === 0, c.logs.slice(0, 3));
   } catch (err) {
     check('exécution sans exception', false, String(err && err.stack || err));
