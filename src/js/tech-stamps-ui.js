@@ -36,7 +36,8 @@ export function pick(sym) {
   if (!doc || !e) return;
   closeMenu();
   lastSym = sym;
-  A.startPlacing(doc, { tool: 'tstamp', kind: 'tstamp', tstamp: { sym, label: e.label, color: e.color.slice() } });
+  // libellé vide à la pose (1.5.0) : à saisir dans le panneau Propriétés ; null = symbole sans libellé
+  A.startPlacing(doc, { tool: 'tstamp', kind: 'tstamp', tstamp: { sym, label: e.label === null ? null : '', color: e.color.slice() } });
 }
 // Le symbole `sym` est-il l'outil actif ? (état « enfoncé » de sa commande et de son favori)
 export const isActive = (doc, cmd) => !!doc && doc.tool === 'tstamp' && cmdOf(A.defaultsOf('tstamp').sym) === cmd;

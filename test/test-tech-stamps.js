@@ -111,10 +111,14 @@ async function source(n, size, rot) {
 
   console.log('2. Objets');
   {
-    const o = T.create('ipe', 100, 200, measure);
-    check('création : type tstamp, libellé par défaut, noir, plein, taille naturelle', o.type === 'tstamp' && o.label === 'IPE 200' && o.color.join() === '0,0,0' && o.style === 'solid' && o.weight === 'normal' && o.cx === 100 && o.cy === 200
+    // 1.5.0 : aucun libellé à la pose (champ vide) ; un ancien objet (label null) garde le libellé du catalogue
+    const o0 = T.create('ipe', 100, 200, measure);
+    check('création : libellé VIDE par défaut (aucun texte), null pour un symbole sans libellé', o0.label === '' && !T.primitives(o0, measure).some((p) => p.kind === 'text') && T.create('north', 0, 0, measure).label === null);
+    check('ancien objet (label null) : libellé du catalogue toujours dessiné', T.primitives(Object.assign({}, o0, { label: null }), measure).some((p) => p.kind === 'text' && p.text === 'IPE 200'));
+    const o = T.create('ipe', 100, 200, measure, { label: 'IPE 200' });
+    check('création : type tstamp, libellé saisi, noir, plein, taille naturelle', o.type === 'tstamp' && o.label === 'IPE 200' && o.color.join() === '0,0,0' && o.style === 'solid' && o.weight === 'normal' && o.cx === 100 && o.cy === 200
       && Math.abs(o.w - T.natural(o, measure).w) < 1e-9 && Math.abs(o.h - T.natural(o, measure).h) < 1e-9);
-    const big = T.create('ipe', 0, 0, measure, { scale: 2.5 });
+    const big = T.create('ipe', 0, 0, measure, { scale: 2.5, label: 'IPE 200' });
     check('création à l\'échelle 2,5', Math.abs(big.w - 2.5 * o.w) < 1e-9 && Math.abs(big.h - 2.5 * o.h) < 1e-9 && !('scale' in big));
     check('cadre : sélection à l\'intérieur, proportions verrouillées, rotation et redimensionnement permis', Shapes.kindOf(o) === 'frame' && Shapes.SOLID.has('tstamp') && Shapes.ASPECT_LOCKED.has('tstamp')
       && Shapes.hitTest(o, 100, 200, 0, measure) && !Shapes.hitTest(o, 100 + o.w, 200, 1, measure) && Shapes.canRotate(o) && Shapes.canResize(o));
@@ -125,7 +129,7 @@ async function source(n, size, rot) {
     const empty = Object.assign({}, o, T.relabel(o, '', measure));
     check('libellé vide : silhouette seule, cadre réduit, aucun texte', !T.primitives(empty, measure).some((p) => p.kind === 'text') && empty.h < o.h);
     check('libellé : champ présent sauf flèche Nord ; plein / contour seulement s\'il y a un corps', T.hasLabel(o) && !T.hasLabel({ sym: 'north' }) && T.hasBody(o) && !T.hasBody({ sym: 'bubble' }) && T.hasBody({ sym: 'anchor' }));
-    const det = T.layout(T.create('detail', 0, 0, measure), measure);
+    const det = T.layout(T.create('detail', 0, 0, measure, { label: '1/05' }), measure);
     check('bulle double : « 1/05 » réparti en haut et en bas', det.texts.length === 2 && det.texts[0].text === '1' && det.texts[1].text === '05' && det.texts[0].my > det.texts[1].my);
     const sec = T.layout(T.create('section', 0, 0, measure, { label: 'B' }), measure);
     check('repère de coupe : la lettre aux deux extrémités, dans le cadre', sec.texts.length === 2 && sec.texts.every((t) => t.text === 'B' && Math.abs(t.my) < sec.H / 2 && Math.abs(t.cx) < sec.W / 2));
@@ -139,7 +143,7 @@ async function source(n, size, rot) {
     const out = T.primitives(Object.assign({}, o, { style: 'outline' }), measure).filter((p) => p.kind === 'path');
     check('contour : aucun remplissage ; plein : remplissage + liseré', out.every((p) => !p.fill && p.stroke) && T.primitives(o, measure).filter((p) => p.kind === 'path').every((p) => p.fill && p.stroke));
     check('valeurs par défaut du type (Shapes.defaultsFor)', Shapes.defaultsFor('tstamp').style === 'solid' && Shapes.defaultsFor('tstamp').weight === 'normal' && Shapes.LABELS.tstamp === 'Tampon technique');
-    const all = T.CATALOG.map((e) => T.create(e.id, 300, 300, measure, { rot: 30 }));
+    const all = T.CATALOG.map((e) => T.create(e.id, 300, 300, measure, { rot: 30, label: e.label })); // libellés d'exemple du catalogue (vides par défaut depuis 1.5.0)
     const bad = all.filter((x) => { const ps = T.primitives(x, measure); return !ps.length || ps.some((p) => (p.kind === 'text' ? !(finite(p.x) && finite(p.y) && p.size > 1 && p.text) : !(p.segs.length > 1 && p.segs.every((s) => s.slice(1).every(finite)) && (p.fill || p.stroke) && (!p.stroke || p.stroke.width > 0)))); });
     check('chaque entrée produit des primitives valides (chemins, textes), même tournée', bad.length === 0, bad.map((x) => x.sym));
     check('aperçu = écriture : Shapes.primitives (aperçu SVG et pdf-edit) = TechStamps.primitives', all.every((x) => JSON.stringify(Shapes.primitives(x, measure, { pageRot: 90 })) === JSON.stringify(T.primitives(x, measure))));
@@ -156,7 +160,7 @@ async function source(n, size, rot) {
   const SIZES = [['petite', 0.6], ['normale', 1], ['grande', 2.5]];
   for (const c of CONF) {
     for (const [sname, sc] of SIZES) {
-      const objs = T.CATALOG.map((e, i) => T.create(e.id, 0, 0, measure, { scale: sc, rot: c.rot + (sc === 1 && i % 3 === 1 ? 30 : 0), style: i % 4 === 3 ? 'outline' : 'solid' }));
+      const objs = T.CATALOG.map((e, i) => T.create(e.id, 0, 0, measure, { label: e.label, scale: sc, rot: c.rot + (sc === 1 && i % 3 === 1 ? 30 : 0), style: i % 4 === 3 ? 'outline' : 'solid' }));
       const f = flow(objs, c.rot ? c.size[0] : c.size[0], c.size[1]);
       const src = await source(f.pages, c.size, c.rot);
       const edits = f.objs.map((o, i) => Object.assign({ id: i + 1 }, o));

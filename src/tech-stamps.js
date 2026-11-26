@@ -1,5 +1,5 @@
 // Tampons techniques (1.4.0) : silhouettes schématiques de profilés (sections en coupe) et repères de plan, sans cotes ni échelle (UMD, pur).
-// Objet : { type: 'tstamp', sym (id du catalogue), label (texte éditable | null), cx, cy, w, h (= taille naturelle × k), rot, color, opacity,
+// Objet : { type: 'tstamp', sym (id du catalogue), label (texte éditable ; '' à la pose depuis 1.5.0 | null = libellé du catalogue, anciens objets), cx, cy, w, h (= taille naturelle × k), rot, color, opacity,
 //           style 'solid' | 'outline' (corps des profilés plein ou en contour), weight 'fine' | 'normal' | 'bold' | 'xbold' (épaisseur relative) }.
 // Le type est un cadre (comme 'stamp') : poignées, rotation, proportions verrouillées (Maj = libre), copier / coller, annulation, écriture par
 // les primitives partagées aperçu / PDF (Shapes.primitives → pdf-edit.drawPrimitives). Épaisseur des traits et taille du libellé
@@ -330,7 +330,8 @@
   // Nouvel objet du catalogue à l'échelle `scale` (1 = taille naturelle), centré en (cx, cy).
   function create(sym, cx, cy, measure, extra) {
     const e = entry(sym);
-    const o = Object.assign({ type: 'tstamp' }, DEFAULTS, { sym, label: e ? e.label : null, color: e ? e.color.slice() : RED }, extra || {}, { cx, cy });
+    // 1.5.0 : libellé VIDE à la pose (le libellé du catalogue n'est plus qu'un exemple) ; null pour un symbole sans libellé.
+    const o = Object.assign({ type: 'tstamp' }, DEFAULTS, { sym, label: e && e.label !== null ? '' : null, color: e ? e.color.slice() : RED }, extra || {}, { cx, cy });
     const sc = (extra && extra.scale) || 1;
     delete o.scale;
     const n = natural(o, measure);

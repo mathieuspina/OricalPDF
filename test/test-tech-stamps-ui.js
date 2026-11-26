@@ -69,8 +69,8 @@ const FONTS = path.join(__dirname, '..', 'node_modules', 'pdfjs-dist', 'standard
     check('IPE choisi : outil « Tampon technique » actif, menu fermé, bouton enfoncé', (await toolLabel()) === 'Outil : Tampon technique' && await c.ev(`document.getElementById('tech-menu-pop').hidden`) && (await c.ev(`document.querySelector('${btn}').getAttribute('aria-pressed')`)) === 'true');
     await click(200, 200); await click(400, 200); await sleep(300);
     let e = await edits();
-    check('deux IPE posés de suite (outil persistant), libellé « IPE 200 », noir, plein', e.length === 2 && e.every((x) => x.sym === 'ipe' && x.label === 'IPE 200' && x.color.join() === '0,0,0' && x.style === 'solid'), e);
-    check('aperçu : libellé affiché sous la silhouette', (await texts()).filter((t) => t === 'IPE 200').length === 2);
+    check('deux IPE posés de suite (outil persistant), libellé VIDE (1.5.0), noir, plein', e.length === 2 && e.every((x) => x.sym === 'ipe' && x.label === '' && x.color.join() === '0,0,0' && x.style === 'solid'), e);
+    check('aperçu : silhouette seule, aucun libellé d\'exemple', (await texts()).filter((t) => /IPE/.test(t)).length === 0, await texts());
     await key('Escape', 'Escape', 27); await sleep(200);
 
     console.log('3. Sélection, poignées, propriétés');
@@ -134,7 +134,7 @@ const FONTS = path.join(__dirname, '..', 'node_modules', 'pdfjs-dist', 'standard
     await c.click('#fav-body [data-cmd=tst-heb]'); await sleep(250);
     check('clic sur le favori : outil Tampon technique HEB, favori enfoncé', (await toolLabel()) === 'Outil : Tampon technique' && (await c.ev(`document.querySelector('#fav-body [data-cmd=tst-heb]').getAttribute('aria-pressed')`)) === 'true');
     await click(150, 340); await sleep(300);
-    check('HEB posé depuis le favori', (await edits()).some((x) => x.sym === 'heb' && x.label === 'HEB 200'));
+    check('HEB posé depuis le favori (libellé vide)', (await edits()).some((x) => x.sym === 'heb' && x.label === ''));
     await key('Escape', 'Escape', 27); await sleep(150);
     const settings = JSON.parse(fs.readFileSync(path.join(c.userData, 'settings.json'), 'utf8'));
     check('favori mémorisé dans les réglages (identifiant de commande tst-heb)', (settings.favorites || []).includes('tst-heb'), settings.favorites);
@@ -148,7 +148,7 @@ const FONTS = path.join(__dirname, '..', 'node_modules', 'pdfjs-dist', 'standard
       const doc = await pdfjs.getDocument({ data: new Uint8Array(fs.readFileSync(path.join(saveDir, saved[0]))), standardFontDataUrl: FONTS, verbosity: 0 }).promise;
       pdfTexts = (await (await doc.getPage(1)).getTextContent()).items.map((i) => i.str);
     }
-    check('Ctrl+S : PDF écrit, libellés lus par pdf.js', saved.length === 1 && ['IPE 200', 'IPE 300 (réservation)', '12', 'HEB 200'].every((t) => pdfTexts.includes(t)), { saved, pdfTexts });
+    check('Ctrl+S : PDF écrit, libellés lus par pdf.js', saved.length === 1 && ['IPE 300 (réservation)', '12'].every((t) => pdfTexts.includes(t)) && !pdfTexts.some((t) => t === 'IPE 200' || t === 'HEB 200'), { saved, pdfTexts });
     const errs = c.logs.filter((l) => /error|exception/i.test(l));
     check('aucune erreur dans la console', errs.length === 0, errs.slice(0, 5));
   } catch (err) {
