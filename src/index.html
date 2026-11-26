@@ -896,9 +896,11 @@
         <p class="muted small">Par défaut, suit le réglage « réduire les animations » de Windows.</p>
       </fieldset>
       <fieldset>
-        <legend>Tampons</legend>
-        <label class="radio">Nom de l'utilisateur <input id="opt-username" type="text" maxlength="40" placeholder="ex. C. Exemple"></label>
-        <p class="muted small">Ajouté sous le tampon quand l'option « Nom » est cochée.</p>
+        <legend>Annotations</legend>
+        <label class="radio"><input type="checkbox" id="opt-keeptool"> Garder l'outil actif après un tracé</label>
+        <p class="muted small">Quitter l'outil : Échap, « Souris » ou un autre outil. Ctrl + clic = sélection temporaire d'un objet.</p>
+        <label class="radio" title="Angle des nouveaux textes, notes et légendes, en degrés, dans le sens inverse des aiguilles d'une montre, par rapport à l'affichage (0 = horizontal à l'écran ; 90 = vertical, lu de bas en haut). Les objets existants ne changent pas.">Angle des nouveaux textes : <input id="opt-annotangle" type="number" min="-180" max="180" step="1" value="0" aria-label="Angle des nouveaux textes et légendes (degrés)"> °</label>
+        <label class="radio">À l'enregistrement : <select id="opt-savemode" aria-label="Annotations à l'enregistrement"><option value="ask">demander</option><option value="editable">modifiables</option><option value="flat">aplaties</option></select></label>
       </fieldset>
       <fieldset>
         <legend>Navigation</legend>
@@ -906,11 +908,9 @@
         <p class="muted small">Maintenir le bouton du milieu et bouger la souris déplace le document. Espace + glisser (bouton gauche) fait de même.</p>
       </fieldset>
       <fieldset>
-        <legend>Annotations</legend>
-        <label class="radio"><input type="checkbox" id="opt-keeptool"> Garder l'outil actif après un tracé</label>
-        <p class="muted small">Quitter l'outil : Échap, « Souris » ou un autre outil. Ctrl + clic = sélection temporaire d'un objet.</p>
-        <label class="radio" title="Angle des nouveaux textes, notes et légendes, en degrés, dans le sens inverse des aiguilles d'une montre, par rapport à l'affichage (0 = horizontal à l'écran ; 90 = vertical, lu de bas en haut). Les objets existants ne changent pas.">Angle des nouveaux textes et légendes : <input id="opt-annotangle" type="number" min="-180" max="180" step="1" value="0" aria-label="Angle des nouveaux textes et légendes (degrés)"> °</label>
-        <label class="radio">À l'enregistrement : <select id="opt-savemode" aria-label="Annotations à l'enregistrement"><option value="ask">demander</option><option value="editable">modifiables</option><option value="flat">aplaties</option></select></label>
+        <legend>Tampons</legend>
+        <label class="radio">Nom de l'utilisateur <input id="opt-username" type="text" maxlength="40" placeholder="ex. C. Exemple"></label>
+        <p class="muted small">Ajouté sous le tampon quand l'option « Nom » est cochée.</p>
       </fieldset>
       <fieldset id="opt-update-box">
         <legend>Mises à jour</legend>

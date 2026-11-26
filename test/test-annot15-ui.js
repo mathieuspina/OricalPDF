@@ -49,7 +49,7 @@ function check(name, cond, detail) {
     // ------------------------------------------------------------ 3. angle par défaut
     console.log('3. Angle par défaut des nouveaux textes et légendes');
     await c.click('#btn-settings'); await sleep(250);
-    check('Réglages > Annotations : champ « Angle des nouveaux textes et légendes », 0 par défaut', (await c.ev(`document.getElementById('opt-annotangle').value`)) === '0');
+    check('Réglages > Annotations : champ « Angle des nouveaux textes » (textes, notes, légendes), 0 par défaut', (await c.ev(`document.getElementById('opt-annotangle').value`)) === '0');
     await c.ev(`(()=>{const i=document.getElementById('opt-annotangle'); i.value='450'; i.dispatchEvent(new Event('change'))})()`); await sleep(150);
     check('valeur ramenée dans ]-180, 180] (450 → 90) et mémorisée', (await c.ev(`document.getElementById('opt-annotangle').value`)) === '90' && (await c.ev(`import('./js/settings.js').then(m=>m.get('annotAngle'))`)) === 90);
     await c.click('#settings-close'); await sleep(200);
@@ -170,6 +170,25 @@ function check(name, cond, detail) {
     e = (await edits()).find((x) => x.id === cid);
     check('« Cadre » recoché : cadre de la couleur de la flèche', JSON.stringify(e.border) === '[0,0,1]', e);
     await c.ev(`import('./js/ui.js').then(m=>{const d=m.store.active; d.selection=[]; m.bus.emit('doc-changed', d); return true})`); await sleep(150);
+
+    // ------------------------------------------------------------ 9. couleurs standard
+    console.log('9. Couleurs standard sous les choix de couleur');
+    await selectId(rid); await sleep(300);
+    const sw = await J(`JSON.stringify([...document.querySelectorAll('#props .prop-row')].filter(r=>r.querySelector('.swatches')).map(r=>[r.querySelector('label').textContent, [...r.querySelectorAll('.swatch')].map(b=>b.title+'='+b.dataset.color), r.querySelector('label').htmlFor && !!document.getElementById(r.querySelector('label').htmlFor)]))`);
+    const want = ['Noir=#000000', 'Blanc=#ffffff', 'Bleu=#0000ff', 'Rouge=#ff0000', 'Vert=#008000', 'Jaune=#ffff00', 'Magenta=#ff00ff'];
+    check('rectangle : 7 couleurs standard sous « Couleur » et « Remplissage » (libellé toujours relié au sélecteur)', sw.length === 2 && sw.every(([, l, lab]) => JSON.stringify(l) === JSON.stringify(want) && lab), sw);
+    await c.click(`#props .prop-row:has(.swatches) .swatch[title="Rouge"]`); await sleep(300);
+    e = (await edits()).find((x) => x.id === rid);
+    check('clic sur « Rouge » : couleur du trait rouge, sélecteur RVB à jour, pastille marquée', JSON.stringify(e.color) === '[1,0,0]' && (await c.ev(`document.querySelector('#props .prop-row:has(.swatches) input[type=color]').value`)) === '#ff0000' && (await c.ev(`document.querySelector('#props .prop-row:has(.swatches) .swatch[title="Rouge"]').getAttribute('aria-pressed')`)) === 'true', e);
+    const fillRow = `[...document.querySelectorAll('#props .prop-row')].find(r=>r.querySelector('label').textContent==='Remplissage')`;
+    check('remplissage : « Aucun » coché au départ', (await c.ev(`${fillRow}.querySelector('input[type=checkbox]').checked`)) === true);
+    await c.ev(`${fillRow}.querySelector('.swatch[title="Jaune"]').scrollIntoView({block:'center'})`);
+    { const [x, y, w, h] = JSON.parse(await c.ev(`(()=>{const r=${fillRow}.querySelector('.swatch[title="Jaune"]').getBoundingClientRect(); return JSON.stringify([r.left,r.top,r.width,r.height])})()`)); await c.clickXY(x + w / 2, y + h / 2); await sleep(300); }
+    e = (await edits()).find((x) => x.id === rid);
+    check('clic sur « Jaune » du remplissage : remplissage jaune, « Aucun » décoché', JSON.stringify(e.fill) === '[1,1,0]' && (await c.ev(`${fillRow}.querySelector('input[type=checkbox]').checked`)) === false, e);
+    await key('z', 'KeyZ', 90, 2); await sleep(300);
+    e = (await edits()).find((x) => x.id === rid);
+    check('Ctrl+Z : une étape par clic (remplissage annulé, couleur gardée)', e.fill === null && JSON.stringify(e.color) === '[1,0,0]', e);
 
     check('aucune erreur JavaScript', c.logs.length === 0, c.logs.slice(0, 3));
   } catch (err) {

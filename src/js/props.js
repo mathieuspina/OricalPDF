@@ -26,8 +26,36 @@ function row(label, control, extraClass) {
   const l = document.createElement('label');
   l.textContent = label;
   r.append(l, control);
-  if (control.id) l.htmlFor = control.id;
+  const target = control.id ? control : control.querySelector && control.querySelector('input[id], select[id], textarea[id]'); // contrôle enveloppé (couleur + pastilles)
+  if (target && target.id) l.htmlFor = target.id;
   return r;
+}
+
+// Couleurs standard proposées sous chaque choix de couleur (1.5.0), en plus du sélecteur RVB du système.
+export const STANDARD_COLORS = [
+  ['Noir', [0, 0, 0]], ['Blanc', [1, 1, 1]], ['Bleu', [0, 0, 1]], ['Rouge', [1, 0, 0]],
+  ['Vert', [0, 0.5, 0]], ['Jaune', [1, 1, 0]], ['Magenta', [1, 0, 1]],
+];
+// Rangée de pastilles : pick(couleur) applique la couleur (et met à jour le sélecteur RVB associé).
+function swatches(f, current, pick) {
+  const d = document.createElement('div');
+  d.className = 'swatches';
+  d.setAttribute('role', 'group');
+  d.setAttribute('aria-label', 'Couleurs standard : ' + (f.label || ''));
+  const cur = current ? toHex(current) : null;
+  for (const [name, c] of STANDARD_COLORS) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'swatch';
+    b.title = name;
+    b.setAttribute('aria-label', name);
+    b.style.background = toHex(c);
+    b.dataset.color = toHex(c);
+    b.setAttribute('aria-pressed', String(cur === toHex(c)));
+    b.addEventListener('click', () => pick(c.slice()));
+    d.append(b);
+  }
+  return d;
 }
 
 let seq = 0;
@@ -41,7 +69,7 @@ function control(doc, f, val) {
   if (f.kind === 'color') {
     const i = input('color', { value: toHex(val || [0, 0, 0]) });
     i.addEventListener('change', () => apply(fromHex(i.value)));
-    return i;
+    return wrap(i, swatches(f, val || [0, 0, 0], (c) => { i.value = toHex(c); apply(c); }));
   }
   if (f.kind === 'colorOrNone') {
     const none = document.createElement('label');
@@ -55,7 +83,7 @@ function control(doc, f, val) {
     i.disabled = !val;
     cb.addEventListener('change', () => apply(cb.checked ? null : fromHex(i.value)));
     i.addEventListener('change', () => apply(fromHex(i.value)));
-    return wrap(i, none);
+    return wrap(i, none, swatches(f, val, (col) => { i.value = toHex(col); i.disabled = false; cb.checked = false; apply(col); }));
   }
   if (f.kind === 'text') {
     const i = input('text', { value: val === undefined || val === null ? '' : val, maxLength: 40 });
